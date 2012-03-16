@@ -37,3 +37,20 @@ Thumbs.db
 
 .svn*
 .cvs*
+CVS
+
+# LaTeX #
+#########
+*.aux
+*.blg
+*.bbl
+*.log
+*.fdb_latexmk
+*.synctex.gz
+*.out
+*.toc
+*.lof
+*.pdf
+*.tmproj
+*.sublime-project
+*.sublime-workspace

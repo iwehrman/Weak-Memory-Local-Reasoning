@@ -1,0 +1,89 @@
+digraph G {
+	{
+		graph [center=true,
+			rank=sink
+		];
+		memory_model		 [fillcolor=white,
+			label="Memory model",
+			shape=doubleoctagon,
+			style=filled];
+	}
+	programming_language	 [fillcolor=white,
+		group=PL,
+		label="Programming language",
+		shape=box,
+		style=filled];
+	programming_model	 [fillcolor=white,
+		group=PL,
+		label="Machine model",
+		shape=octagon,
+		style=filled];
+	programming_model -> memory_model;
+	assertion_language	 [fillcolor=white,
+		group=AL,
+		label="Assertion language",
+		shape=box,
+		style=filled];
+	predicates	 [fillcolor=white,
+		group=AL,
+		label=Predicates,
+		shape=octagon,
+		style=filled];
+	predicates -> programming_model;
+	specification_language	 [fillcolor=white,
+		group=SL,
+		label="Specification language",
+		shape=box,
+		style=filled];
+	specification_language -> programming_language;
+	specification_language -> assertion_language;
+	programming_language_semantics	 [fillcolor=white,
+		group=PL,
+		label="PL semantics",
+		shape=ellipse,
+		style=filled];
+	programming_language_semantics -> programming_language;
+	programming_language_semantics -> programming_model;
+	assertion_language_semantics	 [fillcolor=white,
+		group=AL,
+		label="AL semantics",
+		shape=ellipse,
+		style=filled];
+	assertion_language_semantics -> assertion_language;
+	assertion_language_semantics -> predicates;
+	specification_semantics	 [fillcolor=white,
+		group=SL,
+		label="SL semantics",
+		shape=ellipse,
+		style=filled];
+	specification_semantics -> programming_language_semantics;
+	specification_semantics -> assertion_language_semantics;
+	assertion_logic_soundness	 [fillcolor=white,
+		group=AL,
+		label="AL soundness",
+		shape=trapezium,
+		style=filled];
+	assertion_logic_soundness -> assertion_language_semantics;
+	assertion_logic	 [fillcolor=white,
+		group=AL,
+		label="Assertion logic",
+		shape=hexagon,
+		style=filled];
+	assertion_logic_soundness -> assertion_logic;
+	assertion_logic -> assertion_language;
+	specification_logic	 [fillcolor=white,
+		group=SL,
+		label="Specification logic",
+		shape=hexagon,
+		style=filled];
+	specification_logic -> specification_language;
+	specification_logic -> assertion_logic;
+	specification_logic_soundness	 [fillcolor=white,
+		group=SL,
+		label="SL soundness",
+		shape=trapezium,
+		style=filled];
+	specification_logic_soundness -> specification_semantics;
+	specification_logic_soundness -> assertion_logic_soundness;
+	specification_logic_soundness -> specification_logic;
+}
