@@ -1,0 +1,2865 @@
+\documentclass[11pt]{report}
+
+\usepackage[bookmarks=true,bookmarksopen=true]{hyperref}
+\usepackage{url}
+\usepackage{datetime}
+\usepackage{proof}
+\usepackage{enumerate}
+
+\include{notation}
+\include{definitions}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+\begin{document} 
+
+	\settimeformat{ampmtime}
+	\author{Ian Wehrman} 
+	\title{Weak-Memory Local Reasoning\footnote{This is a draft. Please do not distribute without permission.}} 
+	\date{\today, \currenttime}
+	\maketitle
+
+
+\begin{abstract}
+
+Program logics are formal logics designed to facilitate specification and correctness reasoning for software programs of a particular programming language. Separation logic, a new program logic for C-like pointer programs, has found great success due in large part to its embodiment of a \emph{local reasoning} principle, in which specifications and proofs are restricted to just those resources---variables, shared memory addresses, locks---used by the program during execution.
+
+Existing program logics make the strong assumption that all threads agree on the value of shared memory at all times. This assumption is unsound, though, for shared-memory concurrent programs with race conditions, like concurrent data structures. Verification of these difficult programs must take into account the weaker models of memory provided by the architectures on which they execute.
+
+In this dissertation, I explicate a local reasoning principle for a weak memory model based on a formal specification of the x86 multiprocessor memory model. I demonstrate this principle with a new program logic for fine-grained concurrent C-like programs that incorporates ideas from separation logic and rely/guarantee. Notably, the logic may be applied soundly to programs with races, for which no general high-level verification techniques exist.
+
+\end{abstract}
+
+\tableofcontents
+
+\listoffigures
+
+\chapter{Introduction} % (fold)
+\label{cha:introduction}
+
+Verifying parallel programs is hard.
+
+\section{What's the Problem?} % (fold)
+\label{sec:whats-the-problem}
+
+The weak-memory reasoning problem: the key example, and why most existing techniques fail. 
+
+% section whats-the-problem (end)
+
+
+\section{Contributions} % (fold)
+\label{sec:contributions}
+
+% section contributions (end)
+
+% chapter introduction (end)
+
+
+\chapter{Related Work} % (fold)
+\label{cha:related_work}
+
+Reasoning directly about hardware models with a model checker \cite{DPN93}, and with abstraction refinement \cite{ChatterjeeDissertation}. 
+
+Zhong Shao's TSO CSL proof: \cite{DBLP:conf/esop/FerreiraFS10}.
+
+Tom Ridge's x86-TSO Rely/Guarantee logic: \cite{DBLP:conf/vstte/Ridge10}; operational reasoning about x86-TSO \cite{DBLP:conf/tphol/Ridge07}.
+
+Ernie Cohen's TSO-SC reduction \cite{DBLP:conf/itp/CohenS10}. 
+
+% chapter related_work (end)
+
+\chapter{Notation} % (fold)
+\label{ch:notation}
+
+Terms are defined in this chapter and throughout the document with the following meta-notation: \[ \mathit{object} \eqdef \mathit{definition}.\] We additionally use the following meta-notation for defining predicates: \[ \mathit{predicate} \iffdef \mathit{definition}.\]
+
+\section{Relations} % (fold)
+\label{sec:relations}
+
+We write $(A,B,R)$ for a binary relation $R$ with domain $A$ and codomain $B$. When the relation is an ordering, with domain and codomain equal, we simply write $(A,R)$, and indicate the underlying set of the relation $R$ by $\relset{R}$. And when the domain and codomain is implied, they are omitted entirely. 
+
+Let $R$ be a binary relation. We define $\relexp{R}{n}$ by natural number induction on $n$: \begin{eqnarray*}
+	\relexp{R}{0} & \eqdef & \mathrm{Id}_{\relset{R}} \\
+	\relexp{R}{n + 1} & \eqdef & \relexp{R}{n} \seq R,
+\end{eqnarray*} where $R \seq R'$ is relational composition. We write $\tcl{R}$ and $\rtcl{R}$ for the transitive resp.~reflexive-transitive closure of $R$: \begin{eqnarray*}
+	\tcl{R} & \eqdef & \bigcup_{n \in \setintegers} \relexp{R}{n} \\
+	\rtcl{R} & \eqdef & \bigcup_{n \in \setnaturals} \relexp{R}{n} 
+\end{eqnarray*} If $R \subseteq A \times B$ and $A' \subseteq A$, then the restriction of $R$ to $A'$ is written $\restrict{R}{A'}$.
+
+For binary relations $(A,R)$ and $(B,S)$ with $A \cap B = \nil$, we write $R \oplus S$ and $R \otimes S$ for the \emph{disjoint sum} and \emph{disjoint product}, respectively: \begin{eqnarray*}
+	(A,R) \oplus (B,S) & \eqdef & ((A \uplus B), (R \uplus S)) \\
+	(A,R) \otimes (B,S) & \eqdef & ((A \uplus B), (R \uplus S \uplus (A \times B)))
+\end{eqnarray*}
+
+We say $(A,R)$ \emph{refines} $(A,S)$, written $(A,R)\refines(A,S)$, or just $R \refines S$ when the context is clear, iff $R \supseteq S$.  
+
+% section relations (end)
+
+\section{Functions} % (fold)
+\label{sec:functions}
+
+For a partial function $f$, we write $f(x) = \bot$ to indicate that $f$ is undefined as $x$. Conversely, we write $\defined{f(x)}$ to indicate that $f$ is defined as $x$. 
+
+For a function $f$, we write $\funup{f}{\ptup{x}{v}}$ for the updated function \begin{equation}
+	\label{eq:funup}
+	\funup{f}{\ptup{x}{v}} \eqdef \lambda y . \begin{cases}
+		v & \text{if $y = x$} \\
+		f(y) & \text{otherwise.} 
+	\end{cases}
+\end{equation} A single-point partial function is written $\funup{}{\ptup{x}{v}}$. 
+
+When $f$ is a functional in $A \tfun (B \tfun C)$, we additionally use the following abbreviation to indicate the result of updating the function at a point in the codomain of $f$: \begin{equation}
+	\label{eq:recup}
+	\funup{f}{\ptup{g(x)}{v}} \eqdef \funup{f}{\ptup{g}{\left(\funup{f(g)}{\ptup{x}{v}}\right)}}.
+\end{equation}
+Deletion from a (partial) function is written as follows: \begin{equation}
+	\label{eq:fundel}
+	\fundel{f}{x} \eqdef \funup{f}{\ptup{x}{\bot}}.
+\end{equation} 
+
+The restriction of a function $f$ to a set $A \subseteq \dom{f}$ is written as is the restriction of relations: $\restrict{f}{A}$. The image of a function $f$ on a subset $A$ of its domain is written $\image{f}{A}$. The inverse image of $f$ w.r.t. a subset $B$ of its codomain is written $\invimage{f}{B}$.
+
+Functions (total or partial) are \emph{compatible}, written $f \funcompat g$ when they agree at the intersection of their domains: \[ f \funcompat g \iffdef \forall x \in \dom{f} \cap \dom{g} \st f(x) = f(g).\] More generally, for an equivalence relation $R$, we say functions are \emph{$R$-compatible}, written $f \compat_R g$, when they agree according to $R$ at the intersection of their domains: \[ f \compat_R g \iffdef \forall x \in \left(\dom{f} \cap \dom{g}\right) \st R(f(x),g(x)).\] In particular, note that $f \compat_{\nil} g$ holds iff $\dom{f} \cap \dom{g} = \nil$. 
+
+The result of \emph{overriding} one function $f$ with another $g$, written $f \override g$, is defined as follows: \[ f \override g \eqdef (f \setminus \dom{g}) \cup g.\] 
+
+Let $f$ be a partial function $(B \times B) \pfun B$. We can \emph{lift} $f$ to a partial function on maps $(A \pfun B)$, written $\lift{f}$. Let $g,g' \in (A \pfun B)$. Then $\lift{f}(g,h) \in (A \pfun B))$ is defined as follows: \begin{eqnarray*}
+	\lift{f}(g,g') \eqdef \lambda a . \begin{cases}
+		g(a) & \text{if $a \notin \dom{g'}$} \\
+		g'(a) & \text{else if $a \notin \dom{g}$} \\
+		f(g(a), g'(a)) & \text{else if $(g(a), g'(a)) \in \dom{f}$} \\
+		\bot & \text{otherwise.}
+	\end{cases}
+\end{eqnarray*}  
+
+% section functions (end)
+
+\section{Records} % (fold)
+\label{sec:records}
+
+A record literal is written as follows: \[ \reclit{\ptup{n_1}{v_1},\,\ldots,\, \ptup{n_m}{v_m}},\] where the $n_i$ are field names and the $v_i$ are values. We consider records to be special partial functions mapping field names to some codomain. For a record $r$ with field name $n$, we write $r.n$ as an abbreviation for $r(n)$. It is more traditional to treat records as tuples with named projection functions, but by representing records as partial functions we can handle record and function update uniformly; i.e., the result of updating field $n$ of record $r$ with value $v$ is written $\recup{r}{n}{v}$, and is defined as in Equation~\ref{eq:funup}. Similarly, if the codomain at a field is a function, then we denote the result of updating that function in place at one point by writing $\recup{r}{n(x)}{v}$, defined as in Equation~\ref{eq:recup}. By analogy with Equation~\ref{eq:fundel}, we write deletion from a function in a record as \begin{equation}
+	\label{eq:recdel}
+	\funup{r}{n \setminus x} \eqdef \funup{r}{\ptup{n(x)}{\bot}}.
+\end{equation} Finally, we define a special-purpose abbreviation for appending additional items to a list-type field in a record: \begin{equation}
+	\label{eq:ptapp}
+	\funup{r}{\ptapp{n}{m}} \eqdef \funup{r}{\ptup{n}{(r.n \lapp m)}} 
+\end{equation}
+
+% section records (end)
+
+\section{Lists} % (fold)
+\label{sec:lists}
+
+We write $\epsilon$ for the empty list, $x \lcons l$ for adding a single element $x$ to a list $l$, $\lsingle{x}$ for the singleton list with element $x$ (i.e., shorthand for $x \lcons \epsilon$), and $l \lapp l'$ for the concatenation of lists $l$ and $l'$. 
+
+For a list $l$, we write $\llen{l}$ for its length, and $\elems{l}$ for the set of elements that appear in the list. The $n^{\text{th}}$ element of a list $l$ is given by $\nth{n}{l}$ when $\llen{l} > n$. 
+
+We additionally treat lists $l$ of type $A \times B$ as partial functions $A \pfun B$: \[ l(a) \eqdef \begin{cases}
+	b & \text{$\exists l,l',b \st l = \left(l' \lapp \lsingle{(a,b)} \lapp l''\right) \text{ and }a \notin \dom{\elems{l''}}$} \\
+	\bot & \text{otherwise.}
+\end{cases}\] 
+
+The set of \emph{interleavings} of lists $l$ and $m$, written $l \merge m$, is defined recursively: \begin{eqnarray*}
+	\epsilon \merge m & \eqdef & \set{m} \\
+	l \merge \epsilon & \eqdef & \set{l} \\
+	(a \lcons l') \merge (b \lcons m') & \eqdef & \setof{a \lcons n}{n \in l' \merge (b \lcons m')} \cup \setof{b \lcons n}{n \in (a \lcons l') \merge m'}\\
+\end{eqnarray*}
+
+% section lists (end)
+
+\chapter{Background} % (fold)
+\label{cha:background}
+
+\section{Universes} % (fold)
+\label{sec:universes}
+
+We write the set of booleans as $\setbooleans$, and write its two members as $\bvt$ and $\bvf$. We take the set of \emph{values} $\setvalues$, to be equal to the set of integers $\setintegers$, and the set of memory \emph{locations} $\setlocations$ to be equal to the set of natural numbers $\setnaturals$.\footnote{Say something about using mathematical integers for values instead of fixed-width bitvectors.} Hence, we have $\setlocations \subseteq \setvalues$. We additionally assume disjoint countable sets of \emph{identifiers} $\setidentifiers$ and \emph{processor names} $\setprocessors$, both disjoint from the other sets.
+
+
+\section{Order Theory} % (fold)
+\label{sec:order-theory}
+
+Recall the definition of a closure operator: 
+\begin{definition} 
+\label{def:closure}
+A function $f : A \tfun A$ is a \emph{closure
+  operator} if, for all $B,B' \subseteq A$:
+\begin{enumerate}
+\item $B \subseteq f(B)$,
+\item $B \subseteq B'$ implies $f(B) \subseteq f(B')$, and
+\item $f(B) = f(f(B))$.
+\end{enumerate}
+\end{definition}
+
+Let $\prec$ be a quasi-order (i.e., a reflexive-transitive binary
+relation) on set $A$. For element $a \in A$ we write
+$\downo{\prec}{a}$ for the \emph{down set} of $a$, defined by: \[
+\downo{\prec}{a} \eqdef \setof{b \in A}{b \prec a}.\] For any subset $B
+\subseteq A$ , we write $\downo{\prec}{B}$ \emph{down closure} of $B$,
+defined by: \[ \downo{\prec}{B} \eqdef \bigcup_{b \in B}
+\downo{\prec}{b}.\] We call a set $B$ \emph{down closed} iff $B =
+\downo{\prec}{B}$. When it is clear from context, we omit the order
+symbol and just write $\down{b}$ and $\down{B}$ for the down set of
+$b$ and the down closure of $B$, respectively.
+
+\begin{lemma}
+  \label{lem:down-closure}
+  Let $\prec$ be a quasi-order on set $A$. Then $\downo{\prec}{-}$ is
+  a closure operator.
+\end{lemma}
+
+\begin{proof}
+  \begin{enumerate}
+  \item $B \subseteq \down{B}$: 
+
+    \Calc{
+      $b \in B$
+
+      \conn{\onlyif}{reflexivity of $\prec$ and definition of $\down{b}$}
+
+      $b \in \down{b}$
+
+      \conn{\onlyif}{monotonicity of union}
+
+      $b \in \bigcup_{b \in B} \down{b}$
+
+      \conn{\onlyif}{definition of $\down{B}$}
+
+      $b \in \down{B}$.
+      
+    }
+
+  \item $B \subseteq C$ implies $\down{B} \subseteq \down{C}$: 
+
+    \Calc{
+      
+      $b \in \down{B}$
+
+      \conn{\iff}{definition of $\down{B}$}
+
+      $\exists b' \st b \prec b' \conj b' \in B$
+
+      \conn{\onlyif}{assumption $B \subseteq C$}
+
+      $\exists b' \st b \prec b' \conj b' \in C$
+
+      \conn{\iff}{definition of $\down{C}$}
+
+      $b \in \down{C}$.
+
+    }
+
+  \item $\down{B} = \down{\down{B}}$: 
+
+    \Calc{
+      
+      $b \in \down{\down{B}}$
+
+      \conn{\iff}{definition of $\down{B}$}
+
+      $\exists b' \st b \prec b' \conj b' \in \down{B}$
+
+      \conn{\iff}{definition of $\down{B}$}
+
+      $\exists b' \st b \prec b' \conj (\exists b'' \st b' \prec b''
+      \conj b'' \in B)$
+
+      \conn{\iff}{transitivity of $\prec$}
+
+      $\exists b'' \st b \prec b'' \conj b'' \in B$
+
+      \conn{\iff}{definition of $\down{B}$}
+
+      $b \in \down{B}$. 
+
+    }
+
+  \end{enumerate}
+\end{proof}
+
+\begin{lemma}
+  \label{lem:closure-lattice}
+  Let $X \subseteq \powerset{A}$ such that $B \in X$ implies $B = \down{B}$.
+  \begin{enumerate}
+  \item $\bigcup X = \down{\bigcup X}$,
+  \item $\bigcap X = \down{\bigcap X}$.
+  \end{enumerate}
+\end{lemma} 
+
+\begin{proof}
+  The arguments are similar; we show the second. From
+  Lemma~\ref{lem:down-closure}.1, it suffices to show $\down{\bigcap
+  X} \subseteq \bigcap X$.
+
+  \Calc{
+    
+    $b \in \down{\bigcap X}$
+
+    \conn{\iff}{definition of $\down{\bigcap X}$}
+
+    $\exists b' \st b \prec b' \conj b' \in \bigcap X$.
+
+    \conn{\iff}{set theory}
+
+    $\exists b' \st b \prec b' \conj (\forall B \in X \st b' \in B)$.
+    
+    \conn{\onlyif}{first-order logic}
+
+    $\forall B \in X \st \exists b' \st b \prec b' \conj b' \in B$.
+
+    \conn{\iff}{definition of $\down{B}$}
+
+    $\forall B \in X \st b \in \down{B}$
+
+    \conn{\iff}{$B \in X$ implies $B = \down{B}$ by assumption}
+
+    $\forall B \in X \st b \in B$
+
+    \conn{\iff}{set theory}
+
+    $b \in \bigcap X$.
+
+    
+  }
+  
+  
+\end{proof}
+
+A related operator is known variously as the kernel, interior or dual closure operator. Whereas the closure yields a least upper bound, the kernel (as we shall refer to it in the sequel) yields a greatest upper bound. The definition is as for the closure, but instead of requiring that the operator be inflationary, it is required to be deflationary. 
+\begin{definition} 
+\label{def:kernel}
+A function $f : A \tfun A$ is a \emph{kernel
+  operator} if, for all $B,B' \subseteq A$:
+\begin{enumerate}
+\item $B \supseteq f(B)$,
+\item $B \subseteq B'$ implies $f(B) \subseteq f(B')$, and
+\item $f(B) = f(f(B))$.
+\end{enumerate}
+\end{definition}
+
+(FIXME: The definition of $\kernel$ in the assertion section should be moved here.)
+
+
+\section{Memory Models} % (fold)
+\label{sec:memory-models}
+
+The x86-TSO memory model: \cite{DBLP:conf/tphol/OwensSS09}. 
+
+% section memory-models (end)
+
+\section{Separation Logic} % (fold)
+\label{sec:separation-logic}
+
+The Reynolds paper: \cite{DBLP:conf/lics/Reynolds02}. 
+
+% section separation-logic (end)
+
+% chapter background (end)
+
+\section{Linearizability} % (fold)
+\label{sec:linearizability}
+
+\cite{DBLP:journals/toplas/HerlihyW90} Also Alexey's paper.
+
+% section linearizability (end)
+
+\chapter{Expressions, Commands and Programs}
+
+\section{Expressions} % (fold)
+\label{sec:expressions}
+
+Expressions are syntactic constructs that denote values. We further categorize expressions according to whether they denote boolean values or integer values. Their grammars are as follows, where $v \in \setvalues$ and $x \in \setidentifiers$: 
+
+\begin{align*}
+	\exprs~e & \bnfdef v \bnfbar x \bnfbar e + e' \bnfbar e - e' \bnfbar \ldots \\ 
+	\bexprs~b & \bnfdef \bexpt \bnfbar \bexpf \bnfbar e = e' \bnfbar !b \bnfbar \ldots \\	
+\end{align*}
+
+We do not bother to specify a complete set of expression constructors once and for all, it being so straightforward to augment the set as needed.
+
+
+\subsection{Expression Substitution} % (fold)
+\label{sub:expression_substitution}
+
+For expressions $e,e'$ and variable $x$, the \emph{expression
+substitution} $e\subst{x}{e'}$ is defined by induction on the structure of $e$:
+
+\begin{eqnarray*}
+	v\subst{x}{e'} &\eqdef& v\\
+	y\subst{x}{e'} &\eqdef& \begin{cases} e' & \text{if $y = x$} \\ 
+	y & \text{otherwise}\end{cases} \\
+	(e_1 + e_2)\subst{x}{e'} &\eqdef& e_1\subst{x}{e'} + e_2\subst{x}{e'} \\
+	\vdots~ &\eqdef& ~\vdots
+\end{eqnarray*}
+
+For boolean expression $b$, the substitution $b\subst{x}{e'}$ is
+defined similarly by induction on $b$:
+
+\begin{eqnarray*}
+	\bexpt \subst{x}{e'} &\eqdef& \bexpt \\
+	\bexpf \subst{x}{e'} &\eqdef& \bexpf \\
+	(e_1 = e_2)\subst{x}{e'} &\eqdef& e_1\subst{x}{e'} = e_2\subst{x}{e'}\\
+	!b\subst{x}{e'} &\eqdef& !(b\subst{x}{e'}) \\
+	\vdots~ &\eqdef& ~\vdots
+\end{eqnarray*}
+
+
+% subsection expression_substitution (end)
+
+
+\subsection{Dynamic Semantics of Expressions} % (fold)
+\label{sub:dynamic_semantics_of_expressions}
+
+The dynamic meaning of expressions is given with respect to \emph{stores}, i.e., total functions $\setidentifiers \tfun \setvalues$, abbreviated in the sequel as $\setstores$. Specifically, we define denotation functions $\dnexpr{-}$ and $\dnbexpr{-}$ as total functions $\exprs \tfun (\setstores \tfun \setvalues)$ resp.~$\bexprs \tfun (\setstores \tfun \setvalues)$. These functions\footnote{We also don't bother to distinguish in this document between the natural numbers and the syntactic literals that denote them. We could remedy this by assuming another set $\setvalues^\star$ that is in a one-to-one correspondence with $\setvalues$, and to take $\dnexpr{v^\star} = v$.} are defined in Figure~\ref{fig:dnexpr}. 
+
+We use the term \emph{resolvers} to refer to the semantic functions $\dnexpr{e} \in (\setstores \tfun \setvalues)$. The set of resolvers is abbreviated as $\setresolvers$; we typically use the symbol $\rho$ to range over resolvers. 
+
+\begin{figure}[h]
+	\centering
+		\begin{align*}
+			\dnexpr{v}s & \eqdef v \\
+			\dnexpr{x}s & \eqdef s(x) \\
+			\dnexpr{e + e'}s & \eqdef \dnexpr{e}s + \dnexpr{e'}s \\
+			\dnexpr{e - e'}s & \eqdef \dnexpr{e}s - \dnexpr{e'}s \\
+			\vdots~ & \eqdef ~\vdots \\
+			\dnbexpr{\bexpt}s & \eqdef \bvt \\
+			\dnbexpr{\bexpf}s & \eqdef \bvf \\
+			\dnbexpr{e = e'}s & \eqdef \begin{cases}
+				\bvt & \text{if $\dnexpr{e}s = \dnexpr{e'}s$} \\
+				\bvf & \text{otherwise.}
+			\end{cases}\\
+			\dnbexpr{!b}s & \eqdef \begin{cases}
+				\bvt & \text{if $\dnbexpr{b}s = \bvf$} \\
+				\bvf & \text{otherwise.}
+			\end{cases}\\
+			\vdots~ & \eqdef ~\vdots
+		\end{align*}
+	\caption{The denotation of expressions}
+	\label{fig:dnexpr}
+\end{figure}
+
+For convenience, we overload the function $\dnexpr{-}$ in $\exprs \tfun \setpstates \tfun \setvalues$ such that $\dnexpr{c}\sigma = \dnexpr{c}\sigma.s$, and similarly for $\dnbexpr{-}$. 
+
+% subsection dynamic_semantics_of_expressions (end)
+
+\subsection{Static Semantics of Expressions} % (fold)
+\label{sub:static_semantics_of_expressions}
+
+The set of free variables of expressions and boolean expressions, written $\fv{e}$ resp.~\fv{b} is defined in Figure~\ref{fig:expfv}. 
+
+\begin{figure}[h]
+	\centering
+	\begin{align*}
+		\fv{v} \eqdef {} & \nil \\ 
+		\fv{x} \eqdef {} & \set{x} \\
+		\fv{e + e'} \eqdef {} & \fv{e} \cup \fv{e'} \\
+		\fv{e - e'} \eqdef {} & \fv{e} \cup \fv{e'} \\
+		\vdots~ \eqdef {} & ~\vdots \\
+		\fv{\bexpt} \eqdef {} & \nil \\
+		\fv{\bexpf} \eqdef {} & \nil \\
+		\fv{e = e'} \eqdef {} & \fv{e} \cup \fv{e'} \\
+		\fv{!b} \eqdef {} & \fv{b} \\
+		\vdots~ \eqdef {} & ~\vdots
+	\end{align*}
+	\caption{Free variables of expressions}
+	\label{fig:expfv}
+\end{figure}
+
+For a set of identifiers $X$, stores $s_1$ and $s_2$ are called \emph{$X$-congruent}, written $s_1 \stcong{X} s_2$, if they agree on the elements of $X$: \[ s_1 \stcong{X} s_2 \iffdef \restrict{s_1}{X} = \restrict{s_2}{X}. \]
+
+\begin{lemma}
+	\label{lem:expr-fv}
+	For stores $s_1,s_2$ and expression $e$, if $s_1 \stcong{\fv{e}} s_2$ then $\dnexpr{e}s_1 = \dnexpr{e}s_2$. And similarly for boolean expression $b$, if $s_1 \stcong{\fv{b}} s_2$ then $\dnbexpr{b}s_1 = \dnbexpr{b}s_2$. 
+\end{lemma}
+
+\begin{proof}
+	By a trivial induction on the structure of the expression.
+\end{proof}
+
+% subsection static_semantics_of_expressions (end)
+
+\subsection{Resolver Update} % (fold)
+\label{sub:resolver_update}
+
+For resolvers $\rho,\rho'$ and $x \in \setidentifiers$, the \emph{resolver update} $\rho\subst{x}{\rho'}$ is defined as follows: \[ \rho\subst{x}{\rho'} \eqdef \lambda s \st \rho(\funup{s}{\ptup{x}{\rho'(s)}}). \] In other words, the updated resolver $\rho \subst{i}{\rho'}$ ignores the applied store value at $x$, and instead uses the result of $\rho'$ at that store. Resolver updates are used to describe the semantics of expression substitutions $e \subst{x}{e}$. When resolving a store against $\dnexpr{e}$, instead of querying for the value of $x$, instead $\dnexpr{e'}$ is used to resolve the store, and that value is used instead. 
+
+\begin{lemma}
+  \label{lem:exp-sem-subst}
+  Let $e,e'$ be expressions and $i \in \setidentifiers$. Then $\dnexpr{e\subst{i}{e'}} = \dnexpr{e}\subst{i}{\dnexpr{e'}}$.
+\end{lemma}
+
+\begin{proof}
+  By induction on the structure of $e$. 
+
+  \begin{description}
+
+    \item[Value:]
+
+      \Calc{
+
+        $\dnexpr{v\subst{i}{e'}}s$
+
+        \conn{=}{definition of expression substitution}
+        
+        $\dnexpr{v}s$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $v$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $\dnexpr{v}\funup{s}{\ptup{i}{\dnexpr{e'}s}}$
+
+        \conn{=}{definition of resolver substitution}
+
+        $\dnexpr{v}\subst{i}{\dnexpr{e'}}s$.
+
+      }
+
+    \item[Identifier:]
+
+      First consider $k \neq i$: 
+
+      \Calc{
+
+        $\dnexpr{k\subst{i}{e'}}s$
+
+        \conn{=}{definition of expression substitution, assumption $k
+        \neq i$}
+        
+        $\dnexpr{k}s$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $s(k)$
+
+        \conn{=}{set theory, assumption $k \neq i$}
+        
+        $\funup{s}{\ptup{i}{\dnexpr{e'}s}}(k)$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $\dnexpr{k}\funup{s}{\ptup{i}{\dnexpr{e'}s}}$
+
+        \conn{=}{definition of resolver substitution}
+
+        $\dnexpr{k}\subst{i}{\dnexpr{e'}}s$.
+
+      }
+
+      Next, $k = i$: 
+
+      \Calc{
+
+        $\dnexpr{i\subst{i}{e'}}s$
+
+        \conn{=}{definition of expression substitution}
+        
+        $\dnexpr{e'}s$
+
+        \conn{=}{set theory}
+
+        $\funup{s}{\ptup{i}{\dnexpr{e'}s}}(i)$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $\dnexpr{i}\funup{s}{\ptup{i}{\dnexpr{e'}s}}$
+
+        \conn{=}{definition of resolver substitution}
+
+        $\dnexpr{i}\subst{i}{\dnexpr{e'}}s$.
+
+      }
+
+    \item[Addition:]
+
+      \Calc{
+
+        $\dnexpr{(e_1 + e_2)\subst{i}{e'}}s$
+
+        \conn{=}{definition of expression substitution}
+
+        $\dnexpr{e_1\subst{i}{e'} + e_2\subst{i}{e'}}s$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $\dnexpr{e_1\subst{i}{e'}}s + \dnexpr{e_2\subst{i}{e'}}s$
+
+        \conn{=}{inductive hypothesis}
+
+        $\dnexpr{e_1}\subst{i}{\dnexpr{e'}}s +
+        \dnexpr{e_2}\subst{i}{\dnexpr{e'}}s$
+
+        \conn{=}{definition of resolver substitution}
+
+        $\dnexpr{e_1}\funup{s}{\ptup{i}{\dnexpr{e'}s}} +
+        \dnexpr{e_2}\funup{s}{\ptup{i}{\dnexpr{e'}s}}$
+
+        \conn{=}{definition of $\dnexpr{-}$}
+
+        $(\dnexpr{e_1} + \dnexpr{e_2})\funup{s}{\ptup{i}{\dnexpr{e'}s}}$
+
+        \conn{=}{definition of resolver substitution}
+
+        $(\dnexpr{e_1} + \dnexpr{e_2})\subst{i}{\dnexpr{e'}}s$. 
+
+      }
+
+  \end{description}
+
+\end{proof}
+
+\begin{lemma}
+  \label{lem:bexp-sem-subst}
+  Let $b$ be a boolean expression, $e'$ an expression and $i \in \setidentifiers$. Then $\dnexpr{b\subst{i}{e'}} = \dnexpr{b}\subst{i}{\dnexpr{e'}}$.
+\end{lemma}
+
+\begin{proof}
+  
+  \Calc{
+
+    $\dnexpr{(e_1 = e_2)\subst{i}{e'}}s = 1$
+
+    \conn{\iff}{definition of expression substitution}
+
+    $\dnexpr{e_1\subst{i}{e'} = e_2\subst{i}{e'}}s = 1$
+
+    \conn{\iff}{definition of $\dnexpr{-}$}
+
+    $\dnexpr{e_1\subst{i}{e'}}s = \dnexpr{e_2\subst{i}{e'}}s$
+
+    \conn{\iff}{Lemma~\ref{lem:exp-sem-subst}}
+
+    $\dnexpr{e_1}\subst{i}{\dnexpr{e'}}s = \dnexpr{e_2}\subst{i}{\dnexpr{e'}}s$
+
+    \conn{\iff}{definition of resolver substitution}
+
+    $\dnexpr{e_1}\funup{s}{\ptup{i}{\dnexpr{e'}s}} =
+    \dnexpr{e_2}\funup{s}{\ptup{i}{\dnexpr{e'}s}}$
+
+    \conn{\iff}{definition of $\dnexpr{-}$}
+
+    $\dnexpr{e_1 = e_2}\funup{s}{\ptup{i}{\dnexpr{e'}s}} =
+    1$
+
+    \conn{\iff}{definition of resolver substitution}
+
+    $\dnexpr{e_1 = e_2}\subst{i}{\dnexpr{e'}}s = 1$. 
+
+  }
+
+\end{proof}
+
+
+% subsection resolver_substitution (end)
+
+% section expressions (end)
+
+\section{Primitive Commands} % (fold)
+\label{sec:primitive_commands}
+
+We use the term ``commands'' to describe both the primitives of the programming language, and the fragments of the programming language that result from applying combinators that create only sequential dependences among the primitives. The grammar for primitive commands is given below: 
+\begin{eqnarray*}
+	\pcomms~p & \bnfdef & \cskip \bnfbar \cassign{x}{e} \bnfbar \cassume{b} \bnfbar  \cload{x}{e} \bnfbar \cstore{e}{e'} \\
+	& & \bnfbar \cfence \bnfbar \cnew{x}{e} \bnfbar \cfree{e}
+\end{eqnarray*}
+
+Informally, $\cskip$ is the identity command, which does nothing. $\cassign{x}{e}$ loads the value of $e$ into the identifier $x$. $\cassume{b}$ does nothing if $b$ evaluates to $\bvt$ and diverges otherwise. $\cload{x}{e}$ loads the value at the address in memory which is the value of $e$ into the variable $x$. $\cstore{e}{e'}$ stores the value of $e'$ into the address in memory which is the value of $e$. $\cfence$ performs a memory fence. $\ccons{x}{e}{e'}$ allocates two consecutive locations in memory, and stores the value of $e$ into the first and $e'$ into the latter. $\cfree{e}$ disposes of the memory at the address which is the value of $e$. 
+
+\subsection{Static Semantics of Primitive Commands} % (fold)
+\label{sub:static_semantics_of_primitive_commands}
+
+The set of free variables of a primitive command, written $\fv{p}$, is defined in Figure~\ref{fig:fvpcomm}. 
+
+\begin{figure}[h]
+	\centering
+	\begin{align*}
+		\fv{\cskip} \eqdef {} & \nil \\ 
+		\fv{\cassign{x}{e}} \eqdef {} & \set{x} \cup \fv{e} \\ 
+		\fv{\cassume{b}} \eqdef {} & \fv{b} \\ 
+		\fv{\cload{x}{e}} \eqdef {} & \set{x} \cup \fv{e} \\ 
+		\fv{\cstore{e}{e'}} \eqdef {} & \fv{e} \cup \fv{e'} \\ 
+		\fv{\cfence} \eqdef {} & \nil \\
+		\fv{\cnew{x}{e}} \eqdef {} & \set{x} \cup \fv{e} \\ 
+		\fv{\cfree{e}} \eqdef {} & \fv{e}
+ 	\end{align*}
+	\caption{Free variables of primitive commands}
+	\label{fig:fvpcomm}
+\end{figure}
+
+The set of modified variables of a primitive command, written $\mod{p}$, is defined in Figure~\ref{fig:modpcomm}. 
+
+\begin{figure}[h]
+	\centering
+	\begin{align*}
+		\mod{\cskip} \eqdef {} & \nil \\ 
+		\mod{\cassign{x}{e}} \eqdef {} & \set{x} \\ 
+		\mod{\cassume{b}} \eqdef {} & \nil \\ 
+		\mod{\cload{x}{e}} \eqdef {} & \set{x} \\ 
+		\mod{\cstore{e}{e'}} \eqdef {} & \nil \\ 
+		\mod{\cfence} \eqdef {} & \nil \\
+		\mod{\cnew{x}{e}} \eqdef {} & \set{x} \\ 
+		\mod{\cfree{e}} \eqdef {} & \nil
+ 	\end{align*}
+	\caption{Modified variables of primitive commands}
+	\label{fig:modpcomm}
+\end{figure}
+
+
+\section{Commands} % (fold)
+\label{sec:commands}
+
+The grammar that defines the full language of commands is given below:  
+\begin{eqnarray*}
+	\comms~c & \bnfdef & p \bnfbar \cseq{c}{c'} \bnfbar \cchoice{c}{c'} \bnfbar \cloop{c} \bnfbar \catomic{c}
+\end{eqnarray*}
+
+The informal meaning of the primitive commands was described in the previous sections. The informal meaning of the other commands is as follows. The sequential composition $\cseq{c}{c'}$ executes $c$ completely before executing $c'$. The nondeterministic choice $\cchoice{c}{c'}$ executes exactly one of $c$ and $c'$, chosen arbitrarily. The loop $\cloop{c}$ executes $c$ any finite number of times, or not at all. Finally, the atomic section $\catomic{c}$ executes $c$ in a single atomic step. 
+
+A command $c$ is \emph{well formed} as long as it does not contain embedded atomic sections. E.g, $\cseq{\catomic{c}}{\catomic{c'}}$ is well formed, but $\catomic{\cseq{c}{\catomic{c'}}}$ is not. 
+
+\subsection{Static Semantics of Commands} % (fold)
+\label{sub:static_semantics}
+
+The set of free variables of a command, written $\fv{c}$, are defined in Figure~\ref{fig:fvcomm}. (The base case $\fv{p}$, for a primitive command $p$, is given in Figure~\ref{fig:fvpcomm}.)
+
+\begin{figure}[h]
+	\centering
+	\begin{align*}
+		\fv{\cseq{c}{c'}} \eqdef {} & \fv{c} \cup \fv{c'} \\ 
+		\fv{\cchoice{c}{c'}} \eqdef {} & \fv{c} \cup \fv{c'} \\ 
+		\fv{\cloop{c}} \eqdef {} & \fv{c} \\ 
+		\fv{\catomic{c}} \eqdef {} & \fv{c} 
+ 	\end{align*}
+	\caption{Free variables of commands}
+	\label{fig:fvcomm}
+\end{figure}
+
+
+The modified variables of a primitive command, written $\mod{c}$, are defined in Figure~\ref{fig:modcomm}. (The base case $\mod{p}$, for a primitive command $p$, is given in Figure~\ref{fig:modpcomm}.)
+
+\begin{figure}[h]
+	\centering
+	\begin{align*}
+		\mod{\cseq{c}{c'}} \eqdef {} & \mod{c} \cup \mod{c'} \\ 
+		\mod{\cchoice{c}{c'}} \eqdef {} & \mod{c} \cup \mod{c'} \\ 
+		\mod{\cloop{c}} \eqdef {} & \mod{c} \\ 
+		\mod{\catomic{c}} \eqdef {} & \mod{c} 
+ 	\end{align*}
+	\caption{Modified variables of commands}
+	\label{fig:modcomm}
+\end{figure}
+
+\subsection{Defined Commands} % (fold)
+\label{sub:defined_commands}
+
+\begin{align*}
+	\cifthenelse{b}{c}{c'} \eqdef {} & \cchoice{(\cseq{\cassume{b}}{c})}{(\cseq{\cassume{!b}}{c'})} \\
+	\cwhile{b}{c} \eqdef {} & \cseq{\cloop{\left(\cseq{\cassume{b}}{c}\right)}}{(\cassume{!b})} \\
+	\ccas{s}{t}{u} \eqdef {} & \catomic{\cseq{\cseq{\cseq{\cload{x}{s}}{\cload{y}{t}}}{(\cifthenelse{x = y}{(\cseq{\cstore{t}{u}}{\cassign{r}{1}})}{\cassign{r}{0}}})}{\cfence}}
+\end{align*}
+% subsection defined_commands (end)
+
+\subsection{Admissible Atomic Commands} % (fold)
+\label{sub:admissible_atomic_commands}
+
+Define admissibility of atomic commands according to the x86 instruction set. E.g., atomic increment and CAS are admissible, but, say, atomic prime sieve is not. 
+
+% subsection admissable_atomic_commands (end)
+
+
+\chapter{An Abstract Model of x86-TSO}
+
+In this chapter we describe an abstract model of x86-TSO based on partial orders of writes. We describe the operation of single-threaded commands in terms of these partial orders, and develop a program logic for reasoning about their behavior w.r.t.~this semantics. 
+
+\section{Abstract States}
+
+We assume a set of memory events $\setevents$ that is equipped with two functions: $\proc{-}$, which associates with each event a processor identifier in $\setprocessors$, and $\tp{-}$, which associates with each event an \emph{event type}, either $\tpflush$, $\tpwrite{\ell,v}$ for location $\ell$ and value $v$, or $\tpalloc{\ell}$ for location $\ell$. 
+
+We write $\writesto{\ell,v}$ for the set of memory events of type $\tpwrite{\ell,v}$: \[ \writesto{\ell,v} \eqdef \setof{e \in \setevents}{\tp{e} = \tpwrite{\ell,v}},\] $\allocs{\ell}$ for the set of memory events of type $\tpalloc{\ell}$: \[ \allocs{\ell} \eqdef \setof{e \in \setevents}{\tp{e} = \tpalloc{\ell}},\] and $\flushes$ for the set of events of type $\tpflush$: \[ \flushes \eqdef \setof{e \in \setevents}{\tp{e} = \tpflush}.\] We also write $\writesto{\ell}$ for the union of $\writesto{\ell,v}$ over all values $v$: \[ \writesto{\ell} \eqdef \bigcup_{v \in \setvalues} \writesto{\ell,v},\] and also $\writes$ for the union of $\writesto{\ell}$ over all locations $\ell$: \[ \writes \eqdef \bigcup_{\ell \in \setlocations} \writesto{\ell}.\] 
+
+We write $e \eqproc f$ when $\proc{e} = \proc{f}$. 
+
+A finite partial order $(M,\leq)$, for $M \subseteq \setevents$, is called an \emph{abstract heap} when it satisfies the following healthiness conditions: 
+\begin{enumerate}
+	\item \emph{independence}: for events $e,f$, if $e \leq f$ then $e \eqproc f$;
+	\item \emph{unique allocation}: for each location $\ell$ there exists at most one event $e \in M$ with $\tp{e} = \tpalloc{\ell}$;
+	\item \emph{initial allocation}: if $e \in M$ with $\tp{e} = \tpalloc{\ell}$ and $f \in M$ with $\tp{f} = \tpwrite{\ell,v}$, then $e \leq f$.
+	% \item \emph{definitive value}: if $e \in M$ with $\tp{e} = \tpalloc{\ell}$ then there exists $f \in M$ with $\tp{f} = \tpwrite{\ell,v}$ for some value $v$. 
+	% \item \emph{location linearity}: the restriction of the partial order to any location $\ell$, $(M \cap \writesto{\ell}, \restrict{\leq}{\writesto{\ell}})$, is linear;
+\end{enumerate}
+
+The set of allocated locations in an abstract heap $(M,\leq)$, written $\alloc{M,\leq}$, is defined by: \[ \alloc{M,\leq} \eqdef \setof{\ell}{\exists e \in (M \cap (\allocs{\ell} \cup \writesto{\ell}))}.\] 
+
+% A consequence of the healthiness conditions is that for every allocated location $\ell \in \alloc{(M,\leq)}$ there is a unique maximum write: $\max_{\leq}(\restrict{M}{\writesto{\ell}})$.
+
+An \emph{abstract state} is a store-abstract heap pair. We abbreviate the set of abstract states by $\setastates$. The set of allocated locations of an abstract state is just the set of allocated locations of the underlying abstract heap. The store congruence relation is extended to abstract states as follows: \[ (s,h) \stcong{X} (s',h') \iffdef h = h' \conj s \stcong{X} s'. \] 
+
+
+\section{Abstract Semantics of Primitive Commands} % (fold)
+\label{sec:abstract_semantics_of_primitive_commands}
+
+The meaning of a primitive command $p$ is given with respect to a step relation  $\pcstep{p} \subseteq \setastates \times (\setastates \uplus \set{\abort})$. We define a few auxiliary functions before presenting the full definition. 
+
+For an event $e \in \setevents$, we write $\sval{e}$ for the set of values: \[ \sval{e} \eqdef \begin{cases}
+	\set{v} & \text{if $\exists \ell \st \tp{e} = \tpwrite{\ell,v}$} \\
+	\setvalues & \text{if $\exists \ell \st \tp{e} = \tpalloc{\ell}$} \\
+	\nil & \text{if $\tp{e} = \tpflush$.}
+\end{cases}\] 
+
+For a location $\ell$ and abstract heap $h$, we write $\speek{\ell}{h}$ for the values that may be visible to the processor at $\ell$: \begin{equation}
+	\label{eq:speek}
+	\speek{\ell}{h} \eqdef
+		\bigcup \setof{\sval{e}}{e \in \max_\leq(\restrict{M}{\writesto{\ell}})}.
+\end{equation}
+
+The reduction part of the step relation $\pcstep{p}$ is given in Figure~\ref{fig:pc-red-step}. 
+
+\begin{figure}[h]
+	\centering
+	
+	\infax[PC-assign]{(s,h) \pcstep{\cassign{x}{e}} (\recup{s}{x}{\dnexpr{e}s},h)}
+	
+	\vspace{1em}
+	
+	\infrule[PC-assume]{\text{if~} \dnbexpr{b}s = \bvt}{(s,h) \pcstep{\cassume{b}} (s,h)}
+
+	\vspace{1em}
+	
+	\infrule[PC-load]{\text{if~}\dnexpr{e}s \in \alloc{h} \text{~and~} v \in \speek{\dnexpr{e}s}{h}}{(s,h) \pcstep{\cload{x}{e}} (\recup{s}{x}{v},h)}
+
+	\vspace{1em}
+	
+	\infrule[PC-store]{\text{if~}\dnexpr{e}s \in \alloc{h} \text{~and~} v \in (\writesto{\dnexpr{e}s, \dnexpr{e'}s} \setminus \relset{h})}{(s,h) \pcstep{\cstore{e}{e'}} (s,h \otimes \set{v})}
+	
+	\vspace{1em}
+	
+	\infrule[PC-fence]{\text{if~}V \subseteq (\flushes \setminus \relset{h})}{(s,h) \pcstep{\cfence} (s,h \otimes V)}
+
+	\vspace{1em}
+	
+	\infrule[PC-alloc]{\text{if~}\ell \notin \alloc{h} \text{~and~} v \in (\allocs{\ell} \setminus \relset{h})}{(s,h) \pcstep{\calloc{x}} (\recup{s}{x}{\ell},h \otimes \set{v})}
+	
+	\vspace{1em}
+	
+	\infrule[PC-free]{\text{if~}\allocs{\dnexpr{e}s} \cap \relset{h} \neq \nil}{(s,h) \pcstep{\cfree{e}} (s,\restrict{h}{\setevents \setminus (\allocs{\dnexpr{e}s} \cup \writesto{\dnexpr{e}s})})}
+
+	\caption{The reduction semantics of primitive commands}
+	\label{fig:pc-red-step}
+\end{figure}
+
+The abort part of the step relation $\pcstep{p}$ is given in Figure~\ref{fig:pc-abort-step}. Generally speaking, primitive commands which access a specific location $\ell$ in the heap abort if that location has not allocated. The $\cfree{e}$ command additionally aborts if the current abstract state does not contain the entire history of writes to the specified location. 
+
+\begin{figure}[h]
+	\centering
+
+	\vspace{1em}
+	
+	\infrule[PC-loadA]{\text{if~}\dnexpr{e}s \notin \alloc{h}}{(s,h) \pcstep{\cload{x}{e}} \abort}
+	
+	\vspace{1em}
+	
+	\infrule[PC-storeA]{\text{if~}\dnexpr{e}s \notin \alloc{h}}{(s,h) \pcstep{\cstore{e}{e'}} \abort}
+
+	\vspace{1em}
+	
+	\infrule[PC-freeA]{\text{if~}\allocs{\dnexpr{e}s} \cap \relset{h} = \nil}{(s,h) \pcstep{\cfree{e}} \abort}
+	
+
+	\caption{The abort semantics of primitive commands}
+	\label{fig:pc-abort-step}
+\end{figure}
+
+\begin{lemma}
+	\label{lem:pcomm-fv-abort}
+	For primitive command $p$, if $s \stcong{\fv{p}} s'$ and $(s,h) \pcstep{p} \abort$ then $(s',h) \pcstep{p} \bot$. 
+\end{lemma}
+
+\begin{proof}
+	For a particular abstract heap $h$, whether or not the latter configuration aborts depends only on the value of $\dnexpr{e}s'$, which is equal to $\dnexpr{e}s$ by Lemma~\ref{lem:expr-fv}. 
+\end{proof}
+
+\begin{lemma}\label{lem:pcomm-fv-step}
+	For primitive command $p$ and $X \supseteq \fv{p}$, if $s \stcong{X} s'$ and $(s,h) \pcstep{p} \cskip,(s_1,h_1)$ then there exists $s'_1$  such that $s_1 \stcong{X} s'_1$ and \\ $(s',h) \pcstep{p} \cskip,(s'_1,h_1)$.
+\end{lemma}
+
+\begin{proof}
+	In each case, the result of the command depends only on the value of the function $\dnexpr{e}$, which is the same at $s$ and $s'$ by Lemma~\ref{lem:expr-fv}. For those commands that modify the store, one additionally observes that congruence is preserved by uniform function update. 
+\end{proof}
+
+% section abstract_semantics_of_primitive_commands (end)
+
+
+\section{Abstract Semantics of Commands} % (fold)
+\label{sec:abstract_semantics_of_commands}
+
+The dynamic semantics of commands is given as a structured operational semantics, ala Plotkin \cite{Plotkin:NatSemTR}. A semantic lock is used to distinguish between steps taken within an atomic section (i.e., while holding the lock: $\ell = \bvt$) from those taken outside of an atomic section (i.e., while not holding the lock: $\ell = \bvf$). We use the term \emph{configurations} to refer either to command-state-lock triples. We abbreviate the set of configurations as $\setconfigurations$. The rules for the \emph{internal reduction semantics}, presented in Figure~\ref{fig:comm-red-rel}, yield a relation $\step$ that is a subset of $\setconfigurations \times \setconfigurations$. 
+
+\begin{figure}[h]
+\centering
+			\infrule[C-prim]{(s,h) \pcstep{p} (s',h')}{p,(s,h),\ell \step \cskip,(s',h'),\ell}
+			
+			\vspace{1em}
+
+			\infrule[C-seq1]{c_1,\sigma,\ell \step c',\sigma',\ell'}{(\cseq{c_1}{c_2}),\sigma,\ell \step (\cseq{c'}{c_2}),\sigma',\ell'}
+
+			\vspace{1em}
+
+			\infax[C-seq2]{(\cseq{\cskip}{c_2}),\sigma,\ell \step c_2,\sigma,\ell}
+
+			\vspace{1em}
+
+			\infax[C-ch1]{(\cchoice{c_1}{c_2}),\sigma,\ell \step c_1,\sigma,\ell}
+			
+			\vspace{1em}
+			
+			\infax[C-ch2]{(\cchoice{c_1}{c_2}),\sigma,\ell \step c_2,\sigma,\ell}
+
+			\vspace{1em}
+			
+			\infax[C-loop]{\cloop{c},\sigma,\ell \step \left(\cchoice{\cskip}{\cseq{c}{\cloop{c}}}\right),\sigma,\ell}
+
+			\vspace{1em}
+
+			\infax[C-lock]{\catomic{c},\sigma,\bvf \step \catomic{c},\sigma,\bvt}
+			
+			\vspace{1em}
+			
+			\infrule[C-atom]{c,\sigma,\bvt \step c',\sigma',\bvt}{\catomic{c},\sigma,\bvt \step \catomic{c'},\sigma',\bvt}
+			
+			\vspace{1em}
+	
+			\infax[C-unlock]{\catomic{\cskip},\sigma,\bvt \step \cskip,\sigma',\bvf}
+
+			
+	\caption{Reduction semantics of Commands}
+	\label{fig:comm-red-rel}
+\end{figure}
+
+Some configurations are considered erroneous. For example, a load command $\cload{x}{y}$ paired with a state in which the value of $y$ is not an allocated location in the heap. We call such configurations \emph{aborting configurations}, written $C \step \abort$. Aborting configurations are defined in Figure~\ref{fig:comm-abort-rel}. 
+
+\begin{figure}[h]
+	\centering
+	
+	\vspace{1em}
+	
+	\infrule[C-primA]{(s,h) \pcstep{p} \abort }{p,(s,h),\ell \step \abort}
+			
+	\vspace{1em}
+
+	\infrule[C-seqA]{c_1,\sigma,\ell \step \abort}{(\cseq{c_1}{c_2}),\sigma,\ell \step \abort}
+
+	\vspace{1em}
+
+	\infrule[C-atomA]{c,\sigma,\bvt \step \abort}{\catomic{c},\sigma,\bvt \step \abort}
+
+	\caption{Abort Semantics of Commands}
+	\label{fig:comm-abort-rel}
+\end{figure}
+
+\begin{lemma}
+	\label{lem:comm-fv-abort}
+	For command $c$, if $s \stcong{\fv{c}} s'$ and $c,(s,h),\ell \step \abort$ then $c,(s',h),\ell \step \abort$. 
+\end{lemma}
+
+\begin{proof}
+	By induction on the derivation of $c,\sigma \step \abort$, using Lemma~\ref{lem:pcomm-fv-abort} in the \textsc{(primA)} case. 
+\end{proof}
+
+\begin{lemma}\label{lem:comm-fv-step}
+	For command $c$ and $X \supseteq \fv{c}$, if $s \stcong{X} s'$ and $c,(s,h) \step c_1,(s_1,h_1)$ then there exists $s'_1$  such that $s_1 \stcong{X} s'_1$ and $c,(s',h) \step c_1,(s'_1,h_1)$.
+\end{lemma}
+
+\begin{proof}
+	 By induction on the derivation of $c,\sigma \step c',\sigma'$, using Lemma~\ref{lem:pcomm-fv-step} in the \textsc{(prim)} case.
+\end{proof}
+
+Note that steps within atomic sections are visible in the internal reduction relation. It will be useful later, in the definition of programs, to derive another relation that hides these steps, called the \emph{external reduction semantics} of a command. The definition is given in Figure~\ref{fig:comm-ext-red-rel}. 
+
+\begin{figure}[h]
+	\centering
+
+	\infrule[E-base]{\neg \exists c'' \st c = \catomic{c''} \text{~and~}c,\sigma,\bvf \step c',\sigma',\bvf}{c,\sigma \estep c',\sigma'}
+	
+	\vspace{1em}
+
+	\infrule[E-atom]{c,\sigma,\bvt \rtcl{\step} \cskip,\sigma',\bvt}{\catomic{c},\sigma \estep \cskip,\sigma'}
+	
+	\vspace{1em}
+
+	\infrule[E-seq]{c_1,\sigma \estep c',\sigma'}{(c_1 \seq c_2),\sigma \estep (c' \seq c_2),\sigma'}
+	
+	\vspace{1em}
+
+	\caption{External reduction semantics of commands}
+	\label{fig:comm-ext-red-rel}
+\end{figure}
+
+We similarly define, in Figure~\ref{fig:comm-ext-abort-rel}, the \emph{external abort semantics} of commands. This differs from the internal abort semantics insofar as a a configuration is considered externally erroneous if, after taking any number of internal steps, an erroneous internal configuration is reached. 
+
+\begin{figure}[h]
+	\centering
+
+	\infrule[E-baseA]{\neg \exists c'' \st c = \catomic{c''} \text{~and~}c,\sigma,\bvf \step \abort}{c,\sigma \estep \abort}
+	
+	\vspace{1em}
+
+	\infrule[E-atomA]{c,\sigma,\bvt \rtcl{\step} \abort}{\catomic{c},\sigma \estep \abort}
+	
+	\vspace{1em}
+
+	\infrule[E-seqA]{c_1,\sigma \estep \abort}{(c_1 \seq c_2),\sigma \estep \abort}
+	
+	\vspace{1em}
+
+	\caption{External abort semantics of commands}
+	\label{fig:comm-ext-abort-rel}
+\end{figure}
+
+For configurations $C$ and $C'$, we write $C \noestep C'$ to indicate that $(C,C') \notin \estep$. 
+
+% section abstract_semantics_of_commands (end)
+
+\chapter{A Concrete Model of x86-TSO}
+
+\section{Single-processor States} % (fold)
+\label{sec:sp-states}
+
+In this section we describe a model of an x86-like machine that is sufficient to describe the operation of individual threads executing in isolation. Later, in Section~\ref{sec:mp-states} we describe a more elaborate machine model suitable for describing the operation of multiple threads executing concurrently on distinct processors.
+
+A \emph{heap} is a finite partial function in $\setlocations \fpfun \setvalues$, abbreviated as $\setheaps$.\footnote{Do I need to define a ``nil'' value and remove it from the domain of heaps? If so, acknowledge Matt Kaufmann for pointing this out.} A \emph{write} is a location-value pair, and \emph{write buffer} is a finite queue of writes, the set of which is abbreviated as $\setbuffers$. % A \emph{buffer array} is a finite partial function $\setprocessors \fpfun \setbuffers$. 
+A \emph{single-processor state} $\sigma$ is a record, where $\sigma.s$ is a store, $\sigma.h$ is a heap and $\sigma.q$ is a write buffer that satisfies the following condition: \[ \dom{\elems{\sigma.q}} \subseteq \dom{\sigma.h}.\] The set of single-processor states is abbreviated as $\setstates$. 
+
+The set of \emph{allocated locations} in a state $\sigma$, written $\alloc{\sigma}$ is defined as follows: \[ \alloc{\sigma} \eqdef \dom{\sigma.h} \cup \dom{\elems{\sigma.q}}. \] Note that the above constraint on the definition of a state implies that every allocated location has a defined value in the heap. (Later, we will relax this requirement, but the definition of the set of allocated locations will remain the same.)
+
+The relation $\stcong{X}$ is lifted to states in the obvious way: \[ \sigma_1 \stcong{X} \sigma_2 \iffdef \sigma_1.s \stcong{X} \sigma_2.s.\]
+
+% We additionally indicate by $\abort$ a special error state, which results from accessing (loading from, storing to or deallocating) an unallocated memory allocation. For a set $A$, we write $A_\abort$ as an abbreviation for $A \uplus \abort$. 
+
+\subsection{Flushing Order} % (fold)
+\label{sub:flushing}
+
+As described in Section~\ref{sec:memory-models}, states may nondeterministically transition by committing buffered writes to memory. We define a relation $\sigma \taustep \sigma'$ that describes these silent transitions w.r.t~our single-threaded programming model.
+\begin{equation}
+\begin{split}
+	\label{eq:taustepat}
+	\sigma \taustep \sigma' \iffdef {} & \exists \ell, v, q' \st \sigma.q = \lsingle{(\ell,v)}\lapp q' \conj \sigma' = \funup{\sigma}{\ptup{h(\ell)}{v},\,\ptup{q}{q'}} \\
+\end{split}
+\end{equation}
+
+\begin{lemma}
+	\label{lem:tau-functional}
+	For $n \in \setnaturals$, the relation $\exptaustep{n}$ is functional, but not necessarily injective.
+\end{lemma}
+
+\begin{proof}
+	It is clear that there exists at most one $\ell,v,q'$ such that $\sigma.q = \lsingle{(l,v)} \lapp q'$, and so $\taustep$ is functional. Functionality of of $\exptaustep{n}$ follows by induction on $n$ using the fact that functionality is preserved by relational composition. To see that $\taustep$ is not injective, consider \begin{eqnarray*}
+		\sigma_1 & = & \funup{\sigma}{\ptup{h(\ell)}{1},\,\ptup{q}{\epsilon}} \\
+		\sigma_2 & = & \funup{\sigma}{\ptup{h(\ell)}{2},\,\ptup{q}{\lsingle{(\ell,1)}}} \\
+		\sigma_3 & = & \funup{\sigma}{\ptup{h(\ell)}{3},\,\ptup{q}{\lsingle{(\ell,1)}}},
+	\end{eqnarray*} where $\sigma_2 \taustep \sigma_1$ and $\sigma_3 \taustep \sigma_1$, but $\sigma_2 \neq \sigma_3$. 
+\end{proof}
+
+The reflexive-transitive closure of this relation, ${\rttaustep}$, is, of course, a partial order. Hence we use the abbreviation $\sigma  \poflush \sigma'$ as shorthand for $\sigma \rttaustep \sigma'$. 
+
+\begin{lemma}
+\label{lem:downset-total}
+Down sets $\downo{\poflush}{\sigma}$ are finite and linear. 	
+\end{lemma}
+
+\begin{proof}
+	A straightforward induction on $\sigma.q$ shows that $\card{\down \sigma} = \llen{\sigma.q} + 1$. For linearity, assume $\sigma_1, \sigma_2 \in \down \sigma$. Hence, there exist $n_1, n_2 \in \setnaturals$ such that $\sigma \exptaustep{n_1} \sigma_1$ and $\sigma \exptaustep{n_2} \sigma_2$. Assume w.l.o.g.~that $n_1 \leq n_2$, and so there exists $n' \in \setnaturals$ such that $n_1 + n' = n_2$. By Lemma~\ref{lem:tau-functional}, $\sigma \exptaustep{n_1} \sigma_1 \exptaustep{n'} \sigma_2$, and hence $\sigma_2 \leq \sigma_1$. 
+\end{proof}
+
+
+We define the function $\sflush{\sigma}$ to be the minimum element of $\down \sigma$, which is known to exist by Lemma~\ref{lem:downset-total}. 
+\begin{equation}
+	\label{eq:sflush}
+	\sflush{\sigma} \eqdef \min_{\poflush}\left(\downo{\poflush}\sigma\right)
+\end{equation}
+For convenience, we also overload the function to its pointwise lifting: \[ \sflush{S} \eqdef \setof{\sflush{\sigma}}{\sigma \in S}.\]
+
+% subsection flushing (end)
+
+% section sp-states (end)
+
+\section{Concrete Semantics of Primitive Commands} % (fold)
+\label{sec:concrete_semantics_of_primitive_commands}
+
+Formally, the meaning of primitive commands is given with respect to a function $\dnpcomm{-}$ in $\pcomms \tfun (\setpstates \pfun \powerset{\setpstates})$. But we define a few auxiliary functions first before presenting the full definition of $\dnpcomm{-}$. 
+
+For a resolver $\rho$ and state $\sigma$,  we write $\speek{\rho}{\sigma}$ for the value of location $\rho(\sigma.s)$ visible to the processor: \begin{equation}
+	\label{eq:speek}
+	\speek{\rho}{\sigma} \eqdef \begin{cases}
+		\sigma.q(\rho(\sigma.s)) & \text{if $\rho(\sigma.s) \in \dom{\elems{\sigma.q}}$ } \\
+		\sigma.h(\rho(\sigma.s)) & \text{if $\rho(\sigma.s) \in \dom{\sigma.h}$} \\
+		\bot & \text{otherwise.}
+	\end{cases} 
+\end{equation}
+Note that this partial function is only defined when $\rho(\sigma.s) \in 
+\alloc{\sigma}$. 
+
+The full definition of $\dnpcomm{-}$ is given in Figure~\ref{fig:dnpcomm} below. 
+
+\begin{figure}[h]
+	\centering
+		\begin{eqnarray*}
+			\dnpcomm{\cskip}\sigma & \eqdef & \set{\sigma} \\
+			\dnpcomm{\cassign{x}{e}}\sigma & \eqdef & \set{\recup{\sigma}{s(x)}{\dnexpr{e}\sigma}}\\ 
+			\dnpcomm{\cassume{b}}\sigma & \eqdef & \begin{cases}
+				\set{\sigma} & \text{if $\dnexpr{b}\sigma = \bvt$} \\
+				\emptyset & \text{otherwise.}
+			\end{cases} \\
+			\dnpcomm{\cload{x}{e}}\sigma & \eqdef & \begin{cases}	\set{\recup{\sigma}{s(x)}{\speek{\dnexpr{e}}{\sigma}}} & \text{if $\dnexpr{e}\sigma \in \alloc{\sigma}$} \\ 
+			\bot & \text{otherwise.}
+			\end{cases} \\
+			\dnpcomm{\cstore{e}{e'}}\sigma & \eqdef & \begin{cases} 	\set{\funup{\sigma}{\ptapp{q}{\lsingle{(\dnexpr{e}\sigma, \dnexpr{e'}\sigma}}}} & \text{if $\dnexpr{e}\sigma \in \alloc{\sigma}$} \\	
+			\bot & \text{otherwise.}
+			\end{cases}  \\
+			\dnpcomm{\cfence}\sigma & \eqdef & \set{\sflush{\sigma}} \\
+			\dnpcomm{\cnew{x}{e}}\sigma & \eqdef & \setof{\sflush{\funup{\sigma}{\ptup{s(x)}{\ell},\,\ptapp{q}{\lsingle{(\ell,\dnexpr{e}\sigma)}}}}}{\ell \notin \alloc{\sigma}}\\
+			\dnpcomm{\cfree{e}}\sigma & \eqdef & \begin{cases}	\set{\funup{(\sflush{\sigma})}{h \setminus \dnexpr{e}\sigma}} & \text{if $\dnexpr{e}\sigma \in \alloc{\sigma}$} \\
+			\bot & \text{otherwise.}
+			\end{cases}
+		\end{eqnarray*}
+	\caption{The denotations of primitive commands}
+	\label{fig:dnpcomm}
+\end{figure}
+
+\begin{lemma}
+	\label{lem:pcomm-fv-abort}
+	For primitive command $p$, if $\sigma \stcong{\fv{p}} \sigma'$ and $\dnpcomm{p}\sigma = \bot$ then $\dnpcomm{p}\sigma' = \bot$. 
+\end{lemma}
+
+\begin{proof}
+	Follows from Lemma~\ref{lem:expr-fv}. 
+\end{proof}
+
+\begin{lemma}\label{lem:pcomm-fv-step}
+	For primitive command $p$ and $X \supseteq \fv{p}$, if $\sigma \stcong{X} \sigma'$ and $\sigma_1 \in \dnpcomm{p}\sigma$ then there exists $\sigma'_1$  such that $\sigma_1 \stcong{X} \sigma_1'$ and $\sigma'_1 \in \dnpcomm{p}\sigma'$.
+\end{lemma}
+
+\begin{proof}
+	In every case except $\cfree{e}$, if $\dnpcomm{p}$ is defined, then it defines a singleton set, and it is straightforward to check that the function which is defined preserves the congruence, making frequent use of Lemma~\ref{lem:expr-fv}. For example, in the case of $\cassign{e}{x}$, $\funup{\sigma}{\ptup{s(x)}{\dnexpr{e}\sigma}} \stcong{X} \funup{\sigma'}{\ptup{s(x)}{\dnexpr{e}\sigma'}}$ because $\sigma \stcong{X} \sigma'$ and $\dnexpr{e}\sigma = \dnexpr{e}\sigma'$ by Lemma~\ref{lem:expr-fv}. In the case of $\cfree{e}$, we additionally note that $\dnexpr{e}\sigma = \dnexpr{e}\sigma'$ and $\alloc(\sigma) =\alloc(\sigma')$ when $\sigma \stcong{X} \sigma'$, for $X \supseteq \fv{e}$. 
+\end{proof}
+
+% section concrete_semantics_of_primitive_commands (end)
+
+\section{Concrete Semantics of Commands} % (fold)
+\label{sec:concrete_semantics}
+
+The dynamic semantics of commands is given as a structured operational semantics, ala Plotkin \cite{Plotkin:NatSemTR}. A semantic lock is used to distinguish between steps taken within an atomic section (i.e., while holding the lock: $\ell = \bvt$) from those taken outside of an atomic section (i.e., while not holding the lock: $\ell = \bvf$). We use the term \emph{configurations} to refer either to command-state-lock triples. We abbreviate the set of configurations as $\setconfigurations$. The rules for the \emph{internal reduction semantics}, presented in Figure~\ref{fig:comm-red-rel}, yield a relation $\step$ that is a subset of $\setconfigurations \times \setconfigurations$. 
+
+\begin{figure}[h]
+	\begin{tabular}{rr}
+		\begin{minipage}{.46\textwidth}
+			\infrule[prim]{\sigma' \in \dnpcomm{p}\sigma}{p,\sigma,\ell \step \cskip,\sigma',\ell}
+			
+			% \vspace{1em}
+			% 
+			% \infrule[primA]{\dnpcomm{p}\sigma = \bot}{p,\sigma,\ell \step \abort}
+			
+			\vspace{1em}
+
+			\infrule[seq1]{c_1,\sigma,\ell \step c',\sigma',\ell'}{(\cseq{c_1}{c_2}),\sigma,\ell \step (\cseq{c'}{c_2}),\sigma',\ell'}
+
+			\vspace{1em}
+
+			\infax[seq2]{(\cseq{\cskip}{c_2}),\sigma,\ell \step c_2,\sigma,\ell}
+
+			\vspace{1em}
+
+			\infax[ch1]{(\cchoice{c_1}{c_2}),\sigma,\ell \step c_1,\sigma,\ell}
+			
+			\vspace{1em}
+			
+			\infax[ch2]{(\cchoice{c_1}{c_2}),\sigma,\ell \step c_2,\sigma,\ell}
+
+			% \vspace{1em}
+			% 
+			% \infrule[seqA]{c_1,\sigma,\ell \step \abort}{(\cseq{c_1}{c_2}),\sigma,\ell \step \abort}
+
+		\end{minipage} 
+		&
+		\begin{minipage}{.5\textwidth}
+			
+			\infrule[tau]{\sigma \taustep \sigma'}{c,\sigma,\ell \step c,\sigma',\ell}
+			\vspace{1em}
+
+			\infax[lock]{\catomic{c},\sigma,\bvf \step \catomic{c},\sigma,\bvt}
+			
+			\vspace{1em}
+			
+			\infrule[atom]{c,\sigma,\bvt \step c',\sigma',\bvt}{\catomic{c},\sigma,\bvt \step \catomic{c'},\sigma',\bvt}
+			
+			\vspace{1em}
+			
+			% \infrule[atomA]{c,\sigma,\bvt \step \abort}{\catomic{c},\sigma,\bvt \step \abort}
+			% 			
+			% \vspace{1em}
+			
+			\infax[unlock]{\catomic{\cskip},\sigma,\bvt \step \cskip,\sigma',\bvf}
+
+			
+			\vspace{1em}
+			
+			\infax[loop]{\cloop{c},\sigma,\ell \step \left(\cchoice{\cskip}{\cseq{c}{\cloop{c}}}\right),\sigma,\ell}
+			
+			
+		\end{minipage}
+	\end{tabular}
+	\caption{Reduction semantics of Commands}
+	\label{fig:comm-red-rel}
+\end{figure}
+
+Some configurations are considered erroneous. For example, a load command $\cload{x}{y}$ paired with a state in which the value of $y$ is not an allocated location in the heap. We call such configurations \emph{aborting configurations}, written $C \step \abort$. Aborting configurations are defined in Figure~\ref{fig:comm-abort-rel}. 
+
+\begin{figure}[h]
+	\begin{tabular}{lll}
+		\begin{minipage}{.28\textwidth}
+			\infrule[primA]{\dnpcomm{p}\sigma = \bot}{p,\sigma,\ell \step \abort}
+		\end{minipage}
+		&
+		\begin{minipage}{.33\textwidth}
+			\infrule[seqA]{c_1,\sigma,\ell \step \abort}{(\cseq{c_1}{c_2}),\sigma,\ell \step \abort}
+		\end{minipage}
+		&
+		\begin{minipage}{.30\textwidth}
+			\infrule[atomA]{c,\sigma,\bvt \step \abort}{\catomic{c},\sigma,\bvt \step \abort}
+		\end{minipage}
+	\end{tabular}
+	\caption{Abort Semantics of Commands}
+	\label{fig:comm-abort-rel}
+\end{figure}
+
+Note that steps within atomic sections are visible in the internal reduction relation. It will be useful later, in the definition of programs, to derive another relation that hides these steps, called the \emph{external reduction semantics} of a command. The definition is given in Figure~\ref{fig:comm-ext-red-rel}. 
+
+\begin{figure}[h]
+	\centering
+
+	\infrule[E-base]{\neg \exists c'' \st c = \catomic{c''} \text{~and~}c,\sigma,\bvf \step c',\sigma',\bvf}{c,\sigma \estep c',\sigma'}
+	
+	\vspace{1em}
+
+	\infrule[E-atom]{c,\sigma,\bvt \rtcl{\step} \cskip,\sigma',\bvt}{\catomic{c},\sigma \estep \cskip,\sigma'}
+	
+	\vspace{1em}
+
+	\infrule[E-seq]{c_1,\sigma \estep c',\sigma'}{(c_1 \seq c_2),\sigma \estep (c' \seq c_2),\sigma'}
+	
+	\vspace{1em}
+
+	\caption{External reduction semantics of commands}
+	\label{fig:comm-ext-red-rel}
+\end{figure}
+
+We similarly define, in Figure~\ref{fig:comm-ext-abort-rel}, the \emph{external abort semantics} of commands. This differs from the internal abort semantics insofar as a a configuration is considered externally erroneous if, after taking any number of internal steps, an erroneous internal configuration is reached. 
+
+\begin{figure}[h]
+	\centering
+
+	\infrule[E-baseA]{\neg \exists c'' \st c = \catomic{c''} \text{~and~}c,\sigma,\bvf \step \abort}{c,\sigma \estep \abort}
+	
+	\vspace{1em}
+
+	\infrule[E-atom]{c,\sigma,\bvt \rtcl{\step} \abort}{\catomic{c},\sigma \estep \abort}
+	
+	\vspace{1em}
+
+	\infrule[E-seq]{c_1,\sigma \estep \abort}{(c_1 \seq c_2),\sigma \estep \abort}
+	
+	\vspace{1em}
+
+	\caption{External abort semantics of commands}
+	\label{fig:comm-ext-abort-rel}
+\end{figure}
+
+
+% \begin{figure}[h]
+% 	\begin{tabular}{rr}
+% 		\begin{minipage}{.52\textwidth}
+% 			\infrule[prim]{\sigma' \in \dnpcomm{p}\sigma}{p,\sigma \step \cskip,\sigma'}
+% 			
+% 			\vspace{1em}
+% 			
+% 			\infrule[primA]{\dnpcomm{p}\sigma = \bot}{p,\sigma \step \abort}
+% 			
+% 			\vspace{1em}
+% 
+% 			\infrule[seq1]{c_1,\sigma \step c',\sigma'}{(\cseq{c_1}{c_2}),\sigma \step (\cseq{c'}{c_2}),\sigma'}
+% 
+% 			\vspace{1em}
+% 
+% 			\infax[seq2]{(\cseq{\cskip}{c_2}),\sigma \step c_2,\sigma}
+% 
+% 			\vspace{1em}
+% 			
+% 			\infrule[seqA]{c_1,\sigma \step \abort}{(\cseq{c_1}{c_2}),\sigma \step \abort}
+% 
+% 		\end{minipage} 
+% 		&
+% 		\begin{minipage}{.45\textwidth}
+% 			
+% 			\infrule[tau]{\sigma \taustep \sigma'}{c,\sigma \step c,\sigma'}
+% 			\vspace{1em}
+% 
+% 			\infrule[atom]{c,\sigma \rtcl{\step} \cskip,\sigma'}{\catomic{c},\sigma \step \cskip,\sigma'}
+% 			
+% 			\vspace{1em}
+% 			
+% 			\infrule[atomA]{c,\sigma \rtcl{\step} \abort}{\catomic{c},\sigma \step \abort}
+% 			
+% 			\vspace{1em}
+% 
+% 			\infax[ch1]{(\cchoice{c_1}{c_2}),\sigma \step c_1,\sigma}
+% 			
+% 			\vspace{1em}
+% 			
+% 			\infax[ch2]{(\cchoice{c_1}{c_2}),\sigma \step c_2,\sigma}
+% 			
+% 			\vspace{1em}
+% 			
+% 			\infax[loop]{\cloop{c},\sigma \step \left(\cchoice{\cskip}{\cseq{c}{\cloop{c}}}\right),\sigma}
+% 			
+% 			
+% 		\end{minipage}
+% 	\end{tabular}
+% 	\caption{Semantics of Commands}
+% 	\label{fig:relcomm}
+% \end{figure}
+
+% subsection dynamic_semantics (end)
+
+For configurations $C$ and $C'$, we write $C \noestep C'$ to indicate that $(C,C') \notin \estep$. 
+
+
+
+\begin{lemma}
+	\label{lem:comm-fv-abort}
+	For command $c$, if $\sigma \stcong{\fv{c}} \sigma'$ and $c,\sigma,\ell \step \abort$ then $c,\sigma',\ell \step \abort$. 
+\end{lemma}
+
+\begin{proof}
+	By induction on the derivation of $c,\sigma \step \abort$, using Lemma~\ref{lem:pcomm-fv-abort} in the \textsc{(primA)} case. 
+\end{proof}
+
+\begin{lemma}\label{lem:comm-fv-step}
+	For command $c$ and $X \supseteq \fv{c}$, if $\sigma \stcong{X} \sigma'$ and $c,\sigma \step c_1,\sigma_1$ then there exists $\sigma'_1$  such that $\sigma_1 \stcong{X} \sigma_1'$ and $c,\sigma' \step c_1,\sigma'_1$.
+\end{lemma}
+
+\begin{proof}
+	 By induction on the derivation of $c,\sigma \step c',\sigma'$, using Lemma~\ref{lem:pcomm-fv-step} in the \textsc{(prim)} case, and observing that the $\tau$ steps preserve stores in the \textsc{(tau)} case.
+\end{proof}
+
+% section concrete_commands (end)
+
+\section{Multi-processor States} % (fold)
+\label{sec:mp-states}
+
+A multi-processor state $\Sigma$ is like a single-processor state, defined in Section~\ref{sec:sp-states}, but with a non-empty list of write buffers instead of a single write buffer. That is, we replace the $q$ field of the state record with a $qs$ field, with lists of buffers as values. We abbreviate the set of multi-processor states as $\setmpstates$. We additionally call states $\Sigma$ with $\llen{\Sigma.qs} > 0$ \emph{proper} multi-processor states. 
+
+We write $\allocat{i}{\Sigma}$ for the set of locations known by processor $i$ to be allocated: \begin{equation}
+	\label{eq:allocat}
+	\allocat{i}{\Sigma} \eqdef \dom{\Sigma.h} \cup \dom{\elems{\nth{i}{\Sigma.qs}}}.
+\end{equation} We update the definition of $\alloc{\Sigma}$, the complete set of allocated locations, as the union over all processors: \begin{equation}
+	\label{eq:mpalloc}
+	\alloc{\Sigma} \eqdef \bigcup_{0 \leq i < \llen{\Sigma.qs}} \allocat{i}{\Sigma}.  
+\end{equation} 
+
+We now define two partial functions to destruct multi-processor states, $\lhead{\Sigma}$ and $\ltail{\Sigma}$, which are total on proper multi-processor states. The former yields a single-processor state that represents the part of $\Sigma$ visible by the first processor; the latter a multi-processor state that represents the part visible by the rest of the system. \begin{align}
+	\label{eq:mphdtl}
+	\lhead{\Sigma} \eqdef & \reclit{\ptup{s}{\Sigma.s},\, \ptup{h}{\Sigma.h},\, \ptup{q}{\lhead{\Sigma.qs}}} \\
+	\ltail{\Sigma} \eqdef & \funup{\Sigma}{\ptup{qs}{\ltail{\Sigma.qs}}}
+\end{align}
+
+Next we define two partial functions to construct new multi-processor states, $\sigma / \Sigma$ and $\sigma \backslash \Sigma$, the former of which inherits the store and heap values from $\sigma$ and the latter from $\Sigma$. 
+\begin{align}
+	\sigma / \Sigma \eqdef {} & \funup{\Sigma}{\ptup{s}{\sigma.s},\,\ptup{h}{\sigma.h},\,\ptup{qs}{(\sigma.q \lcons\Sigma.qs)}} \\ 
+	\sigma \backslash \Sigma \eqdef {} & \funup{\Sigma}{\ptup{qs}{(\sigma.q \lcons \Sigma.qs)}}
+\end{align}
+
+\section{Programs} % (fold)
+\label{sec:programs}
+
+Syntactically, programs are simply lists of commands: 
+\begin{equation}
+	\label{eq:programs}
+	\progs~P \bnfdef \epsilon \bnfbar \left(\cpar{c}{P}\right)
+\end{equation}
+
+The dynamic semantics of programs is given in terms of \emph{program configurations}, which consist of program-multi-processor-state pairs. A structural operational semantics, defined in Figure~\ref{fig:prog-red-rel}, defines a relation $\pstep \subseteq \setmconfigurations \times \setmconfigurations$.
+ 
+% First we define a rather simple structural congruence relation on programs: \begin{equation}
+% 	\cpar{P}{(\cpar{P'}{P''})} \stcong \cpar{(\cpar{P}{P'})}{P''}
+% \end{equation} Henceforth we do not bother to parenthesize parallel composition of programs, as justified by the congruence above.  
+
+\begin{figure}[h]
+	\begin{tabular}{ll}
+		\begin{minipage}{.44\textwidth}
+			\infrule[step]{c,\lhead{\Sigma} \estep c',\sigma'}{(\cpar{c}{P}),\Sigma \pstep (\cpar{c'}{P}),\sigma' / \Sigma}
+
+		\end{minipage} 
+		&
+		\begin{minipage}{.51\textwidth}
+			
+			\infrule[cong]{P,\ltail{\Sigma} \pstep P',\Sigma'}{(\cpar{c}{P}),\Sigma \pstep (\cpar{c}{P'}),\lhead{\Sigma} \backslash \Sigma'}
+
+						
+		\end{minipage}
+	\end{tabular}
+	\caption{Reduction semantics of programs}
+	\label{fig:prog-red-rel}
+\end{figure}
+
+Some multi-processor configurations are considered erroneous---viz.~those which ``contain'' a command configuration that is erroneous (see Figure~\ref{fig:comm-abort-rel}). We call such configurations \emph{aborting program configurations}, written $C \pstep \abort$. Aborting configurations are defined in Figure~\ref{fig:comm-abort-rel}. 
+
+\begin{figure}[h]
+	\begin{tabular}{rr}
+		\begin{minipage}{.5\textwidth}
+			
+			\infrule[stepA]{c,\lhead{\Sigma} \estep \abort}{(\cpar{c}{P}),\Sigma \pstep \abort}
+
+		\end{minipage} 
+		&
+		\begin{minipage}{.4\textwidth}
+			
+			\infrule[congA]{P,\Sigma \pstep \abort}{(\cpar{c}{P}),\Sigma \pstep \abort}
+						
+		\end{minipage}
+	\end{tabular}
+	\caption{Abort semantics of programs}
+	\label{fig:prog-abort-rel}
+\end{figure}
+
+% \begin{figure}[h]
+% 	\begin{tabular}{rr}
+% 		\begin{minipage}{.52\textwidth}
+% 			\infrule[step]{c,\lhead{\Sigma} \step c',\sigma'}{(\cpar{c}{P}),\Sigma \pstep (\cpar{c'}{P}),\sigma' / \Sigma}
+% 			
+% 			\vspace{1em}
+% 			
+% 			\infrule[stepA]{c,\lhead{\Sigma} \step \abort}{(\cpar{c}{P}),\Sigma \pstep \abort}
+% 
+% 		\end{minipage} 
+% 		&
+% 		\begin{minipage}{.4\textwidth}
+% 			
+% 			\infrule[cong]{P,\ltail{\Sigma} \pstep P',\Sigma'}{(\cpar{c}{P}),\Sigma \pstep (\cpar{c}{P'}),\lhead{\Sigma} \backslash \Sigma'}
+% 			
+% 			\vspace{1em}
+% 			
+% 			\infrule[congA]{P,\Sigma \pstep \abort}{(\cpar{c}{P}),\Sigma \pstep \abort}
+% 						
+% 		\end{minipage}
+% 	\end{tabular}
+% 	\caption{Semantics of Programs}
+% 	\label{fig:relprog}
+% \end{figure}
+
+% section programs (end)
+
+\section{Programming Model Design Issues} % (fold)
+\label{sec:programming_model_design_issues}
+
+The meaning of barriers. The definition of atomic instructions. 
+
+% section programming_model_design_issues (end)
+
+\chapter{The Assertion Logic}
+
+In this chapter we define a language of assertions for describing a single thread's view of an x86-like system state. The semantics of assertions is defined in terms of instrumented versions of single-processor states, as defined previously in Section~\ref{sec:sp-states}. Instrumented states are defined in Section~\ref{sec:partial_states}. The semantics of assertions is defined formally in Section~\ref{sec:assertion-semantics} with a function defined by recursion on the structure of assertions.
+
+
+\section{Assertions} % (fold)
+\label{sec:assertions}
+
+The grammar of assertions is as follows: 
+\begin{align*}
+	\setassertions~P \bnfdef {} & b \bnfbar P \disj P' \bnfbar P \conj P' \bnfbar \forall x \st P \bnfbar \exists x \st P \\
+	&  \bnfbar \emp \bnfbar e \writeto{}{b} e' \bnfbar \barr \bnfbar P \seq P' \bnfbar P \sep P' \bnfbar \expand{P}
+\end{align*} 
+
+The informal meaning of the symbols from first-order logic is traditional: $P \disj P'$ is satisfied by a model that satisfies either $P$ or $P'$, etc. The informal meaning of $\emp$ and $P \sep P'$ is as in separation logic. The \emph{leads-to} assertion $e \writeto{}{b} e'$ indicates a single buffered write in a write buffer with top-bit $b$, and $\barr$ is used to describe the result of fencing a write buffers. Finally, $\expand{P}$ is used to give meaning to heap-only invariants in an x86-like setting.
+
+In the leads-to assertion, we sometimes omit the decoration, writing $e \writeto{}{} e'$ as shorthand for $e \writeto{}{\bvt} e'$. We shall additionally find it useful to define a \emph{points-to} assertion $e \mapsto e'$ as shorthand for $e \leadsto e' \seq \barr$. 
+
+% section assertions (end)
+
+\section{Partial Single-Processor States} % (fold)
+\label{sec:partial_states}
+
+In this section we define abstract states that represent ``parts'' of single-processor states. Of course, all single-processor states are partial in the sense that they only describe relevant memory locations. The partial states we describe next generalize single-processor states so that they may be interpreted as only describing relevant buffered writes as well. This is accomplished by generalizing the single-processor state data structure in a number of ways. First, we remove the requirement that all allocated locations have defined values in the heap. In particular, we define the set of allocated locations in a state to be the union of locations allocated in the heap along with those locations to which there are buffered writes.  
+
+Two flags are also introduced into the state data structure, which we call the ``top'' and ``bottom'' flags. The bottom flag indicates that the no buffered writes precede those described in the state data structure; the top flag indicates that no writes succeed those in the state. 
+
+If the bottom flag is set, then because preceding writes may not exist in the write buffer, they must instead have committed to memory and reside in the heap. Because there is a total order writes in the TSO memory model, only a single bottom flag is needed: if a one write precedes another which must have committed to memory, then the earlier write must too have committed to memory. 
+
+If the top flag is set, the there must be no succeeding buffered writes. Because writes always enter the state at the top of the write buffer, when this flag is set, the state may not be expanded with any succeeding writes whatsoever. This is in contrast to the bottom flag, which simply indicates that preceding writes be committed to memory. However, we do not wish for this to be a property that is global across memory locations, so we instead associate a top flag with each allocated memory location. This is accomplished by adding an additional partial function to the state data structure, called a \emph{top map}, that associates booleans with each allocated memory location. % This could be accomplished by replacing the heap in the state data structure with a structure that maps memory locations to value-boolean pairs. But, as mentioned above, we wish to remove the requirement that all memory locations have a defined value in the heap. So we instead replace the heap with a partial function in $\setlocations \pfun ((\setvalues \uplus \bot) \times \setbooleans)$; we call these \emph{topped heaps}. Every allocated memory location is thus associated with a top flag, but may or may not have a defined value in the shared memory. 
+
+A \emph{partial state} then $\pi$ is a record, where $\pi.s$ is a store, $\pi.h$ is a heap, $\pi.q$ is a write buffer, $\pi.t$ is a top map, and $\pi.b$ is a bottom flag, subject to the following constraints: \begin{align}
+	\dom{\pi.t} = \dom{\pi.h} \cup \dom{\elems{\pi.q}} \\
+	\pi.h = \nil \disj \pi.b = \bvt
+\end{align} The set of partial states is abbreviated as $\setpstates$.
+
+We extend the flushing relation from Section~\ref{sub:flushing}, $\pi \taustep \pi'$ to partial single-processor states as follows:  \begin{equation}
+\begin{split}
+	\label{eq:ptaustep}
+	\pi \taustep \pi' \iffdef {} & \exists \ell, v, q' \st \pi.q = \lsingle{(\ell,v)}\lapp q' \conj \pi' = \funup{\pi}{\ptup{h(\ell)}{v},\,\ptup{q}{q'},\,\ptup{b}{\bvt}}
+\end{split}
+\end{equation} The flushing ordering is similarly extended, so that $\pi' \leq \pi$ when $\pi \rtcl{\taustep} \pi'$. Note that flushing does not affect the store or top flags. 
+
+\paragraph{Relating States and Partial States}
+
+One way to think of the partial states is as \emph{abstractions} of complete states, or alternatively to think of complete states as \emph{concretizations} of (certain) abstract states. The following definitions make this intuition more precise. 
+
+If every location defined by a partial state has full permission, and if the bottom/flushing flag is set, then it is called \emph{full} and may used to represent a state as defined in Section~\ref{sec:sp-states}. The predicate $\fullst{\pi}$ defines this condition. \begin{equation}
+	\fullst{\pi}  \iffdef   \pi.b = \bvt \conj \forall \ell \in \dom{\pi.t} \st \pi.t(\ell) = \bvt 
+\end{equation}
+The partial function $\concst{\pi}$ associates a state with each full partial state. \begin{equation}
+	\concst{\pi} \eqdef \begin{cases}
+		\reclit{\ptup{s}{\pi.s},\,\ptup{h}{\pi.h},\,\ptup{q}{\pi.q}} & \text{if $\fullst{\pi}$} \\
+		\bot & \text{otherwise.}
+	\end{cases}
+\end{equation}
+
+Similarly, every state $\sigma$ may be used to represent a unique full partial state $\abst{\sigma}$. \begin{equation}
+	\abst{\sigma} \eqdef \funup{\sigma}{\ptup{t}{\lambda \ell . \begin{cases}
+		\bvt & \text{if $\ell \in \alloc{\sigma}$} \\
+		\bot & \text{otherwise}
+	\end{cases},\, \ptup{b}{\begin{cases}
+		\bvt & \text{if $\dom{\pi.h} \neq \nil$} \\
+		\bvf & \text{otherwise}
+	\end{cases}}}}
+\end{equation}
+
+The following lemmas describe the functorial nature of the abstration and concretion functions. 
+
+\begin{lemma}
+	\label{lem:concst-tau}
+	If $\fullst{\pi}$ and $\pi \taustep \pi_1$ then $\fullst{\pi_1}$ and $\concst{\pi} \taustep \concst{\pi_1}$. 
+\end{lemma}
+
+\begin{lemma}
+	\label{lem:abst-tau}
+	If $\sigma \taustep \sigma_1$ then $\abst{\sigma} \taustep \abst{\sigma_1}$. 
+\end{lemma}
+
+The following lemmas describe the adjunctive nature of the abstraction and concretion functions.
+
+\begin{lemma}
+	\label{lem:concst-abst}
+	For state $\sigma$, $\fullst{\abst{\sigma}}$ and $\concst{\abst{\sigma}} = \sigma$. 
+\end{lemma}
+
+\begin{lemma}
+	\label{lem:abst-concst}
+	For partial state $\pi$ such that $\fullst{\pi}$, $\abst{\concst{\pi}} = \pi$.
+\end{lemma}
+
+\section{The Meaning of Assertions} % (fold)
+\label{sec:assertion-semantics}
+
+The meaning of an assertion is a set of partial single-processor states that satisfies a certain closure property, described shortly. Meaning is assigned to each assertion $P$ by a total function $\dna{-}$, defined by recursion on the structure of $P$. In order to define this function, we must first define a number of auxiliary functions and notions.
+
+\subsection{The Interleaving Separating Conjunction}
+
+We call assertions $P \sep P'$ \emph{interleaving separating conjunctions}. Their models will be given using an associated model-theoretic function $\pi \sep \pi'$ in $(\setpstates \times \setpstates) \tfun \powerset{\setpstates}$. Informally, $\pi \sep \pi'$ describes all the possible interleavings of the buffers of $\pi$ and $\pi'$. First, we describe the definedness condition for the interleaving conjunction. Two partial states are compatible w.r.t. interleaving, written $\defined{\pi \sep \pi'}$, if their stores are equal and  their allocated sets are disjoint: \[ \defined{\pi \sep \pi'} \iffdef \pi.s = \pi'.s \conj \alloc{\pi} \cap \alloc{\pi'} = \nil \]
+The set of partial states $\pi \sep \pi'$ is, when $\defined{\pi \sep \pi'}$, defined as follows:\[ 
+	\pi \sep \pi' \eqdef \setof{\funup{\pi}{\ptup{h}{\pi.h \cup \pi'.h,\,\ptup{q}{l},\, \ptup{t}{\pi.t \cup \pi'.t},\,\ptup{b}{\pi.b \disj \pi'.b} }}}{l \in \pi.q \merge \pi'.q}
+\] Note that $\pi \sep \pi' \neq \nil$ when $\defined{\pi \sep \pi'}$.
+
+\begin{lemma}
+	\label{lem:sep-def-uniform}
+	If $\exists \pi \in (\pi_0 \sep \pi_1) \st \defined{\pi \sep \pi'}$ then $\forall \pi \in (\pi_0 \sep \pi_1) \st \defined{\pi \sep \pi'}$. 
+\end{lemma}
+
+\begin{proof}
+	By definition, all elements of $\pi_0 \sep \pi_1$ are the same except for their queues, which are irrelevant to the definedness condition for $\sep$. 
+\end{proof}
+
+\begin{lemma}
+	\label{lem:full-uniform}
+	If $\exists \pi \in (\pi_0 \sep \pi_1) \st \fullst{\pi}$ then $\forall \pi \in (\pi_0 \sep \pi_1) \st \fullst{\pi}$. 
+\end{lemma}
+
+\begin{proof}
+	By definition, all elements of $\pi_0 \sep \pi_1$ are the same except for their queues, which are irrelevant to the definition of $\fullst{-}$. 
+\end{proof}
+
+\begin{lemma}[Commutativity]
+	\label{lem:sep-comm}
+	$(\pi_1 \sep \pi_2) = (\pi_2 \sep \pi_1)$. 
+\end{lemma}
+
+\begin{proof}
+	Trivial. 
+\end{proof}
+
+\begin{lemma}[Associativity-1]
+	\label{lem:sep-assoc-1}
+	If $\pi_{12} \in (\pi_1 \sep \pi_2)$ and $\pi \in (\pi_{12} \sep \pi_3)$ then there exists $\pi_{23} \in (\pi_2 \sep \pi_3)$ such that $\pi \in (\pi_1 \sep \pi_{23})$. 
+\end{lemma}
+
+\begin{proof}
+	Proved in Coq.
+\end{proof}
+
+\begin{lemma}
+	\label{lem:sep-assoc-2}
+	If $\pi_{23} \in (\pi_2 \sep \pi_3)$ and $\pi \in (\pi_1 \sep \pi_{23})$ then there exists $\pi_{12} \in (\pi_1 \sep \pi_2)$ such that $\pi \in (\pi_{12} \sep \pi_3)$. 
+\end{lemma}
+
+\begin{proof}
+	From Lemmas~\ref{lem:sep-assoc-1} and~\ref{lem:sep-comm}. 
+\end{proof}
+
+Unless stated explicitly, when we write $(\pi_1 \sep \pi_2)$, it is implied that $\defined{\pi_1 \sep \pi_2}$. And, as justified by the previous lemmas, we write $(\pi_1 \sep \pi_2 \sep \pi_3)$ as shorthand for the set $\setof{\pi \in (\pi_{12} \sep \pi_3)}{\exists \pi_{12} \in (\pi_1 \sep \pi_2)}$. 
+
+\begin{lemma}
+	\label{lem:sep-down}
+	If $\pi \in (\pi_0 \sep \pi_1)$ and $\pi' \leq \pi$ then there exists $\pi'_0 \leq \pi_0$ and $\pi'_1 \leq \pi_1$ such that $\pi' \in (\pi'_0 \sep \pi'_1)$. 
+\end{lemma}
+
+\begin{proof}
+	Proved in Coq. 
+\end{proof}
+
+The interleaving separating conjunction is lifted to sets of states in the following way: \[ A \sep A' \eqdef \left(\bigcup \setof{\pi \sep \pi'}{\pi \in A \conj \pi' \in A' \conj \defined{\pi \sep \pi'}}\right).\] 
+
+\begin{lemma}
+	\label{lem:sep-closure}
+	If $\down A = A$ and $\down A' = A'$, then $\down (A \sep A') = (A \sep A')$. 
+\end{lemma}
+
+\begin{proof}
+	Follows from Lemma~\ref{lem:sep-down} and the definition of $A \sep A'$. 
+\end{proof}
+
+\subsection{The Sequential Separating Conjunction}
+
+We call assertions $P \seq P'$ \emph{sequential separating conjunctions}. Their models will be given using an associated model-theoretic partial function $\pi \seq \pi'$ in $(\setpstates \times \setpstates) \pfun \setpstates$. Informally, $\pi \seq \pi'$ describes the concatenation of the buffers of $\pi$ and $\pi'$. First, we describe the definedness condition for the sequential conjunction. Two partial states are compatible w.r.t. the sequential conjunction, written $\defined{\pi \seq \pi'}$ if their stores are equal, the multiplication of their permission structures is defined, and either their heaps agree or the right-hand bottom flag is set: \[ \defined{\pi \seq \pi'} \iffdef \pi.s = \pi'.s \conj \pi.p \compat_{\shmult} \pi'.p \conj (\pi'.b = \bvt \disj \pi.h \compat \pi'.h)\]
+The function $\pi \seq \pi'$ is then defined, when $\defined{\pi \seq \pi'}$, as follows: \begin{eqnarray*}
+	\pi \seq \pi' & \eqdef & \begin{cases}
+		\funup{\pi}{\ptup{h}{\pi.h \cup \pi'.h},\,\ptapp{q}{\pi'.q},\,\ptup{p}{\pi.p \shadd \pi'.p}} & \text{if $\pi'.b = \bvf$} \\
+		\funup{\pi'}{\ptup{h}{\sflush{\pi}.h \override \pi'.h},\, \ptup{p}{\pi.p \shadd \pi'.p}}  & \text{otherwise.}
+	\end{cases}
+\end{eqnarray*}
+
+\begin{lemma}[Associativity]
+	\label{lem:seq-assoc}
+	$(\pi_1 \seq \pi_2) \seq \pi_3 = \pi_1 \seq (\pi_2 \seq \pi_3)$. 
+\end{lemma} 
+
+\begin{proof}
+	Proved in Coq.
+\end{proof}
+
+Unless stated explicitly, when we write $(\pi_1 \seq \pi_2)$, it is implied that $\defined{\pi_1 \seq \pi_2}$. And, as justified by the previous lemmas, we write $(\pi_1 \seq \pi_2 \seq \pi_3)$ as shorthand for either association. 
+ 
+\begin{lemma}
+	\label{lem:seq-down}
+	If $\pi' \leq (\pi_1 \seq \pi_2)$, then there exists $\pi'_1 \leq \pi_1$ and $\pi'_2 \leq \pi_2$ such that $\pi' = (\pi'_1 \seq \pi'_2)$. 
+\end{lemma}
+
+\begin{proof}
+	If any writes of $\pi_2$ have committed, then $\pi'_1 = \sflush{\pi_1}$ and $\pi'_2$ is the result of flushing just those writes. Otherwise, $\pi'_2 = \pi_2$ and $\pi'_1$ is the result of flushing just those writes (if any) that have committed. FIXME: This is proved in Coq, but a better proof should be given here. 
+\end{proof}
+
+As with the interleaving conjunction, the sequential separating conjunction is lifted to sets of states: \[ A \seq A' \eqdef \left(\setof{\pi \seq \pi'}{\pi \in A \conj \pi' \in A' \conj \defined{\pi \seq \pi'}}\right).\] 
+
+\begin{lemma}
+	\label{lem:seq-closure}
+	If $\down A = A$ and $\down A' = A'$, then $\down (A \seq A') = (A \seq A')$. 
+\end{lemma}
+	
+\subsection{Closure and Kernel}
+
+First, recall from Section~\ref{sec:order-theory} that we write $\downo{\leq} A$ for the down-closure of a set $A$ w.r.t.~to the ordering $\leq$, and that a set $A$ is called down-closed w.r.t.~$\leq$ when $\downo{\leq} A = A$. The function $\dna{-}$ will be total from assertions $P$ to sets of partial states that are down-closed w.r.t.~the flushing order $\leq$. In the rest of this section, the flushing order $\leq$ is left implicit, and so we write just $\down A$ for the down-closure of set $A$.
+
+The \emph{kernel} function, $\kernel(-)$, is another kind of closure operator. While the down-closure operation $\down -$ is the smallest closed set which includes $A$, the kernel operator gives the largest closed set which is included in $A$. It can be defined as follows: \begin{equation}
+	\kernel(A) \eqdef \bigcup \setof{B \subseteq A}{\down B = B},
+\end{equation} i.e., the intersection of all closed sets within $A$. 
+
+\begin{lemma}
+	\label{lem:kernel-closure}
+	$\down \kernel(A) = \kernel(A)$. 	
+\end{lemma}
+
+\begin{proof}
+	Immediate from Lemma~\ref{lem:closure-lattice}. 
+\end{proof}
+
+\begin{lemma}[Down-set characterization]
+	\label{lem:kernel-downset}
+	$\pi \in \kernel(A) \iff \down \pi \subseteq A$. 
+\end{lemma}
+
+\begin{proof}
+	In one direction: 
+	\Calc{
+		
+		$\pi \in \kernel(A)$
+		
+		\conn{\onlyif}{definition of $\kernel$}
+		
+		$\exists B \st B \subseteq A \conj \down B = B \conj \pi \in B$
+		
+		\conn{\onlyif}{down closure of $B$}
+		
+		$\exists B \st B \subseteq A \conj \down B = B \conj (\forall \pi' \leq \pi \st  \pi' \in B)$
+		
+		\conn{\onlyif}{$B \subseteq A$}
+		
+		$\exists B \st B \subseteq A \conj \down B = B \conj (\forall \pi' \leq \pi \st  \pi' \in A)$
+		
+		\conn{\onlyif}{predicate calculus}
+		
+		$\forall \pi' \leq \pi \st  \pi' \in A$
+		
+		\conn{\onlyif}{set theory}
+		
+		$\setof{\pi'}{\pi' \leq \pi} \subseteq A$
+		
+		\conn{\onlyif}{definition of $\down \pi$}
+		
+		$\down \pi \subseteq A.$
+
+	}
+	
+	In the other direction, $\down \pi \subseteq A$ by assumption, and $\down \pi$ is down-closed by definition. 
+	
+\end{proof}
+
+\begin{note}
+	This reflects an interesting topological structure... (FIXME).
+\end{note}
+	
+	
+\subsection{Trimming States}
+
+Given a partial state $\pi$, we call $\recup{\pi}{q}{\epsilon}$ its \emph{trimmed} equivalent. The function $\trim(-)$ maps a set of partial states to their set of trimmed equivalents: \[ \trim(A) \eqdef \setof{\recup{\pi}{q}{\epsilon}}{\pi \in A}. \] One way to think of the trimmed equivalent is as the view of the heap from another process, which does not see other processes' write buffers. 
+
+Of course, if $\pi.q = \epsilon$, then $\recup{\pi}{q}{\epsilon} = \pi$. We call such states \emph{flat}. If $A$ is a set of flat states, then $\trim{A} = A$ as well. 
+
+Also of interest is the inverse image $\invimage{\trim}{A}$, which for a set of partial states $A$, denotes the set of states that, when trimmed, yield $A$. If $A$ is flat, then $\invimage{\trim}{A}$ can be thought of representing the possible states of other processes' buffers given possible possible views of the heap (as described by $A$). 
+
+If we think of the inverse image of trim as a function, then the functional composition $\invimage{\trim}{\trim{A}}$ describes a set that is constructed by first discarding information about the buffer and then recreating it in the most general way. This set may not be down-closed, however. Consider the flat state $\pi$ with $\pi.h = \set{(\ell,1)}$. Then $\trim(\set{\pi})$ includes, e.g., the state $\recup{\pi}{q}{\lsingle{(\ell,2)}}$ as well, which is not below $\pi$ in the flushing order. To regain down closure, we can apply the kernel operator. Consequently, we define the $\sexpand{A}$ as shorthand for the following composition: \[ \sexpand{A} \eqdef \kernel(\invimage{\trim}{\trim(A)}).\]
+
+\subsection{Semantic Substitution}
+
+For state $\pi$, we write $\pi\subst{i}{v}$ as an abbreviation for $\funup{\pi}{\ptup{s(i)}{v}}$. For a set of states $S$, we write $S\subst{i}{v}$ for the pointwise application of this update. Now fix an update $\subst{i}{v}$ and consider it as a function in $(\setpstates \rightarrow \setpstates)$. We write $\pi\unsubst{i}{v}$ for the pre-image of this function: \[ \pi\unsubst{i}{v} \eqdef \setof{\pi'}{\pi = \pi'\subst{i}{v}}.\] This function is then lifted to sets of states $S$: \[ S\unsubst{i}{v} \eqdef \setof{\pi'}{\exists \pi \in S \st \pi = \pi'\subst{i}{v}}.\] We call this operation a \emph{semantic substitution}. It is right-adjoint to the pointwise update operation, and together they form a Galois connection. 
+
+
+\begin{lemma}[Substitution Galois Connection]
+  \label{lem:subst-galois}
+  $A\subst{i}{v} \subseteq B \iff A \subseteq B\unsubst{i}{v}$
+\end{lemma}
+
+\begin{proof}
+
+  Left to right: 
+
+  \Calc{
+
+    $\pi \in A$
+
+    \conn{\onlyif}{definition of $A\subst{i}{v}$}
+
+    $\pi\subst{i}{v} \in A\subst{i}{v}$
+
+    \conn{\onlyif}{assumption}
+
+    $\pi\subst{i}{v} \in B$
+
+    \conn{\onlyif}{definition of $B\unsubst{i}{v}$}
+
+    $\pi \in B\unsubst{i}{v}$. 
+
+  }
+
+  Right to left:
+
+  \Calc{
+
+    $\pi \in A\subst{i}{v}$
+
+    \conn{\onlyif}{definition of $A\subst{i}{v}$}
+
+    $\exists w \in \setvalues \st \pi\subst{i}{w} \in A$
+
+    \conn{\onlyif}{assumption}
+
+    $\exists w \in \setvalues \st \pi\subst{i}{w} \in
+    B\unsubst{i}{v}$
+
+    \conn{\onlyif}{definition of $B\unsubst{i}{v}$}
+
+    $\exists w \in \setvalues \st (\pi\subst{i}{w})\subst{i}{v} \in
+    B$
+
+    \conn{\onlyif}{$(\pi\subst{i}{w})\subst{i}{v} =
+    \pi\subst{i}{v}$}
+
+    $\pi\subst{i}{v} \in B$
+
+    \conn{\onlyif}{$\pi\subst{i}{v} = \pi$ by assumption}
+
+    $\pi \in B$.
+
+  }
+
+\end{proof}
+
+\begin{lemma}
+  \label{lem:unsubst-univ}
+  Let $S \in \powerset{\setpstates}$, $\pi \in \setpstates$, $i \in
+  \setidentifiers$ and $v \in \setvalues$. If $\pi \in S\unsubst{i}{v}$,
+  then, for any $w \in \setvalues$, $\pi\subst{i}{v} \in
+  S\unsubst{i}{v}$
+\end{lemma}
+
+\begin{proof}
+
+  \Calc{
+
+    $\pi \in S\unsubst{i}{v}$
+
+    \conn{\iff}{definition of $S\unsubst{i}{v}$}
+
+    $\exists \pi' \in S \st \pi' = \pi\subst{i}{v}$
+
+    \conn{\iff}{$\pi\subst{i}{v} =
+    (\pi\subst{i}{w})\subst{i}{v}$}
+
+    $\exists \pi' \in S \st \pi' =
+    (\pi\subst{i}{w})\subst{i}{v}$
+
+    \conn{\iff}{definition of $S\unsubst{i}{v}$}
+
+    $(\pi\subst{i}{w}) \in S\unsubst{i}{v}$.
+
+  }
+
+\end{proof}
+
+\begin{lemma}
+	\label{lem:closure-unsubst}
+	$\down \left(S\unsubst{x}{v}\right) = \left(\down S\right) \unsubst{x}{v}$.
+\end{lemma}
+
+\begin{proof}
+		
+	\Calc{
+	
+		$\pi \in \left(S\unsubst{x}{v}\right)$
+		
+		\conn{\iff}{definition of $\down -$}
+		
+		$\exists \pi' \st \pi \leq \pi' \conj \pi' \in \left(S\unsubst{x}{v}\right)$
+		
+		\conn{\iff}{definition of unsubstitution}
+		
+		$\exists \pi' \st \pi \leq \pi' \conj \pi'\subst{x}{v} \in S$
+		
+		\conn{\iff}{definition of $\leq$}
+		
+		$\exists \pi' \st \pi\subst{x}{v} \leq \pi'\subst{x}{v} \conj \pi'\subst{x}{v} \in S$
+		
+		\conn{\iff}{definition of $\down -$}
+		
+		$\pi\subst{x}{v} \in \down S$
+		
+		\conn{\iff}{definition of unsubstitution}
+		
+		$\pi \in \left(\down S\right)\unsubst{x}{v}$
+	
+	}
+\end{proof}
+
+
+% \subsubsection{Negation}
+% 
+% The meaning of negation is similar to that of the phase semantics of linear logic \cite{Girard95logic}. Below, we write $\overline{S}$ for $(\setpstates \setminus S)$. 
+% 
+% \begin{lemma}[Involution]
+% 	\label{lem:involution}
+% 	If $\down S = S$, then $\kernel\left(\overline{\kernel\left(\overline{S}\right)}\right) = S$.  
+% 	
+% \end{lemma}
+% 
+% \begin{proof}
+% 	
+% 	\Calc{
+% 	
+% 		$\pi \in \kernel\left(\overline{\kernel\left(\overline{S}\right)}\right)$
+% 		
+% 		\conn{\iff}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\down \pi \subseteq \overline{\kernel\left(\overline{S}\right)}$
+% 		
+% 		\conn{\iff}{set theory and definition of $\down -$}
+% 		
+% 		$\forall \pi' \leq \pi \st \pi' \notin \kernel\left(\overline{S}\right)$
+% 		\conn{\iff}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\forall \pi' \leq \pi \st \neg(\down \pi' \subseteq (\overline{S}))$		
+% 		
+% 		\conn{\iff}{set theory}
+% 		
+% 		$\forall \pi' \leq \pi \st \exists \pi'' \leq \pi' \st \pi'' \in S$
+% 		
+% 		\conn{\iff}{Lemmas~\ref{lem:dcc} and~\ref{lem:downset-total}}
+% 		
+% 		$\forall \pi' \leq \pi \st \pi' \in S$
+% 		
+% 		\conn{\iff}{$\down S = S$}
+% 		
+% 		$\pi \in S$
+% 		
+% 	}
+% 	
+% \end{proof}
+% 
+% \begin{lemma}
+% 	\label{lem:downset-forall-disj}
+% 	Suppose $\down P = P$ and $\down P' = P'$. Then $\down \pi \subseteq (\overline{P \cap P'}) \iff \down \pi \subseteq \overline{P} \disj \down \pi \subseteq \overline{P'}$.
+% \end{lemma}
+% 
+% \begin{proof}
+% 	The right-to-left direction is trivial because, e.g., $\overline{P} \subseteq \overline{P \cap P'}$. 
+% 	
+% 	In the other direction, first note that if $\pi \in P$, then $\down \pi \subseteq P$ because $\down P = P$, and furthermore that $\down \pi \subseteq \overline{P'}$. To see this, suppose instead, for some $\pi' \leq \pi$, that $\pi \in P'$. Then $\pi' \in P \cap P'$, and so $\pi' \notin \overline{P \cap P'}$, contradicting the assumption that $\down \pi \subseteq \overline{P \cap P'}$. Similarly, if $\pi \in P'$ then $\down \pi \subseteq \overline{P}$. 
+% 	
+% 	It is only left to consider $\pi \in \overline{P \cup P'}$. Consider the greatest $\pi' \leq \pi$ with $\pi' \in (P \cup P')$. Such an element is known to exist because, as shown in Lemma~\ref{lem:downset-total}, $\down \pi$ is both finite and total. Consequently, we can partition $\down \pi$ into two subsets: $\down \pi'$ and $\down \pi \setminus \down \pi'$.  The latter is included in both $\overline{P}$ and $\overline{P'}$, and the former is included in either $\overline{P'}$ (if $\pi' \in P$) or in $\overline{P}$ (if $\pi' \in P'$). In the first case $\down \pi \subseteq \overline{P'}$, and in the second case $\down \pi \subseteq \overline{P}$. 
+% \end{proof}
+% 
+% \begin{lemma}[De Morgan]
+% 	\label{lem:demorgan}
+% 	For $P$ and $P'$ with $\down P = P$ and $\down P' = P'$, $\kernel(\setpstates \setminus (P \cap P')) = \kernel(\setpstates \setminus P) \cup \kernel(\setpstates \setminus P')$. 
+% \end{lemma}
+% 
+% \begin{proof}
+% 	\Calc{
+% 		
+% 		$\pi \in \kernel(\setpstates \setminus (P \cap P'))$
+% 		
+% 		\conn{\onlyif}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\down \pi \subseteq (\setpstates \setminus (P \cap P'))$
+% 		
+% 		\conn{\iff}{Lemma~\ref{lem:downset-forall-disj}}
+% 		
+% 		$\down \pi \subseteq (\setpstates \setminus P) \disj \down \pi \subseteq (\setpstates \setminus \cap P')$
+% 		
+% 		\conn{\iff}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\pi \in \kernel(\setpstates \setminus P) \disj \pi \in \kernel(\setpstates \setminus P')$
+% 		
+% 		\conn{\iff}{set theory}
+% 		
+% 		$\pi \in (\kernel(\setpstates \setminus P) \cup \kernel(\setpstates \setminus P'))$
+% 	
+% 	}
+% 	
+% \end{proof}
+% 
+% \begin{corollary}
+% 	\label{cor:demorgan}
+% 	For $P$ and $P'$ with $\down P = P$ and $\down P' = P'$, $\kernel(\setpstates \setminus (P \cup P')) = \kernel(\setpstates \setminus P) \cap \kernel(\setpstates \setminus P')$.
+% \end{corollary}
+% 
+% \begin{proof}
+% 	From Lemmas~\ref{lem:involution} and ~\ref{lem:demorgan}. 
+% \end{proof}
+
+\subsection{The Semantic Function for Assertions}
+
+The complete definition of $\dna{-}$ is given in Figure~\ref{fig:dna} below.
+
+\begin{figure}[h]
+	\centering
+		\begin{eqnarray*}
+			\dna{b} & \eqdef & \setof{\pi}{\dnbexpr{b}\pi.s = \bvt} \\
+			\dna{P \conj P'} & \eqdef & \dna{P} \cap \dna{P'} \\
+			\dna{P \disj P'} & \eqdef & \dna{P} \cup \dna{P'} \\
+			% \dna{\neg P} & \eqdef & \kernel\left(\overline{\dna{P}}\right) \\
+			\dna{\exists x \st P} & \eqdef & \bigcup_{v \in \setvalues}\dna{P}\unsubst{x}{v} \\
+			\dna{\forall x \st P} & \eqdef & \bigcap_{v \in \setvalues}\dna{P}\unsubst{x}{v} \\
+			\dna{\emp} & \eqdef & \down \setof{\pi}{\pi.h = \pi.p = \nil \conj \pi.q = \epsilon} \\
+			\dna{\barr} & \eqdef & \down \setof{\pi}{\pi.h = \pi.p = \nil \conj \pi.q = \epsilon \conj \pi.b = \bvt} \\
+			\dna{e \writeto{}{b} e'} & \eqdef & \down \lbrace\pi \,|\, \pi.h = \nil \conj \pi.q = \lsingle{(\dnexpr{e}\pi, \dnexpr{e'}\pi)} \\ 
+			& & \mtab \mtab \conj \pi.t = \funup{}{\ptup{\dnexpr{e}\pi}{(\dnbexpr{b}\pi)}}\rbrace \\
+			\dna{P \seq P'} & \eqdef & \dna{P} \seq \dna{P'} \\ 
+			\dna{P \sep P'} & \eqdef & \dna{P} \sep \dna{P'} \\ 
+			\dna{\expand{P}} & \eqdef & \sexpand{\dna{P}}
+		\end{eqnarray*}
+	\caption{The denotations of assertions}
+	\label{fig:dna}
+\end{figure} 
+
+\begin{lemma}[Closure]
+	\label{lem:assertion-closure}
+	For any assertion $P$, $\down \dna{P} = \dna{P}$. 
+\end{lemma}
+
+\begin{proof}
+	By lemma \ref{lem:down-closure}.1, it is sufficient to show $\down \dna{P} \subseteq \dna{P}$. We proceed by induction on the structure of $P$. 
+	\begin{description}
+		
+		\item[Case $b$:] Suppose $\pi \in \dna{b}$, and $\pi' \leq \pi'$. Because $\pi'.s = \pi.s$, $\dnbexpr{b}\pi'.s = \dnbexpr{b}\pi.s$. Hence $\pi' \in \dna{b}$.
+		
+		\item[Case $P \conj P'$:] 
+		
+		\Calc{
+		
+			$\down \dna{P \conj P'}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\down (\dna{P} \cap \dna{P'})$
+			
+			\conn{=}{Lemma~\ref{lem:closure-lattice}}
+			
+			$(\down \dna{P}) \cap (\down \dna{P'})$
+			
+			\conn{\subseteq}{induction hypothesis}
+			
+			$\dna{P} \cap \dna{P'}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\dna{P \conj P'}$.
+		
+		}
+		
+		\item[Case $P \disj P'$:] Same as previous case. 
+		
+		\item[Case $\exists x \st P$:] 
+		
+		\Calc{
+		
+			$\down \dna{\exists x \st P}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\down \bigcup_{v \in \setvalues} \left(\dna{P}\unsubst{x}{v} \right)$
+			\conn{=}{Lemma~\ref{lem:closure-lattice}}
+			
+			$\bigcup_{v \in \setvalues} \down \left(\dna{P}\unsubst{x}{v} \right)$
+			\conn{=}{Lemma~\ref{lem:closure-unsubst}}
+			
+			$\bigcup_{v \in \setvalues} \left(\down \dna{P}\right)\unsubst{x}{v}$
+			
+			\conn{\subseteq}{induction hypothesis}
+			
+			$\bigcup_{v \in \setvalues} \dna{P}\unsubst{x}{v}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\dna{\exists x \st P}$.
+		
+		}
+		
+		\item{Case $\forall x \st P$:} Same as previous case. 
+		
+		\item{Cases $\emp$, $\barr$ and $e \writeto{f}{b} e'$:} Closed by construction.
+		
+		\item{Cases $(P \sep P')$, $(P \seq P')$} By Lemmas~\ref{lem:sep-closure} and~\ref{lem:seq-closure}. 
+		
+		\item{Case $\expand{P}$:} Closed by the kernel function. 
+		
+	\end{description}
+	
+\end{proof}
+
+\subsection{A Few Semantic Entailments} % (fold)
+\label{sec:a_few_semantic_entailments}
+
+We write $P \sentails P'$ as shorthand for $\dna{P} \subseteq \dna{P}$, and call this relation \emph{semantic entailment}. We write $P \sequiv P$ when both $P \sentails P'$ and $P' \sentails P$, and call this relation \emph{semantic equivalence}. A few examples of such entailments and equivalences follow.\fixme{Check Reynolds' notes for other interesting implications. Also worthwhile to define pure and precise assertions?} 
+
+\begin{eqnarray*}
+	% P &\sequiv& \neg \neg P \\
+	% \neg (P \cup P') & \sequiv & \neg P \cap \neg P' \\
+	% \neg (P \cap P') & \sequiv & \neg P \cup \neg P' \\
+	P \sep P' & \sequiv & P' \sep P \\
+	P \sep (P' \sep P'') & \sequiv & (P \sep P') \sep P'' \\
+	P \seq (P' \seq P'') & \sequiv & (P \seq P') \seq P'' \\
+%	(P \sep P') \conj P'' & \sentails & (P \conj P'') \sep (P' \conj P'')\\
+	P \sep \emp & \sequiv & P \\
+	P \seq \emp & \sequiv & P \\
+	\emp \seq P & \sequiv & P \\
+	\barr & \sentails & \emp \\
+	(P \sep P') \seq \barr & \sequiv & (P \seq \barr) \sep (P' \seq \barr) \\
+	\barr \sep \barr & \sequiv & \barr \\
+	\barr \seq \barr & \sequiv & \barr \\
+	(P \sep P') \seq \barr & \sequiv & (P \seq \barr) \sep (P' \seq \barr) \\
+	e \writeto{}{b} e' \sep \barr & \sequiv & e \writeto{}{b} e' \\
+	e \writeto{}{\bexpf} e' \seq e \writeto{}{b} e'' \seq \barr & \sequiv & e \writeto{}{b} e''\seq \barr \\ 
+	e \writeto{}{\bexpt} e' \seq e \writeto{}{b} e'' & \sequiv & \bexpf \\ 
+	P \seq \barr  & \sentails & \expand{P \seq \barr} \\
+	\expand{\emp}  & \sequiv & \emp
+\end{eqnarray*}
+
+% subsection a_few_semantic_entailments (end)
+
+
+\section{Static Semantics} % (fold)
+\label{sec:static_semantics}
+
+The set of free variables of an assertion $P$, written $\fv{P}$, is defined in Figure~\ref{fig:assertion-fv}. 
+
+\begin{figure}[h]
+	\centering
+	\begin{eqnarray*}
+		\fv{b} & \eqdef & \fv{b}\text{ as defined in Fig.~\ref{fig:expfv}} \\ 
+		\fv{P \conj P'} & \eqdef & \fv{P} \cup \fv{P'} \\
+		\fv{P \disj P'} & \eqdef & \fv{P} \cup \fv{P'} \\
+		\fv{\exists x \st P} & \eqdef & \fv{P} \setminus \set{x} \\
+		\fv{\forall x \st P} & \eqdef & \fv{P} \setminus \set{x} \\
+		\fv{\emp} & \eqdef & \nil \\
+		\fv{\barr} & \eqdef & \nil \\
+		\fv{e \writeto{f}{b} e'} & \eqdef & \fv{e} \cup \fv{e'} \cup \fv{f} \cup \fv{b} \\
+		\fv{P \seq P'} & \eqdef & \fv{P} \cup \fv{P'} \\
+		\fv{P \sep P'} & \eqdef & \fv{P} \cup \fv{P'} \\
+		\fv{\expand{P}} & \eqdef & \fv{P}
+ 	\end{eqnarray*}
+	\caption{Free variables of assertions}
+	\label{fig:assertion-fv}
+\end{figure}
+
+
+\begin{lemma}
+	\label{lem:assertion-fv}
+	For states $\pi_1, \pi_2$ and assertions $P$, if $\pi_1 \stcong{\fv{P}} \pi_2$, then $\pi_1 \in \dna{P}$ if and only if $\pi_2 \in \dna{P}$. 
+\end{lemma}
+
+\begin{proof}
+	The only interesting cases are for boolean expressions and quantifiers. The former follows from Lemma~\ref{lem:expr-fv}. For the latter, suppose that $\pi_1 \stcong{\fv{\exists x \st P}} \pi_2$, i.e. that $\pi_1 \stcong{\fv{P} \setminus \set{x}} \pi_2$. Let $\pi_1 \in \dna{\exists x \st P}$, i.e., for some $v \in \setvalues$, $\pi_1 \in \dna{P}\unsubst{x}{v}$. By definition, $\pi_1 \subst{x}{v} \in \dna{P}$. Note that $\pi_1 \subst{x}{v} \stcong{\fv{P}} \pi_2 \subst{x}{v}$. By the induction hypothesis, $\pi_2 \subst{x}{v} \in \dna{P}$, hence $\pi_2 \in \dna{P}\unsubst{x}{v}$, and so finally $\pi_2 \in \dna{\exists x \st P}$. 
+\end{proof}
+
+
+% section assertion-semantics (end)
+
+\subsection{Capture-avoiding Substitution} % (fold)
+\label{sub:capture_avoiding_substitution}
+
+For assertion $P$, identifier $x$ and expression $e$,
+the \emph{capture-avoiding substitutions} $P \subst{x}{e}$ are defined
+as follows: 
+
+\begin{eqnarray*}
+  \bexpf\subst{x}{e} & \eqdef & \bexpf\\
+  (e_1 = e_2)\subst{x}{e} & \eqdef & (e_1\subst{x}{e}) = (e_2\subst{x}{e})\\
+  (P \conj P')\subst{x}{e} & \eqdef & (P\subst{x}{e}) \conj (P' \subst{x}{e}) \\
+  (\exists y \st {P})\subst{x}{e} & \eqdef &
+  \begin{cases}
+    \exists z \st ((P\subst{y}{z})\subst{x}{e}) & \text{if $x \in
+    \fv{\exists z \st P}$, where} \\
+	&  \text{\mtab $z = \fresh{\fv{e} \cup \fv{\exists y \st P}}$}\\
+    \exists y \st P & \text{otherwise}\\
+  \end{cases}\\
+  \vdots~ & \eqdef & ~\vdots
+\end{eqnarray*}
+The function $\fresh{\mathcal{P}}$ above, for a set of assertions $\mathcal{P}$, returns an identifier that is not free in any of the assertions of $\mathcal{P}$. That is, \begin{equation}\label{eq:fresh} \fresh{\mathcal{P}} \notin \bigcup_{P \in \mathcal{P}} \fv{P}.\end{equation} Clearly there are a variety of ways to define $\fresh{}$---e.g., $x^{\overbrace{'''\cdots'}^{n}}$, where $n$ is the least number of annotated primes with which $x$ satisfies Equation~\ref{eq:fresh}---and we do not bother to fix any particular definition here.
+
+The semantics of substitution can be described using a generalization of the semantic substitution operation (in Section~\ref{sec:assertion-semantics}) from values $\unsubst{x}{v}$ to resolvers $\unsubst{x}{\rho}$, using the concept of resolver updates (in Section~\ref{sub:resolver_update}). As before, we first define $\pi \subst{x}{\rho}$ as shorthand for $\funup{\pi}{\ptup{s(x)}{\rho(\pi.s)}}$. We then consider $\subst{x}{\rho}$ as a function in $\setpstates \tfun \setpstates$ and consider the preimage: \[ \pi \unsubst{x}{\rho} \eqdef \setof{\pi'}{\pi = \pi'\subst{x}{\rho}}.\] Then lift this function pointwise to sets of states: \[ S \unsubst{x}{\rho} \eqdef \setof{\pi'}{\exists \pi \in S \st \pi = \pi'\subst{x}{\rho}}.\]
+
+\begin{lemma}[Substitution]
+	\label{lem:substitution-unsubstitution}
+	For an assertion $P$, identifier $x$ and expression $e$, \dna{P\subst{x}{e}} = \dna{P}\unsubst{x}{\dnexpr{e}}. 
+\end{lemma}
+
+\begin{proof}
+	FIXME. Lots of auxiliary lemmas needed for this, but it should be mostly the same as for the earlier sequential logic. This is only (?) used to show the soundness of the assignment axiom.  
+\end{proof}
+
+% subsection capture_avoiding_substitution (end)
+
+
+\section{Assertion Language Design Issues} % (fold)
+\label{sec:assertion_language_design_issues}
+
+Per-location top versus global top. Per-location versus counting permissions, and how this relates to the semantics of allocation and disposal. Bar as an atomic formula versus bar as a unary logical operation. Why a satisfaction semantics is not sufficient for denoting down-closed sets of models. 
+
+Why negation is hard to define: the complement of a closed set is not necessarily closed; instead it is open. But formulas must (?) denote down-closed sets. The two obvious workarounds don't work: closing the complement of a set is too weak ($\neg e \mapsto e'$ is equivalent to $\top$, and so $P \conj \neg P$ is not generally equivalent to $\bot$), and the kernel 
+of the complement is too strong (consider $a < b$ and $\neg \set{a}$ to see that $\neg \neg \set{a} = \set{a,b}$, hence $P \onlyif \neg\neg P$, but not the other way around). 
+% section assertion_language_design_issues (end)
+
+\chapter{The Specification Logic}
+
+In this section we describe a logic of partial-correctness specifications, which we show to be sound w.r.t. an x86-like memory model. In Section~\ref{sec:command_specifications} we describe a language of specifications for commands, and in Section~\ref{sec:the_command_logic} a logic for deriving valid command specifications. A soundness argument is given in Section~\ref{sec:soundness}. In Section~\ref{sec:program_specifications} we state what conclusions can be drawn about programs that consist of proved commands, and justify this statement.  
+
+\section{Command Specifications} % (fold)
+\label{sec:command_specifications}
+
+Following work on Concurrent Separation Logic by Brookes \cite{DBLP:journals/tcs/Brookes07} and O'Hearn \cite{DBLP:journals/tcs/OHearn07}, \emph{command specifications} are four-tuples, written as follows: \[ \spec{J}{P}{c}{Q}\] where $c$ is a command and $J$, $P$ and $Q$ are assertions. The assertion $J$ is called the \emph{invariant}, $P$ the \emph{precondition}, and $Q$ the \emph{postcondition}. Although not enforced syntactically, the invariant $J$ should not describe pending writes, only values in the store and the heap. This is because only the models of $J$ in which all pending writes have been committed to memory will be used in its interpretation in the context of a command specification. (This is made precise in Section~\ref{sec:the_meaning_of_command_specifications}.)
+
+% section command_specifications (end)
+
+\section{The Meaning of Command Specifications} % (fold)
+\label{sec:the_meaning_of_command_specifications}
+% 
+% In the sequel, we write $\downpstates$ as an abbreviation for the set of down-closed subsets of $\setpstates$: \[ \downpstates = \setof{A \subseteq \setpstates}{\down A = A}. \]
+
+We follow Vafeiadis \cite{V11} in using a family of \emph{configuration safety} predicates, $\safe{n}{c, \pi,J,Q}$, to give meaning to specifications, for $n \in \setnaturals$, $\pi \in \setpstates$ and assertions $J$ and $Q$. The meaning of $\safe{n}{c,\pi,J,Q}$ is defined by natural number induction on $n$ as follows. In the base case, the predicate $\safe{0}{c,\pi,J,Q}$ holds always. In the inductive case, for $n \in \setnaturals$, $\safe{n+1}{c, \pi,J,Q}$ holds exactly when the following conditions hold: \begin{enumerate}
+	\item If $c = \cskip$ then $\pi \in \dna{Q}$. 
+	
+	\item For all $\pi_1,\pi_J,\pi_F \in \setpstates$, if
+	
+	\begin{enumerate}
+		
+		\item $\pi_J \in \sexpand{\dna{J}}$,
+		
+		\item $\fullst{\pi_1}$ and
+		
+		\item $\pi_1 \in (\pi_J \sep \pi_F \sep \pi)$, 
+
+	\end{enumerate} then $c,\concst{\pi_1} \noestep \abort$. 
+
+	\item For all $\pi_1,\pi_J,\pi_F \in \setpstates$, if 
+	
+	\begin{enumerate}
+		
+		\item $\pi_J \in \sexpand{\dna{J}}$,
+		
+		\item $\fullst{\pi_1}$ and
+		
+		\item $\pi_1 \in (\pi_J \sep (\pi_F \seq \pi))$, 
+				
+	\end{enumerate} then $c,\concst{\pi_1} \noestep \abort$. 
+
+	
+	\item For all $\pi_1,\pi_J,\pi_F \in \setpstates$, $c' \in \comms$ and $\sigma' \in \setstates$, if 
+	
+	\begin{enumerate}
+		
+		\item $\pi_J \in \sexpand{\dna{J}}$,
+		
+		\item $\fullst{\pi_1}$,
+		
+		\item $\pi_1 \in (\pi_J \sep \pi_F \sep \pi)$ and
+		
+		\item $c,\concst{\pi_1} \estep c',\sigma'$,
+		
+	\end{enumerate} 
+	
+	then there exists $\pi',\pi'_J,\pi'_F \in \setpstates$ such that 
+	
+	\begin{enumerate}[i)]
+		
+		\item $\pi'_J \in \sexpand{\dna{J}}$,
+		
+		\item $\pi'_F \leq \pi_F$,
+		
+		\item $\abst{\sigma'} \in (\pi'_J \sep \pi'_F \sep \pi')$ and
+		
+		\item $\safe{n}{c', \pi', J, Q}$.
+		
+	\end{enumerate}
+
+	\item For all $\pi_1,\pi_J,\pi_F \in \setpstates$, $c' \in \comms$ and $\sigma' \in \setstates$, if 
+	
+	\begin{enumerate}
+		
+		\item $\pi_J \in \sexpand{\dna{J}}$,
+		
+		\item $\fullst{\pi_1}$,
+		
+		\item $\pi_1 \in (\pi_J \sep (\pi_F \seq \pi)$ and
+		
+		\item $c,\concst{\pi_1} \estep c',\sigma'$,
+		
+	\end{enumerate} 
+	
+	then there exists $\pi',\pi'_J,\pi'_F \in \setpstates$ such that 
+	
+	\begin{enumerate}[i)]
+		
+		\item $\pi'_J \in \sexpand{\dna{J}}$,
+		
+		\item $\pi'_F \leq \pi_F$,
+		
+		\item $\abst{\sigma'} \in (\pi_J \sep (\pi'_F \seq \pi'))$, and
+		
+		\item $\safe{n}{c', \pi', J, Q}$.
+		
+	\end{enumerate}
+	
+\end{enumerate}
+
+For a set of states $A \subseteq \setpstates$, we write $\safe{n}{c,A,J,Q}$ as shorthand for $\forall \pi \in A \st \safe{n}{c,\pi,J,Q}$. A command specification is defined to be \emph{true}, written $\truespec{J}{P}{c}{Q}$, when the following condition holds: \[ \truespec{J}{P}{c}{Q} \;\iffdef\; \forall n\in \setnaturals \st \safe{n}{c,\dna{P},J,Q}.\]
+
+% section the_meaning_of_command_specifications (end)
+
+
+
+\section{The Command Logic} % (fold)
+\label{sec:the_command_logic}
+
+Axioms of the command logic are shown in Figure~\ref{fig:command-logic-axioms}.
+\begin{figure}[h]
+	\centering
+	
+		\infax[skip]{\spec{J}{P}{\cskip}{P}}
+		
+		\vspace{1em}
+	
+		\infrule[assign]{x \notin \fv{J}}{\spec{J}{P\subst{x}{e}}{\cassign{x}{e}}{P}}
+		
+		\vspace{1em}
+	
+		\infax[assume]{\spec{J}{P}{\cassume{b}}{P \conj b}}
+		
+		\vspace{1em}
+	
+		\infrule[load]{x \notin \fv{e, e', J, P}}{\spec{J}{e \writeto{f}{\bexpt} e' \seq P}{\cload{x}{e}}{(e \writeto{f}{\bexpt} e' \seq P) \conj x = e'}}
+		
+		\vspace{1em}
+	
+		\infax[store]{\spec{J}{e \writeto{1}{\bexpt} e \seq P}{\cstore{e}{e''}}{(e \writeto{1}{\bexpf} e' \seq P \seq e \writeto{1}{\bexpt} e'') \conj x = e'}}
+		
+		\vspace{1em}
+	
+		\infrule[alloc]{x \notin \fv{e, J, P}}{\spec{J}{\emp}{\cnew{x}{e}}{x \writeto{1}{\bexpt} e \seq \barr}}
+		
+		\vspace{1em}
+	
+		\infax[free]{\spec{J}{x \writeto{1}{\bexpt} e \seq \barr}{\cfree{e}}{\barr}}
+		
+		
+	\caption{Axioms of the command logic}
+	\label{fig:command-logic-axioms}
+\end{figure}
+
+Inference rules of the command logic are shown in Figure~\ref{fig:command-logic-inference-rules}. 
+
+\begin{figure}[h]
+	\centering
+	
+	\infrule[seq]{\spec{J}{P}{c}{Q} \andif \spec{J}{Q}{c'}{R}}{\spec{J}{P}{\cseq{c}{c'}}{R}}
+	
+	\vspace{1em}
+	
+	\infrule[choice]{\spec{J}{P}{c}{Q} \andif \spec{J}{P}{c'}{Q}}{\spec{J}{P}{\cchoice{c}{c'}}{Q}}
+
+	\vspace{1em}
+	
+	\infrule[loop]{\spec{J}{P}{c}{P}}{\spec{J}{P}{\cloop{c}}{P}}
+	
+	\vspace{1em}
+	
+	\infrule[atom]{\spec{\emp}{\expand{J} \sep P}{c}{\expand{J} \sep Q}}{\spec{J}{P}{\catomic{c}}{Q}}
+	
+	\vspace{1em}
+	
+	\infrule[sep-frame]{\spec{J}{P}{c}{Q} \andif \fv{R} \cap \mod{c} = \nil}{\spec{J}{R \sep P}{c}{R \sep Q}}
+	
+	\vspace{1em}
+
+	\infrule[seq-frame]{\spec{J}{P}{c}{Q} \andif \fv{R} \cap \mod{c} = \nil}{\spec{J}{R \seq P}{c}{R \seq Q}}
+	
+	\vspace{1em}
+
+	\infrule[conseq]{\spec{J}{P}{c}{Q} \andif P' \sentails P \andif Q \sentails Q'}{\spec{J}{P'}{c}{Q'}}
+
+	\vspace{1em}
+
+	\infrule[disj]{\spec{J}{P}{c}{Q} \andif \spec{J}{P'}{c}{Q}}{\spec{J}{P \disj P'}{c}{Q'}}
+	
+	\vspace{1em}
+	
+	\infrule[ex]{\spec{J}{P}{c}{Q} \andif x \notin \fv{c}}{\spec{J}{\exists x \st P}{c}{Q'}}
+
+	\caption{Inference rules of the command logic}
+	\label{fig:command-logic-inference-rules}
+\end{figure}
+
+% section the_command_logic (end)
+
+\section{Soundness of the Command Logic} % (fold)
+\label{sec:soundness}
+
+\begin{lemma}
+	\label{lem:safe-monotonic}
+	If $\safe{n}{c,\pi,J,Q}$ and $m \leq n$ then $\safe{m}{c,\pi,J,Q}$. 
+\end{lemma}
+
+\begin{proof}
+	By natural-number induction on $m$. 
+\end{proof}
+
+\begin{lemma}
+	\label{lem:save-fv}
+	If $\safe{n}{c,\pi,J,Q}$ and $\pi \stcong{\fv{c,J,Q}} \pi'$ then $\safe{n}{c,\pi,J,Q}$. 
+\end{lemma}
+
+\begin{proof}
+	By Lemmas~\ref{lem:comm-fv-abort}, \ref{lem:comm-fv-step} and~\ref{lem:assertion-fv} and the definition of $\safe{n}{c,\pi,J,Q}$.
+\end{proof}
+
+\begin{lemma}\label{lem:safe-tau}
+	If $\safe{n}{c,\pi,J,Q}$ and $\pi' \leq \pi$ then $\safe{n}{c,\pi',J,Q}$. 
+\end{lemma}
+
+\begin{theorem}[Sequential soundness]
+	\label{thm:sequential-soundness}
+	If $\spec{J}{P}{c}{Q}$ then $\truespec{J}{P}{c}{Q}$. 
+\end{theorem}
+
+\begin{proof}
+	We show that each axiom is true, and that, for each inference rule, the truth of the antecedent implies the truth of the consequent. Truth of an arbitrary derivation then follows by a straightforward induction on the rules of the derivation. 
+	
+	\begin{description}
+		\item[(\textsc{skip})] Follows immediately from the following lemma. 
+		
+		\begin{lemma}\label{lem:skip-sound}
+			If $\pi \in \dna{Q}$ then $\safe{n}{\cskip,\pi,J,Q}$.
+		\end{lemma}
+		
+		\begin{proof}
+			If $n = 0$ then safety holds by definition. Otherwise, we consider the five parts of the definition in turn. For part (1), $\pi \in \dna{Q}$ by assumption. For (2,3), $\cskip,\sigma \noestep \abort$, for all $\sigma$, by definition. (See Figures~\ref{fig:comm-ext-abort-rel}, \ref{fig:comm-abort-rel} and~\ref{fig:dnpcomm}.) 
+			
+			For (4), assume $\pi_1 \in (\pi_J \sep \pi_F \sep \pi)$ and $\cskip, \concst{\pi_1} \step c',\sigma'$. We must show $\pi'_J \in \sexpand{\dna{J}}$, $\pi'_F \leq \pi_F$ and $\pi'$ such that $\abst{\sigma'} \in (\pi'_J \sep \pi_J \sep \pi')$ and $\safe{n}{c',\pi',J,Q}$. 
+			
+			Note that $\cskip,\concst{\pi_1} \step c',\sigma'$ only when $c' = \cskip$ and either $\sigma' = \concst{\pi_1}$ by (\textsc{prim}) or $\concst{\pi_1} \taustep \sigma'$ by (\textsc{tau}). (See Figures~\ref{fig:comm-ext-red-rel}, \ref{fig:comm-red-rel} and~\ref{fig:dnpcomm}.) In either case, $\sigma' \leq \concst{\pi_1}$. By Lemma~\ref{lem:abst-tau}, $\abst{\sigma'} \leq \abst{\concst{\pi_1}}$ and by Lemma~\ref{lem:abst-concst}, $\abst{\concst{\pi_1}} = \pi_1$, hence $\abst{\sigma'} \leq \pi_1$. 
+			
+			By Lemma~\ref{lem:sep-down} there exists $\pi'_J \leq \pi_J$, $\pi'_F \leq \pi_F$ and $\pi' \leq \pi$ such that $\abst{\sigma'} \in (\pi'_J \sep \pi'_F \sep \pi')$. By Lemma~\ref{lem:assertion-closure}, $\sexpand{\dna{J}}$ is down closed, and so $\pi'_J \in \sexpand{\dna{J}}$. Similarly, $\dna{Q}$ is down closed, so $\pi' \in \dna{Q}$. By the inductive hypothesis, $\safe{n}{\cskip, \pi', J, Q}$, which completes part (4). 
+			
+			Part (5) follows similarly, but using Lemma~\ref{lem:seq-down} to show the existence of the appropriate $\pi'_J$, $\pi'_F$ and $\pi'$. 
+			
+		\end{proof}
+		
+		\item[(\textsc{assign})] 
+		
+		\item[(\textsc{sep-frame})] I need to develop semantic equivalents to free and modified variables for this. 
+		
+		\begin{lemma}
+			\label{lem:sep-frame-sound}
+			If $\safe{n}{c,\pi,J,Q}$ and $\fv{R} \cap \mod{c}$, $\mathcal{R} \in \downpstates$ and $\mathcal{R} \subseteq \dna{R}$ then $\safe{n}{c,\left(\down \pi \sep \mathcal{R}\right), J , Q \sep R}$. 
+		\end{lemma}
+		
+		\begin{proof}
+			We proceed by induction on $n$. The base case is trivial. For the inductive step we assume $\safe{n+1}{c, \pi, J, Q}$ show $\safe{n+1}{c, (\down \pi \sep \mathcal{R}), J, Q \sep R}$. 
+			
+			For part (1), we have by the inductive hypothesis that $\pi \in \dna{Q}$, and hence also that $\down \pi \subseteq \dna{Q}$. It follows that $\down \pi \sep \mathcal{R} \subseteq \dna{Q} \sep \mathcal{R} \subseteq \dna{Q} \sep \dna{R} = \dna{Q \sep R}$. 
+			
+			For part (2), we must show, for $\pi' \in (\down \pi \sep \mathcal{R})$, $\mathcal{F} \in \downpstates$ and $\pi_1 \in (\sexpand{\dna{J}} \sep \mathcal{F} \sep \down \pi')$, that $c,\concst{\pi_1} \noestep \abort$. Because $\down \pi' \subseteq (\down \pi \sep \mathcal{R})$, it follows that $\pi_1 \in (\sexpand{\dna{J}} \sep \mathcal{F} \sep \down \pi \sep \mathcal{R}) = (\sexpand{\dna{J}} \sep \mathcal{F} \sep \mathcal{R} \sep \down \pi)$. We may thus instantiate the frame in the inductive hypothesis with $(\mathcal{F} \sep \mathcal{R})$ to conclude that $c,\concst{\pi_1} \noestep \abort$. 
+			
+			For part (3), we must show, for $\pi' \in (\down \pi \sep \mathcal{R})$, $\mathcal{F} \in \downpstates$ and $\pi_1 \in (\sexpand{\dna{J}} \sep (\mathcal{F} \seq \down \pi'))$, that $c,\concst{\pi_1} \noestep \abort$. Because $\down \pi' \subseteq (\down \pi \sep \mathcal{R})$, it follows that $\pi_1 \in (\sexpand{\dna{J}} \sep (\mathcal{F} \seq (\down \pi \sep \mathcal{R}))) = (\sexpand{\dna{J}} \sep (\mathcal{F} \seq (\mathcal{R} \sep \down \pi )))$. We may thus instantiate the frame in the inductive hypothesis with $(\mathcal{F} \sep \mathcal{R})$ to conclude that $c,\concst{\pi_1} \noestep \abort$. 
+			 
+		\end{proof}
+		
+	\end{description}
+\end{proof}
+
+% section soundness (end)
+
+
+
+\section{Program Specifications} % (fold)
+\label{sec:program_specifications}
+
+% section program_specifications (end)
+
+\chapter{Examples}
+
+\section{Very Small Examples} % (fold)
+
+\label{sec:very_small_examples}
+
+% section very_small_examples (end)
+
+\section{Variations on Message Passing} % (fold)
+\label{sec:variations_on_message_passing}
+
+% section variations_on_message_passing (end)
+
+\section{Concurrent Stacks} % (fold)
+\label{sec:concurrent_stacks}
+
+% section concurrent_stacks (end)
+
+\section{Concurrent Reclamation and Hazard Pointers} % (fold)
+\label{sec:hazard_pointers}
+
+% section hazard_pointers (end)
+
+\chapter{Fractional Permissions}
+
+See \cite{lola11}. 
+
+\section{Shares and Permissions} % (fold)
+\label{sec:permissions}
+
+Fractional expressions, $\fracs$, are a superset of the integer expressions defined in Section~\ref{sec:expressions}: \begin{align*}
+	\fracs~f \bnfdef e \bnfbar \left(\nicefrac{f}{f'}\right)
+\end{align*}
+The denotations of (some) fractions is given by the rationals: \begin{eqnarray*}
+	\dnfrac{e}s & \eqdef & \dnexpr{e}s \\
+	\dnfrac{\nicefrac{f}{f'}}s & \eqdef & \begin{cases} 
+		\left(\nicefrac{\dnfrac{f}s}{\dnfrac{f'}s}\right) & \text{if $\dnfrac{f} \neq \bot$ and $\dnfrac{f'} \neq \bot$ and $\dnfrac{f'} \neq 0$} \\
+		\bot & \text{otherwise} 
+	\end{cases}
+\end{eqnarray*} 
+
+An \emph{ownership share} is a rational number $r$ such that $0 \leq r \leq 1$. A \emph{top share} is a boolean value. As mentioned earlier, the denotation of boolean expressions are boolean values. An ownership-top pair is called a \emph{share}, and the set of these pairs is abbreviated as $\setshares$. Given a boolean expression-fraction pair $(f,b)$, we write define $\dnshare{f,b}$ as follows: \[ \dnshare{f,b}s \eqdef \begin{cases}
+	(\dnfrac{f}s,\dnbexpr{b}s) & \text{if $\dnfrac{f}s \neq \top$} \\
+	\bot & \text{otherwise.}
+\end{cases} \] As before, we overload $\dnfrac{f}\pi \eqdef \dnfrac{f}\pi.s$ and $\dnshare{f,b}\pi \eqdef \dnshare{f,b}\pi.s$. 
+
+We now define two partial functions on shares, which we think of as addition and multiplication: \begin{eqnarray}
+	(s,t) \shadd (s',t') & \eqdef & \begin{cases}
+		(s+s',t) & \text{if $s + s' \leq 1$ and $t = t'$} \\
+		\bot & \text{otherwise}
+	\end{cases} \\
+	(s,t) \shmult (s',t') & \eqdef & \begin{cases}
+		(s',t') & \text{if $t \neq \bvf$} \\
+		\bot & \text{otherwise}
+	\end{cases}
+\end{eqnarray} 
+These operations are associative and addition is also commutative, but they do not form a ring. (There is no additive identity, for example.) They also obey a so-called \emph{exchange law}, as in Concurrent Kleene Algebra \cite{DBLP:journals/ipl/WehrmanHO09, DBLP:conf/concur/HoareMSW09, DBLP:conf/RelMiCS/HoareMSW09, DBLP:journals/jlp/HoareMSW11}. 
+
+\begin{lemma}[Share exchange]
+	\label{lem:share-exchange}
+	For shares $p,q,r,s$, $(p \shadd q) \shmult (r \shadd s) = p \shmult r \shadd q \shmult s$, when the left-hand side of the equation is defined.  
+\end{lemma}
+
+A \emph{permission structure} is a finite partial function in $\setlocations \fpfun \setshares$, which is abbreviated as $\setperms$. The previous two operations are lifted to permission structures: \begin{eqnarray*}
+	p \shadd p' & \eqdef & \lift{\shadd}(p,p') \\
+	p \shmult p' & \eqdef & \lift{\shmult}(p,p').
+\end{eqnarray*} We write $p \compat_{\shadd} p'$ when $p \shadd p'$ is defined, and similarly $p \compat_{\shmult} p'$ when $p \shmult p'$. 
+
+\section{Permission Assertions} % (fold)
+\label{sec:permission-assertions}
+
+The grammar of assertions is as follows: 
+\begin{align*}
+	\setassertions~P \bnfdef {} & b \bnfbar P \disj P' \bnfbar P \conj P' \bnfbar \forall x \st P \bnfbar \exists x \st P \\
+	&  \bnfbar \emp \bnfbar e \writeto{f}{b} e' \bnfbar \barr \bnfbar P \seq P' \bnfbar P \sep P' \bnfbar \expand{P}
+\end{align*} 
+
+The informal meaning of the symbols from first-order logic is traditional: $P \disj P'$ is satisfied by a model that satisfies either $P$ or $P'$, etc. The informal meaning of $\emp$ and $P \sep P'$ is as in separation logic. The \emph{leads-to} assertion $e \writeto{f}{b} e'$ indicates a single buffered write in a write buffer with share $(f,b)$, and $\barr$ is used to describe the result of fencing a write buffers. Finally, $\expand{P}$ is used to give meaning to heap-only invariants in an x86-like setting.
+
+In the leads-to assertion, we sometimes omit the decorations. We write $e \writeto{}{b} e'$ as shorthand for $e \writeto{1}{b} e'$, $e \writeto{f}{} e'$ as shorthand for $e \writeto{f}{\bvt} e'$, and $e \leadsto e'$ as shorthand for $e \writeto{1}{\bvt} e'$. We shall additionally find it useful to define a \emph{points-to} assertion $e \mapsto e'$ as shorthand for $e \leadsto e' \seq \barr$. 
+
+% section assertions (end)
+
+
+
+\section{Fractional Single-Processor States} % (fold)
+\label{sec:fractional_states}
+
+
+A \emph{fractional state} $\pi$ is a record, where $\pi.s$ is a store, $\pi.h$ is a heap, $\pi.q$ is a write buffer, $\pi.p$ is a permission structure, and $\pi.b$ is a boolean value, which we call the ``bottom'' flag, subject to the following constraints: \begin{align}
+	\dom{\pi.p} = \dom{\pi.h} \cup \dom{\elems{\pi.q}} \\
+	\pi.h = \nil \disj \pi.b = \bvt \\
+	\forall \ell \st \ell \in \elems{\pi.q} \onlyif \pi.p(\ell) > \nicefrac{1}{2}
+\end{align} The set of partial states is abbreviated as $\setpstates$.
+
+We extend the flushing relation from Section~\ref{sub:flushing}, $\pi \taustep \pi'$ to partial single-processor states as follows:  \begin{equation}
+\begin{split}
+	\label{eq:ptaustep}
+	\pi \taustep \pi' \iffdef {} & \exists \ell, v, q' \st \pi.q = \lsingle{(\ell,v)}\lapp q' \conj \pi' = \funup{\pi}{\ptup{h(\ell)}{v},\,\ptup{q}{q'},\,\ptup{b}{\bvt}}
+\end{split}
+\end{equation} The flushing ordering is similarly extended, so that $\pi' \leq \pi$ when $\pi \taustep \pi'$. 
+
+\paragraph{Relating States and Fractional States}
+
+One way to think of the partial states is as \emph{abstractions} of complete states, or alternatively to think of complete states as \emph{concretizations} of (certain) abstract states. The following definitions make this intuition more precise. 
+
+If every location defined by a partial state has full permission, and if the bottom/flushing flag is set, then it is called \emph{full} and may used to represent a state as defined in Section~\ref{sec:sp-states}. The predicate $\fullst{\pi}$ defines this condition. \begin{equation}
+	\fullst{\pi}  \iffdef   \pi.b = \bvt \conj \forall \ell \in \dom{\pi.p} \st \pi.p(\ell) = (1,\bvt) 
+\end{equation}
+The partial function $\concst{\pi}$ associates a state with each full partial state. \begin{equation}
+	\concst{\pi} \eqdef \begin{cases}
+		\reclit{\ptup{s}{\pi.s},\,\ptup{h}{\pi.h},\,\ptup{q}{\pi.q}} & \text{if $\fullst{\pi}$} \\
+		\bot & \text{otherwise.}
+	\end{cases}
+\end{equation}
+
+Similarly, every state $\sigma$ may be used to represent a unique full partial state $\abst{\sigma}$. \begin{equation}
+	\abst{\sigma} \eqdef \funup{\sigma}{\ptup{p}{\lambda \ell . \begin{cases}
+		(1,t) & \text{if $\ell \in \alloc{\sigma}$} \\
+		\bot & \text{otherwise}
+	\end{cases},\, \ptup{b}{\begin{cases}
+		\bvt & \text{if $\dom{\pi.h} \neq \nil$} \\
+		\bvf & \text{otherwise}
+	\end{cases}}}}
+\end{equation}
+
+The following lemmas describe the functorial nature of the abstration and concretion functions. 
+
+\begin{lemma}
+	\label{lem:concst-tau}
+	If $\fullst{\pi}$ and $\pi \taustep \pi_1$ then $\fullst{\pi_1}$ and $\concst{\pi} \taustep \concst{\pi_1}$. 
+\end{lemma}
+
+\begin{lemma}
+	\label{lem:abst-tau}
+	If $\sigma \taustep \sigma_1$ then $\abst{\sigma} \taustep \abst{\sigma_1}$. 
+\end{lemma}
+
+The following lemmas describe the adjunctive nature of the abstraction and concretion functions.
+
+\begin{lemma}
+	\label{lem:concst-abst}
+	For state $\sigma$, $\fullst{\abst{\sigma}}$ and $\concst{\abst{\sigma}} = \sigma$. 
+\end{lemma}
+
+\begin{lemma}
+	\label{lem:abst-concst}
+	For partial state $\pi$ such that $\fullst{\pi}$, $\abst{\concst{\pi}} = \pi$.
+\end{lemma}
+
+% section fractional_states (end)
+
+\section{The Meaning of Fractional Assertions} % (fold)
+\label{sec:permission-assertion-semantics}
+[
+The meaning of an assertion is a set of partial single-processor states that satisfies a certain closure property, described shortly. Meaning is assigned to each assertion $P$ by a total function $\dna{-}$, defined by recursion on the structure of $P$. In order to define this function, we must first define a number of auxiliary functions and notions.
+
+\subsection{Fractional Separating Conjunctions}
+
+We call assertions $P \sep P'$ \emph{interleaving separating conjunctions}. Their models will be given using an associated model-theoretic p function $\pi \sep \pi'$ in $(\setpstates \times \setpstates) \tfun \powerset{\setpstates}$. Informally, $\pi \sep \pi'$ describes all the possible interleavings of the buffers of $\pi$ and $\pi'$. First, we describe the definedness condition for the interleaving conjunction. Two partial states are compatible w.r.t. interleaving, written $\defined{\pi \sep \pi'}$, if their stores are equal, their heaps agree, the summation of their permission structures is defined, and their bottom flags agree: \[ \defined{\pi \sep \pi'} \iffdef \pi.s = \pi'.s \conj \pi.h \compat \pi'.h \conj \pi.p \compat_{\shadd} \pi'.p \conj \pi.b = \pi'.b\]
+The function $\pi \sep \pi'$ is then defined, when $\defined{\pi \sep \pi'}$, as follows:\[ 
+	\pi \sep \pi' \eqdef \setof{\funup{\pi}{\ptup{h}{\pi.h \cup \pi'.h,\,\ptup{q}{l},\, \ptup{p}{\pi.p \shadd \pi'.p}}}}{l \in \pi.q \merge \pi'.q}
+\] Note that $\pi \sep \pi' \neq \nil$ when $\defined{\pi \sep \pi'}$.
+
+Unless stated explicitly, when we write $(\pi_1 \sep \pi_2)$, it is implied that $\defined{\pi_1 \sep \pi_2}$. And, as justified by the previous lemmas, we write $(\pi_1 \sep \pi_2 \sep \pi_3)$ as shorthand for the set $\setof{\pi \in (\pi_{12} \sep \pi_3)}{\exists \pi_{12} \in (\pi_1 \sep \pi_2)}$. 
+
+The interleaving separating conjunction is lifted to sets of states in the following way: \[ A \sep A' \eqdef \kernel\left(\bigcup \setof{\pi \sep \pi'}{\pi \in A \conj \pi' \in A' \conj \defined{\pi \sep \pi'}}\right).\] In the definition, the kernel function is composed with the naive pointwise lifting to sets to ensure that the resulting set of states is down closed. (FIXME: Much more needs to be said about this, including an explanation for why the resulting set isn't simply necessary down closed without extra massaging, and why simply applying the down-closure operation leads to unsoundness.)
+
+We call assertions $P \seq P'$ \emph{sequential separating conjunctions}. Their models will be given using an associated model-theoretic partial function $\pi \seq \pi'$ in $(\setpstates \times \setpstates) \pfun \setpstates$. Informally, $\pi \seq \pi'$ describes the concatenation of the buffers of $\pi$ and $\pi'$. First, we describe the definedness condition for the sequential conjunction. Two partial states are compatible w.r.t. the sequential conjunction, written $\defined{\pi \seq \pi'}$ if their stores are equal, the multiplication of their permission structures is defined, and either their heaps agree or the right-hand bottom flag is set: \[ \defined{\pi \seq \pi'} \iffdef \pi.s = \pi'.s \conj \pi.p \compat_{\shmult} \pi'.p \conj (\pi'.b = \bvt \disj \pi.h \compat \pi'.h)\]
+The function $\pi \seq \pi'$ is then defined, when $\defined{\pi \seq \pi'}$, as follows: \begin{eqnarray*}
+	\pi \seq \pi' & \eqdef & \begin{cases}
+		\funup{\pi}{\ptup{h}{\pi.h \cup \pi'.h},\,\ptapp{q}{\pi'.q},\,\ptup{p}{\pi.p \shadd \pi'.p}} & \text{if $\pi'.b = \bvf$} \\
+		\funup{\pi'}{\ptup{h}{\sflush{\pi}.h \override \pi'.h},\, \ptup{p}{\pi.p \shadd \pi'.p}}  & \text{otherwise.}
+	\end{cases}
+\end{eqnarray*}
+
+Unless stated explicitly, when we write $(\pi_1 \seq \pi_2)$, it is implied that $\defined{\pi_1 \seq \pi_2}$
+
+As with the interleaving conjunction, the sequential separating conjunction is lifted to sets of states: \[ A \seq A' \eqdef \kernel\left(\setof{\pi \seq \pi'}{\pi \in A \conj \pi' \in A' \conj \defined{\pi \seq \pi'}}\right).\] 
+
+
+% \subsubsection{Negation}
+% 
+% The meaning of negation is similar to that of the phase semantics of linear logic \cite{Girard95logic}. Below, we write $\overline{S}$ for $(\setpstates \setminus S)$. 
+% 
+% \begin{lemma}[Involution]
+% 	\label{lem:involution}
+% 	If $\down S = S$, then $\kernel\left(\overline{\kernel\left(\overline{S}\right)}\right) = S$.  
+% 	
+% \end{lemma}
+% 
+% \begin{proof}
+% 	
+% 	\Calc{
+% 	
+% 		$\pi \in \kernel\left(\overline{\kernel\left(\overline{S}\right)}\right)$
+% 		
+% 		\conn{\iff}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\down \pi \subseteq \overline{\kernel\left(\overline{S}\right)}$
+% 		
+% 		\conn{\iff}{set theory and definition of $\down -$}
+% 		
+% 		$\forall \pi' \leq \pi \st \pi' \notin \kernel\left(\overline{S}\right)$
+% 		\conn{\iff}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\forall \pi' \leq \pi \st \neg(\down \pi' \subseteq (\overline{S}))$		
+% 		
+% 		\conn{\iff}{set theory}
+% 		
+% 		$\forall \pi' \leq \pi \st \exists \pi'' \leq \pi' \st \pi'' \in S$
+% 		
+% 		\conn{\iff}{Lemmas~\ref{lem:dcc} and~\ref{lem:downset-total}}
+% 		
+% 		$\forall \pi' \leq \pi \st \pi' \in S$
+% 		
+% 		\conn{\iff}{$\down S = S$}
+% 		
+% 		$\pi \in S$
+% 		
+% 	}
+% 	
+% \end{proof}
+% 
+% \begin{lemma}
+% 	\label{lem:downset-forall-disj}
+% 	Suppose $\down P = P$ and $\down P' = P'$. Then $\down \pi \subseteq (\overline{P \cap P'}) \iff \down \pi \subseteq \overline{P} \disj \down \pi \subseteq \overline{P'}$.
+% \end{lemma}
+% 
+% \begin{proof}
+% 	The right-to-left direction is trivial because, e.g., $\overline{P} \subseteq \overline{P \cap P'}$. 
+% 	
+% 	In the other direction, first note that if $\pi \in P$, then $\down \pi \subseteq P$ because $\down P = P$, and furthermore that $\down \pi \subseteq \overline{P'}$. To see this, suppose instead, for some $\pi' \leq \pi$, that $\pi \in P'$. Then $\pi' \in P \cap P'$, and so $\pi' \notin \overline{P \cap P'}$, contradicting the assumption that $\down \pi \subseteq \overline{P \cap P'}$. Similarly, if $\pi \in P'$ then $\down \pi \subseteq \overline{P}$. 
+% 	
+% 	It is only left to consider $\pi \in \overline{P \cup P'}$. Consider the greatest $\pi' \leq \pi$ with $\pi' \in (P \cup P')$. Such an element is known to exist because, as shown in Lemma~\ref{lem:downset-total}, $\down \pi$ is both finite and total. Consequently, we can partition $\down \pi$ into two subsets: $\down \pi'$ and $\down \pi \setminus \down \pi'$.  The latter is included in both $\overline{P}$ and $\overline{P'}$, and the former is included in either $\overline{P'}$ (if $\pi' \in P$) or in $\overline{P}$ (if $\pi' \in P'$). In the first case $\down \pi \subseteq \overline{P'}$, and in the second case $\down \pi \subseteq \overline{P}$. 
+% \end{proof}
+% 
+% \begin{lemma}[De Morgan]
+% 	\label{lem:demorgan}
+% 	For $P$ and $P'$ with $\down P = P$ and $\down P' = P'$, $\kernel(\setpstates \setminus (P \cap P')) = \kernel(\setpstates \setminus P) \cup \kernel(\setpstates \setminus P')$. 
+% \end{lemma}
+% 
+% \begin{proof}
+% 	\Calc{
+% 		
+% 		$\pi \in \kernel(\setpstates \setminus (P \cap P'))$
+% 		
+% 		\conn{\onlyif}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\down \pi \subseteq (\setpstates \setminus (P \cap P'))$
+% 		
+% 		\conn{\iff}{Lemma~\ref{lem:downset-forall-disj}}
+% 		
+% 		$\down \pi \subseteq (\setpstates \setminus P) \disj \down \pi \subseteq (\setpstates \setminus \cap P')$
+% 		
+% 		\conn{\iff}{Lemma~\ref{lem:kernel-downset}}
+% 		
+% 		$\pi \in \kernel(\setpstates \setminus P) \disj \pi \in \kernel(\setpstates \setminus P')$
+% 		
+% 		\conn{\iff}{set theory}
+% 		
+% 		$\pi \in (\kernel(\setpstates \setminus P) \cup \kernel(\setpstates \setminus P'))$
+% 	
+% 	}
+% 	
+% \end{proof}
+% 
+% \begin{corollary}
+% 	\label{cor:demorgan}
+% 	For $P$ and $P'$ with $\down P = P$ and $\down P' = P'$, $\kernel(\setpstates \setminus (P \cup P')) = \kernel(\setpstates \setminus P) \cap \kernel(\setpstates \setminus P')$.
+% \end{corollary}
+% 
+% \begin{proof}
+% 	From Lemmas~\ref{lem:involution} and ~\ref{lem:demorgan}. 
+% \end{proof}
+
+
+The semantic function for fractional assertions is as before, except for the $e \writeto{f}{b} e'$ case: \[ \dna{e \writeto{f}{b} e'} \eqdef \begin{cases}
+				\down \lbrace\pi \,|\, \pi.h = \nil \conj \pi.q = \lsingle{(\dnexpr{e}\pi, \dnexpr{e'}\pi)} \conj & \text{if $0 < \dnfrac{f}\pi \leq 1$}\\ \mtab \mtab \mtab \pi.p = \funup{}{\ptup{\dnexpr{e}\pi}{(\dnshare{f,b}\pi)}}\rbrace &  \\
+				\nil & \text{otherwise.}\end{cases}\]
+			
+\begin{lemma}[Closure]
+	\label{lem:assertion-closure}
+	For any assertion $P$, $\down \dna{P} = \dna{P}$. 
+\end{lemma}
+
+\begin{proof}
+	By lemma \ref{lem:down-closure}.1, it is sufficient to show $\down \dna{P} \subseteq \dna{P}$. We proceed by induction on the structure of $P$. 
+	\begin{description}
+		
+		\item[Case $b$:] Suppose $\pi \in \dna{b}$, and $\pi' \leq \pi'$. Because $\pi'.s = \pi.s$, $\dnbexpr{b}\pi'.s = \dnbexpr{b}\pi.s$. Hence $\pi' \in \dna{b}$.
+		
+		\item[Case $P \conj P'$:] 
+		
+		\Calc{
+		
+			$\down \dna{P \conj P'}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\down (\dna{P} \cap \dna{P'})$
+			
+			\conn{=}{Lemma~\ref{lem:closure-lattice}}
+			
+			$(\down \dna{P}) \cap (\down \dna{P'})$
+			
+			\conn{\subseteq}{induction hypothesis}
+			
+			$\dna{P} \cap \dna{P'}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\dna{P \conj P'}$.
+		
+		}
+		
+		\item[Case $P \disj P'$:] Same as previous case. 
+		
+		\item[Case $\exists x \st P$:] 
+		
+		\Calc{
+		
+			$\down \dna{\exists x \st P}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\down \bigcup_{v \in \setvalues} \left(\dna{P}\unsubst{x}{v} \right)$
+			\conn{=}{Lemma~\ref{lem:closure-lattice}}
+			
+			$\bigcup_{v \in \setvalues} \down \left(\dna{P}\unsubst{x}{v} \right)$
+			\conn{=}{Lemma~\ref{lem:closure-unsubst}}
+			
+			$\bigcup_{v \in \setvalues} \left(\down \dna{P}\right)\unsubst{x}{v}$
+			
+			\conn{\subseteq}{induction hypothesis}
+			
+			$\bigcup_{v \in \setvalues} \dna{P}\unsubst{x}{v}$
+			
+			\conn{=}{definition of $\dna{-}$}
+			
+			$\dna{\exists x \st P}$.
+		
+		}
+		
+		\item{Case $\forall x \st P$:} Same as previous case. 
+		
+		\item{Cases $\emp$, $\barr$ and $e \writeto{f}{b} e'$:} Closed by construction.
+		
+		\item{Cases $(P \sep P')$, $(P \seq P')$ and $\expand{P}$:} Closed by the kernel function. 
+		
+	\end{description}
+	
+\end{proof}
+
+% section assertion-semantics (end)
+
+
+\section{Fractional Assertion Language Design Issues} % (fold)
+\label{sec:fractional_assertion_language_design_issues}
+
+Permissions are hard. 
+
+% section fractional_assertion_language_design_issues (end)
+
+% section command_specifications (end)
+
+\section{The Fractional Command Logic} % (fold)
+\label{sec:the_command_logic}
+
+Axioms of the fractional command logic are shown in Figure~\ref{fig:fractional-command-logic-axioms}.
+\begin{figure}[h]
+	\centering
+	
+		\infrule[load]{x \notin \fv{e, e', J, P}}{\spec{J}{e \writeto{f}{\bexpt} e' \seq P}{\cload{x}{e}}{(e \writeto{f}{\bexpt} e' \seq P) \conj x = e'}}
+		
+		\vspace{1em}
+	
+		\infax[store]{\spec{J}{e \writeto{1}{\bexpt} e \seq P}{\cstore{e}{e''}}{(e \writeto{1}{\bexpf} e' \seq P \seq e \writeto{1}{\bexpt} e'') \conj x = e'}}
+		
+		\vspace{1em}
+	
+		\infrule[alloc]{x \notin \fv{e, J, P}}{\spec{J}{\emp}{\cnew{x}{e}}{x \writeto{1}{\bexpt} e \seq \barr}}
+		
+		\vspace{1em}
+	
+		\infax[free]{\spec{J}{x \writeto{1}{\bexpt} e \seq \barr}{\cfree{e}}{\barr}}
+		
+		
+	\caption{Axioms of the fractional command logic}
+	\label{fig:fractional-command-logic-axioms}
+\end{figure}
+
+% section permissions (end)
+
+
+\chapter{Conclusion}
+
+\bibliographystyle{abbrv} \bibliography{dissertation}
+
+\end{document} 
