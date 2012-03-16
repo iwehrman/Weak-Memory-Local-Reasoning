@@ -1,0 +1,116 @@
+%!TEX root = dissertation.tex
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{bcprules}
+\usepackage{graphicx}
+\usepackage{stmaryrd}
+\usepackage{nicefrac}
+
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{definition}{Definition}
+\newtheorem{note}{Note}
+\newtheorem{proposition}{Proposition}
+
+
+\newcommand{\bnfbar}{\ensuremath{~|~}}
+\newcommand{\bnfdef}{\ensuremath{~::=~}}
+
+%% set notation
+\newcommand{\set}[1]{\left\lbrace #1 \right\rbrace}
+\newcommand{\setof}[2]{\set{#1 \mid #2}}
+\newcommand{\bigset}[1]{\left\lbrace #1 \right\rbrace}
+\newcommand{\bigsetof}[2]{\bigset{#1 \mid #2}}
+
+\DeclareMathOperator{\funcompat}{\smile}
+
+\newcommand{\mtab}{\ensuremath{\;\;\;}}
+
+\newcommand{\powerset}[1]{\ensuremath{\mathcal{P}(#1)}}
+\newcommand{\zorch}{\ensuremath{\lightning}}
+
+\DeclareMathOperator{\opdom}{\mathrm{dom}}
+\newcommand{\dom}[1]{\ensuremath{\opdom(#1)}}
+
+\newcommand{\bvt}{\ensuremath{\mathbf{t}}}
+\newcommand{\bvf}{\ensuremath{\mathbf{f}}}
+
+\newcommand{\llen}[1]{\ensuremath{|#1|}}
+\newcommand{\lsingle}[1]{\ensuremath{\left[#1\right]}}
+\newcommand{\lnil}[0]{\ensuremath{\epsilon}}
+\newcommand{\elems}[1]{\ensuremath{|\!|#1|\!|}}
+\newcommand{\funof}[1]{\ensuremath{\overline{#1}}}
+\DeclareMathOperator{\lapp}{+\!\!\!+}
+\DeclareMathOperator{\lcons}{:\!:}
+\newcommand{\lhead}[1]{\ensuremath{\mathit{hd}(#1)}}
+\newcommand{\ltail}[1]{\ensuremath{\mathit{tl}(#1)}}
+\newcommand{\nth}[2]{\ensuremath{#2 ! #1}}
+
+\newcommand{\relset}[1]{\ensuremath{|#1|}}
+\newcommand{\ext}[1]{\ensuremath{\hat{#1}}}
+\newcommand{\restrict}[2]{\ensuremath{#1 |_{#2}}}
+\newcommand{\proj}[2]{\ensuremath{#1 |_{#2}}}
+
+\newcommand{\reclit}[1]{\ensuremath{\set{#1}}}
+
+\DeclareMathOperator{\tfun}{\rightarrow}
+\DeclareMathOperator{\pfun}{\rightharpoonup}
+\DeclareMathOperator{\fpfun}{\pfun_{\mathrm{fin}}}
+
+\DeclareMathOperator{\st}{\,:\,}
+
+\newcommand{\ptup}[2]{\ensuremath{#1 \shortleftarrow #2}}
+\newcommand{\funup}[2]{\ensuremath{#1 \left[ #2 \right]}}
+\newcommand{\fundel}[2]{\ensuremath{#1 \setminus#2 }}
+\newcommand{\recup}[3]{\funup{#1}{\ptup{#2}{#3}}}
+\newcommand{\ptapp}[2]{\ensuremath{#1 \lapp #2}}
+
+\DeclareMathOperator{\conj}{\,\wedge\,}
+\DeclareMathOperator{\disj}{\,\vee\,}
+\DeclareMathOperator{\onlyif}{\,\Rightarrow\,}
+\DeclareMathOperator{\ifandonlyif}{\,\Longleftrightarrow\,}
+%% FIXME \DeclareMathOperator{\iff}{\Leftrightarrow}
+
+\newcommand{\fresh}[1]{\ensuremath{\mathrm{fresh}(#1)}}
+\newcommand{\subst}[2]{\ensuremath{\left[#1 / #2\right]}}
+\newcommand{\unsubst}[2]{\ensuremath{\left[#1 \backslash #2\right]}}
+
+\newcommand{\eqclass}[1]{\ensuremath{\left[ #1 \right]}}
+\DeclareMathOperator{\downop}{\downarrow}
+\newcommand{\downo}[2]{\ensuremath{\downop_{#1}\!#2}}
+\newcommand{\down}[1]{\ensuremath{\downop\!#1}}
+
+%% Calculational proofs
+
+\newcommand{\Calc}[1]{\begin{description}
+                \item \begin{tabbing}\qquad\=\quad\=\kill
+                \> \> #1\end{tabbing}
+                \end{description}}
+\newcommand{\conn}[2]{\\*$#1 $\> \{#2\}\\\> \>}
+\newcommand{\Conn}[1]{\conn{=}{#1}}
+
+\newcommand{\relexp}[2]{\ensuremath{\stackrel{#2}{#1}}}
+\newcommand{\tcl}[1]{\stackrel{+}{#1}}
+\newcommand{\rtcl}[1]{\stackrel{\ast}{#1}}
+
+\newcommand{\image}[2]{\ensuremath{#1\left[#2\right]}}
+\newcommand{\invimage}[2]{\ensuremath{#1^{-1}\left[#2\right]}}
+
+\newcommand{\lift}[1]{\ensuremath{\mathit{lift}_{#1}}}
+\renewcommand{\merge}{\ensuremath{\,\#\,}}
+
+\newcommand{\override}{\reflectbox{\rotatebox[origin=c]{180}{\ensuremath{\,\oslash\,}}}}
+
+\newcommand{\sentails}{\ensuremath{\,\models\,}}
+\newcommand{\sequiv}{\ensuremath{\,\equiv\,}}
+
+\newcommand{\fixme}[1]{\footnote{FIXME: #1}}
+
+\DeclareMathOperator{\eqdef}{\;=_{\mathit{df}}\;}
+\DeclareMathOperator{\iffdef}{\;\equiv_{\mathit{df}}\;}
+
+\newcommand{\card}[1]{\left|#1\right|}
+\newcommand{\cmpl}[1]{\ensuremath{\overline{#1}}}
+
+\newcommand{\refines}{\ensuremath{\sqsubseteq}}

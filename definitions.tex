@@ -1,0 +1,208 @@
+%!TEX root = dissertation.tex
+
+\usepackage{stackrel}
+
+%% types
+
+\newcommand{\setlocations}{\ensuremath{\mathbb{L}}}
+\newcommand{\setvalues}{\ensuremath{\mathbb{V}}}
+\newcommand{\setintegers}{\ensuremath{\mathbb{Z}}}
+\newcommand{\setnaturals}{\ensuremath{\mathbb{N}}}
+\newcommand{\setpositives}{\ensuremath{\mathbb{N}^+}}
+\newcommand{\setidentifiers}{\ensuremath{\mathbb{I}}}
+\newcommand{\setbooleans}{\ensuremath{\mathbb{B}}}
+\newcommand{\setprocessors}{\ensuremath{\mathbb{P}}}
+
+\newcommand{\setevents}{\ensuremath{\mathbb{E}}}
+\newcommand{\proc}[1]{\ensuremath{\mathit{proc}(#1)}}
+\newcommand{\eqproc}{\ensuremath{\approx}}
+\newcommand{\tp}[1]{\ensuremath{\mathit{type}(#1)}}
+\newcommand{\tpflush}{\ensuremath{\mathtt{flush}}}
+\newcommand{\tpwrite}[1]{\ensuremath{\mathtt{write}(#1)}}
+\newcommand{\tpalloc}[1]{\ensuremath{\mathtt{alloc}(#1)}}
+\newcommand{\writesto}[1]{\ensuremath{\mathit{Wr}_{#1}}}
+\newcommand{\allocs}[1]{\ensuremath{\mathit{Al}_{#1}}}
+\newcommand{\writes}{\ensuremath{\mathit{Wr}}}
+\newcommand{\flushes}{\ensuremath{\mathit{Fl}}}
+
+
+%% abbreviations
+\newcommand{\setstores}{\ensuremath{\mathbf{Store}}}
+\newcommand{\setstacks}{\ensuremath{\mathbf{Stack}}}
+\newcommand{\setheaps}{\ensuremath{\mathbf{Heap}}}
+\newcommand{\setbuffers}{\ensuremath{\mathbf{Buf}}}
+\newcommand{\setshares}{\ensuremath{\mathbf{Share}}}
+\newcommand{\setperms}{\ensuremath{\mathbf{Perm}}}
+\newcommand{\setastates}{\ensuremath{\mathit{\Sigma}}}
+\newcommand{\setstates}{\ensuremath{\mathbf{State}}}
+\newcommand{\setpstates}{\ensuremath{\Pi}}
+\newcommand{\setmpstates}{\ensuremath{\mathbf{MPState}}}
+\newcommand{\setresolvers}{\ensuremath{\mathbf{Resolver}}}
+\newcommand{\setconfigurations}{\ensuremath{\mathbf{Config}}}
+\newcommand{\setmconfigurations}{\ensuremath{\mathbf{MConfig}}}
+\newcommand{\setassertions}{\ensuremath{\mathbf{Assert}}}
+
+%% operators 
+
+\DeclareMathOperator{\op}{\mathit{op}}
+\DeclareMathOperator{\opskip}{\mathsf{skip}}
+\DeclareMathOperator{\opfence}{\mathsf{fence}}
+\DeclareMathOperator{\opassume}{\mathsf{assume}}
+\DeclareMathOperator{\opassert}{\mathsf{assert}}
+\DeclareMathOperator{\opassign}{:\!=}
+\DeclareMathOperator{\opequals}{=}
+\DeclareMathOperator{\opseq}{;}
+\DeclareMathOperator{\opchoice}{+}
+\DeclareMathOperator{\oppar}{||}
+\DeclareMathOperator{\oploop}{\ast}
+\DeclareMathOperator{\oplock}{\mathsf{lock}}
+\DeclareMathOperator{\opunlock}{\mathsf{unlock}}
+\DeclareMathOperator{\opcons}{\mathsf{cons}}
+\DeclareMathOperator{\opnew}{\mathsf{new}}
+\DeclareMathOperator{\opalloc}{\mathsf{alloc}}
+\DeclareMathOperator{\opdispose}{\mathsf{free}}
+\DeclareMathOperator{\opif}{\mathsf{if\,}}
+\DeclareMathOperator{\opthen}{\mathsf{\,then\,}}
+\DeclareMathOperator{\opelse}{\mathsf{\,else}}
+\DeclareMathOperator{\opwhile}{\mathsf{while\,}}
+\DeclareMathOperator{\opdo}{\mathsf{\,do\,}}
+\DeclareMathOperator{\oplocal}{\mathsf{local\,}}
+\DeclareMathOperator{\opin}{\mathsf{\,in\,}}
+\DeclareMathOperator{\opresource}{\mathsf{resource\,}}
+\DeclareMathOperator{\opwith}{\mathsf{with\,}}
+\DeclareMathOperator{\opwhen}{\mathsf{\,when\,}}
+\DeclareMathOperator{\nil}{\emptyset}
+\DeclareMathOperator{\compat}{\smile}
+
+
+
+%% primitive commands
+
+\newcommand{\cskip}[0]{\ensuremath{\opskip}}
+\newcommand{\cfence}[0]{\ensuremath{\opfence}}
+\newcommand{\clock}[0]{\ensuremath{\oplock}}
+\newcommand{\cunlock}[0]{\ensuremath{\opunlock}}
+\newcommand{\cassume}[1]{\ensuremath{\opassume(#1)}}
+\newcommand{\cassert}[1]{\ensuremath{\opassert(#1)}}
+\newcommand{\cassign}[2]{\ensuremath{#1 \opassign #2}}
+\newcommand{\cload}[2]{\ensuremath{#1 \opassign \left[ #2 \right]}}
+\newcommand{\cstore}[2]{\ensuremath{\left[ #1 \right] \opassign #2}}
+\newcommand{\cnew}[2]{\ensuremath{#1 \opassign \opnew(#2)}}
+\newcommand{\calloc}[1]{\ensuremath{#1 \opassign \opalloc}}
+\newcommand{\ccons}[3]{\ensuremath{#1 \opassign \opcons(#2, #3)}}
+\newcommand{\cfree}[1]{\ensuremath{\opdispose(#1)}}
+
+%% commands
+
+\newcommand{\cseq}[2]{\ensuremath{#1 \opseq #2}}
+\newcommand{\cchoice}[2]{\ensuremath{#1 \opchoice #2}}
+\newcommand{\cpar}[2]{\ensuremath{#1 \oppar #2}}
+\newcommand{\cifthenelse}[3]{\ensuremath{\opif #1 \opthen #2 \opelse #3}}
+\newcommand{\cifthen}[2]{\ensuremath{\opif #1 \opthen #2}}
+\newcommand{\cwhile}[2]{\ensuremath{\opwhile #1 \opdo #2}}
+\newcommand{\cloop}[1]{\ensuremath{#1^{\oploop}}}
+\newcommand{\clocal}[3]{\ensuremath{\oplocal #1 \opassign #2 \opin #3}}
+\newcommand{\cres}[2]{\ensuremath{\opresource #1 \opin #2}}
+\newcommand{\cwith}[2]{\ensuremath{\opwith #1 \opdo #2}}
+\newcommand{\catomic}[1]{\ensuremath{\left\langle #1 \right\rangle}}
+\newcommand{\ccas}[1]{\ensuremath{\mathsf{cas}(#1)}}
+
+\newcommand{\exprs}{\ensuremath{\mathbf{Expr}}}
+\newcommand{\fracs}{\ensuremath{\mathbf{Frac}}}
+\newcommand{\bexprs}{\ensuremath{\mathbf{BExpr}}}
+\newcommand{\pcomms}{\ensuremath{\mathbf{PComm}}}
+\newcommand{\comms}{\ensuremath{\mathbf{Comm}}}
+\newcommand{\asserts}{\ensuremath{\mathbf{Assert}}}
+\newcommand{\progs}{\ensuremath{\mathbf{Prog}}}
+
+\newcommand{\dnexpr}[1]{\ensuremath{\mathcal{E}[\![#1]\!]}}
+\newcommand{\dnshare}[1]{\ensuremath{\mathcal{S}[\![#1]\!]}}
+\newcommand{\dnbexpr}[1]{\ensuremath{\mathcal{B}[\![#1]\!]}}
+\newcommand{\dnpcomm}[1]{\ensuremath{\mathcal{P}[\![#1]\!]}}
+\newcommand{\dna}[1]{\ensuremath{\mathcal{A}[\![#1]\!]}}
+\newcommand{\dnfrac}[1]{\ensuremath{\mathcal{F}[\![#1]\!]}}
+
+\newcommand{\sflush}[1]{\ensuremath{\mathit{flush}\left(#1\right)}}
+\newcommand{\speek}[2]{\ensuremath{\mathit{peek}_{#1}(#2)}}
+\newcommand{\sval}[1]{\ensuremath{\mathit{val}(#1)}}
+\newcommand{\spush}[3]{\ensuremath{\mathit{push}_{#1}^{#2}(#3)}}
+\newcommand{\alloc}[1]{\ensuremath{\mathit{alloc}(#1)}}
+\newcommand{\allocat}[2]{\ensuremath{\mathit{alloc}_{#1}(#2)}}
+\newcommand{\owned}[1]{\ensuremath{\mathit{owned}(#1)}}
+\newcommand{\full}[1]{\ensuremath{\mathit{full}(#1)}}
+
+\newcommand{\pcstep}[1]{\,\stackrel[#1]{}{\,\hookrightarrow}\,}
+\DeclareMathOperator{\step}{\hookrightarrow}
+\DeclareMathOperator{\estep}{\rightarrow}
+\DeclareMathOperator{\pstep}{\twoheadrightarrow}
+\DeclareMathOperator{\noestep}{\nrightarrow}
+
+\newcommand{\taustep}{\ensuremath{\stackrel[\tau]{}{\step}}}
+\newcommand{\rttaustep}{\ensuremath{\stackrel[\tau]{\ast}{\step}}}
+\newcommand{\exptaustep}[1]{\ensuremath{\stackrel[\tau]{#1}{\step}}}
+
+\newcommand{\poflushat}[1]{\ensuremath{\leq_{#1}}}
+\newcommand{\poflush}{\ensuremath{\leq}}
+
+\DeclareMathOperator{\shagree}{\sim}
+\DeclareMathOperator{\mpagree}{\propto}
+\DeclareMathOperator{\mpcons}{\#}
+\DeclareMathOperator{\stcong}{\,\equiv\,}
+\newcommand{\fv}[1]{\ensuremath{\mathrm{fv}(#1)}}
+\renewcommand{\mod}[1]{\ensuremath{\mathrm{mod}(#1)}}
+
+\DeclareMathOperator{\sep}{\ast}
+\DeclareMathOperator{\seq}{;}
+\DeclareMathOperator{\emp}{\mathbf{emp}}
+\DeclareMathOperator{\barr}{\mathbf{bar}}
+\DeclareMathOperator{\pointsto}{\mapsto}
+\DeclareMathOperator{\expop}{\mathbf{exp}}
+\newcommand{\expand}[1]{\ensuremath{\expop(#1)}}
+\newcommand{\sexpand}[1]{\ensuremath{\mathit{expand}(#1)}}
+
+\newcommand{\concst}[1]{\ensuremath{\left\lfloor#1\right\rfloor}}
+\newcommand{\abst}[1]{\ensuremath{\left\lceil#1\right\rceil}}
+\newcommand{\fullst}[1]{\ensuremath{\mathsf{full}(#1)}}
+\newcommand{\writeto}[2]{\ensuremath{\stackrel[#1]{#2}{\leadsto}}}
+
+\newcommand{\kernel}{\ensuremath{\mathcal{K}}}
+\DeclareMathOperator{\trim}{\mathit{trim}}
+\DeclareMathOperator{\shadd}{\oplus}
+\DeclareMathOperator{\shmult}{\odot}
+
+\newcommand{\bexpt}{\ensuremath{\mathbf{true}}}
+\newcommand{\bexpf}{\ensuremath{\mathbf{false}}}
+
+\newcommand{\spec}[4]{\ensuremath{#1\;\vdash\;\set{#2}\;#3\;\set{#4}}}
+\newcommand{\truespec}[4]{\ensuremath{#1\;\models\;\set{#2}\;#3\;\set{#4}}}
+\newcommand{\andif}{\ensuremath{\text{\;\;\;and\;\;\;}}}
+
+\newcommand{\safe}[2]{\ensuremath{\mathsf{safe}_{#1}(#2)}}
+
+\newcommand{\defined}[1]{\ensuremath{\mathsf{def}(#1)}}
+
+\renewcommand{\stcong}[1]{\ensuremath{\sim_{#1}}}
+\newcommand{\abort}{\ensuremath{\zorch}}
+
+\newcommand{\downpstates}{\ensuremath{\down \powerset{\setpstates}}}
+\newcommand{\pjoin}{\ensuremath{\sqcup}}
+\newcommand{\pmeet}{\ensuremath{\sqcap}}
+\newcommand{\live}[1]{\ensuremath{\mathit{live}(#1)}}
+
+\newcommand{\femp}{\ensuremath{\mathbf{emp}}}
+\newcommand{\fbar}[1]{\ensuremath{\mathbf{bar}(#1)}}
+\newcommand{\flock}[1]{\ensuremath{\mathbf{lock}(#1)}}
+\newcommand{\fwrite}[1]{\ensuremath{\leadsto_{#1}}}
+\newcommand{\fwrote}{\ensuremath{\rightarrowtail}}
+\newcommand{\fpointsto}{\ensuremath{\mapsto}}
+\newcommand{\fiter}[1]{\ensuremath{#1^{\ast}}}
+\DeclareMathOperator{\fhash}{\#}
+\DeclareMathOperator{\fsep}{\ast}
+\DeclareMathOperator{\fseq}{;}
+\DeclareMathOperator{\fsseq}{,}
+
+\newcommand{\presat}[1]{\ensuremath{\kernel(#1)}}
+\newcommand{\pred}[1]{\ensuremath{[\![#1]\!]}}
+\newcommand{\locked}[1]{\ensuremath{\mathit{locked}(#1)}}
+
+\newcommand{\taurefines}{\ensuremath{\preceq}}
