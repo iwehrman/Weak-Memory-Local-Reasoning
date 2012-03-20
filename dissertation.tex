@@ -19,7 +19,7 @@
 
 	\settimeformat{ampmtime}
 	\author{Ian Wehrman} 
-	\title{Weak-Memory Local Reasoning\\Summary of Progress\footnote{This is a draft. Please do not distribute without permission.}} 
+	\title{Weak-Memory Local Reasoning\\Dissertation Draft\footnote{This is a draft. Please do not distribute without permission.}} 
 	\date{\today, \currenttime}
 	\maketitle
 
@@ -97,6 +97,11 @@ For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, w
 	f(x) & \text{otherwise.}
 \end{cases}\] We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. When convenient, we also write $f_a$ as shorthand for $f(a)$. $a \mapsto b$ is shorthand for the partial function $f$ such that $f(a) = b$ and is undefined otherwise. For $A' \subseteq A$, $\restrict{f}{A'}$ is the restriction of $f$ to domain $A'$. 
 
+For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \lambda x . \begin{cases}
+	g(x) & \text{if $x \in \dom{g}$} \\
+	f(x) & \text{otherwise.}
+\end{cases} \] Note that if $f$ and $g$ have disjoint domains then $f \override g = f \cup g$. 
+
 \subsubsection{Lists and Pomsets}
 
 The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, and list concatenation by $l \lapp l'$, for lists $l$ and $l'$. For a list $l$ of elements drawn from a set $A \times B$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
@@ -135,7 +140,7 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 This section contains a brief, informal review of the x86-TSO memory model as defined by Owens, Sarkar and Sewell \cite{DBLP:conf/tphol/OwensSS09}. The model is given as a collection of legal traces of memory events. Legal traces are defined axiomatically and operationally, the latter via a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
 	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ is a register file for each processor;
 	\item $m : \setlocations \pfun \setvalues$ is a shared memory; 
-	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~ \mathit{list}$ is a write buffer for each processor; 
+	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is a write buffer for each processor; 
 	\item $l : \setprocessors^\bot$ is a global lock. 
 \end{itemize}
 
@@ -201,14 +206,20 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 
 The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p \vdash \sigma \stackrel{i}{\rightarrow} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) 
 
-A machine state is a four-tuple $(s,h,B,l)$ such that: \begin{itemize}
-	\item $s$ is a stack, as defined in Section~\ref{sec:expressions};
+\begin{definition}
+A partial machine state is a four-tuple $(s,h,B,k)$ such that: \begin{itemize}
+	\item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
-	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathit{list}$ is an array of write buffers; and
-	\item $l : \setprocessors^\bot$ is a global lock.
+	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is an array of write buffers; and
+	\item $k : \powerset{\setprocessors}$ is a set of blocked processors. 
 \end{itemize} The collection of states is written $\setstates$. 
+\end{definition}
 
-Note that the notion of machine state given here differs from that used to define the memory model insofar as the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
+Note that the notion of machine state given here differs from that used to define the memory model. First, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
+
+Second, the global lock value from the memory model replaced in the machine model by a set of ``blocked'' processors, which are not allowed to access main memory. In the memory model an available lock indicates that no processors are blocked, while all lock held by processor $i$ indicates that all processors but $i$ are blocked. The machine model is more general, allowing an arbitrary subset of processors to be blocked. 
+
+A partial state is called \emph{complete} if its set of blocked processors is a valid representation of a global lock, insofar as no processors are blocked when the lock is free, and all processors but $i$ are blocked when $i$ holds the lock: \[ \complete{s,h,B,k} \iffdef k = \nil \disj \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}.\]
 
 A primitive command may alternatively abort upon execution: \[ p \vdash \sigma \stackrel{i}{\rightarrow} \top. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
@@ -544,9 +555,9 @@ The model of state just presented can be thought of as an abstraction of a more 
 As the quotient set of the concrete model, the abstract model yields relatively coarse notion of program equivalence. Conversely, a logic that is sound w.r.t.\ the concrete model is sound w.r.t.\ the abstract model as well. Given that the unified representation of shared memory and write buffers used in the concrete model leads to a dramatically simpler algebra of system specifications, we shall proceed with the concrete model. 
 
 A \emph{concrete state} is a four-tuple $(s,h,B,l)$ such that: \begin{enumerate}
-	\item $s : (\setidentifiers \tfun \setvalues)$ is a stack;
-	\item $h : (\setlocations \times \setvalues) \mathit{list}$ is a concrete heap; 
-	\item $B : (\setprocessors \tfun (\setlocations \times \setvalues) \mathit{list})$ is an array of write buffers; and 
+	\item $s : \setidentifiers \tfun \setvalues$ is a stack;
+	\item $h : (\setlocations \times \setvalues)~\mathsf{list}$ is a concrete heap; 
+	\item $B : \setprocessors \tfun ((\setlocations \times \setvalues)~\mathsf{list})$ is an array of write buffers; and 
 	\item $l : \setprocessors^\bot$ is a global lock. 
 \end{enumerate}  
 
