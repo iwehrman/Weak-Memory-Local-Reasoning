@@ -123,16 +123,6 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 
 We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$.
 
-\subsubsection{Pomsets}
-
-The previous list notation is also carried over for finite pomsets: $\lnil$ for the empty pomset, $\lsingle{o}$ for the singleton pomset with label $o$, and $p \lapp p'$ for the concatenation of pomsets $p$ and $p'$. We additionally write $p \uplus p'$ for the additive union of pomsets. In contrast to the corresponding operations on partially ordered sets, these operations are total.\footnote{I assume the reader has basic familiarity with pomsets; the definition of these operations is presented nicely in \cite{DBLP:conf/icdt/GrumbachM95}.}
-
-One subtle point is that, for $a \in A$, $\funof{p}(a)$ is defined only when there is some $b \in B$ such that $(a,b)$ is the maximum element of $p$, and undefined otherwise. Another is that, for list $l$, $\restrict{\funof{l}}{A'} = \funof{\restrict{l}{A'}}$, but, for pomset $p$, $\restrict{\funof{p}}{A'} \neq \funof{\restrict{p}{A'}}$. Consider, e.g., the two-element pomset $p = \lsingle{(a,b)} \uplus \lsingle{(a',b')}$, with $a \neq b$. Then \[\restrict{\funof{p}}{\set{a}}(a) = \bot,\] but \[\funof{\restrict{p}{\set{a}}}(a) = \funof{\lsingle{(a,b)}}(a) = b.\] 
-
-We additionally write $p \pjoin p'$ and $p \pmeet p'$ for the partial join and partial meet of pomsets, respectively. These are intuitively are like the join and meet of partial orders, defined only when the underlying sets are equal. (The definition using pomsets is straightforward but laborious.) Given a definition of partial join, we can define a refinement partial order on pomsets in the usual way: \[ p \refines p' \iffdef p \pjoin p' = p'. \] 
-
-When convenient, lists are treated as instances of pomsets. 
-
 \subsection{Universes}
 
 The various universal sets are declared and in some cases defined in Figure~\ref{fig:universes}. Note that, in the case of memory locations (i.e., addresses) and processor identifiers, 0 is excluded. 
@@ -252,51 +242,48 @@ The definition of the semantic relation for primitive commands is given in Figur
 
 	\begin{minipage}{\columnwidth}
 
-		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l)}
+		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} \vdash (s,h,B,k) \stackrel{i}{\rightarrow} (s,h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l)}
+		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} \vdash (s,h,B,k) \stackrel{i}{\rightarrow} (s,h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} \top}
+		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} \top}
 
 		\vspace{1em}
 
-		\infrule[p-assign]{}{\cassign{x}{e} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,l)}
+		\infrule[p-assign]{}{\cassign{x}{e} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-load-b]{\text{if $\funof{B_i}(\ext{s}(e)) = v$ and $i \in \live{l}$}}{\cload{x}{e} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{v}},h,B,l)}
+		\infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{v}},h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-load-m]{\text{if $\funof{B_i}(\ext{s}(e)) = \bot$ and $h(\ext{s}(e)) = v$ and $i \in \live{l}$}}{\cload{x}{e} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{v}},h,B,l)}
+
+		\infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} \top}
 		
 		\vspace{1em}
 
-		\infrule[p-load-a]{\text{if $\funof{B_i}(\ext{s}(e)) = h(\ext{s}(e)) = \bot$ and $i \in \live{l}$}}{\cload{x}{e} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} \top}
+		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},k)}
 		
 		\vspace{1em}
 
-		\infrule[p-store]{\text{if $\ext{s}(e) \in (\dom{\funof{B_i}} \cup \dom{h})$}}{\cstore{e}{e'} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},l)}
+		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} \top}
 		
 		\vspace{1em}
 
-		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin (\dom{\funof{B_i}} \cup \dom{h})$}}{\cstore{e}{e'} \vdash(s,h,B,l) \stackrel{i}{\rightarrow} \top}
+		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (s,h,B,k)}
 		
 		\vspace{1em}
 
-		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence \vdash(s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l)}
+		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock \vdash(s,h,B,\nil) \stackrel{i}{\rightarrow} (s,h,B,\set{i})}
 		
 		\vspace{1em}
 
-		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock \vdash(s,h,B,\bot) \stackrel{i}{\rightarrow} (s,h,B,i)}
-		
-		\vspace{1em}
-
-		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock \vdash(s,h,B,i) \stackrel{i}{\rightarrow} (s,h,B,\bot)}
+		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock \vdash(s,h,B,\set{i}) \stackrel{i}{\rightarrow} (s,h,B,\nil)}
 	\end{minipage}
 	\caption{\label{fig:primitive-semantics} Semantics of primitive commands}
 \end{figure}
@@ -307,7 +294,7 @@ The language of commands is defined by the following grammar: \[ \comms~c \bnfde
 
 The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \top. \] 
 
-The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation between states $\stackrel{\tau}{\rightarrow}$ defined as follows: \begin{align*} (s,h,B,l) \stackrel{\tau}{\rightarrow} (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},l) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \in \live{l} 
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation between states $\stackrel{\tau}{\rightarrow}$ defined as follows: \begin{align*} (s,h,B,k) \stackrel{\tau}{\rightarrow} (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
 \end{align*} 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below.
@@ -402,237 +389,6 @@ The complete relation that defines the semantics of commands is given in Figure~
 \end{figure}
 
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}_z} = \set{x,y,z}$ and $\mod{\cload{x}{y+1}_z} = \set{x}$.  
-
-\subsubsection{A More Intensional Model}
-
-I now describe a second, different machine model and program semantics. I do this not because I believe these changes are necessary for the rest of the development, but because they have helped me in the past to understand the model and continue to make progress on the overall project. 
-
-I refer to this second machine and program model as the ``intensional'' model, in contrast with the previous ``extensional'' model, so-called because there is some distinction between the intent of the new model (which is just the extensional model) and its denotation. In particular, the new model will use partially ordered structures to represent both the write buffers and the memory. 
-
-The intensional model is best thought of as the composition of two changes from the extensional model: \begin{enumerate}
-	\item the representation of the memory is changed from a partial function that summarizes the history of committed writes to a list that records the entire history of committed writes; and
-	\item the representation of the history of writes, whether committed or buffered is relaxed from being linearly to a partially ordered. 
-\end{enumerate} 
-
-Again I emphasize that I have made these changes to provide clarity in the rest of the development, and in particular w.r.t.~later definitions of the separating conjunctions. In fact, I believe that it will \emph{not} be necessary to make pervasive use this intensional model as I am about to do in a final development of this program logic. But, because I have not yet had the opportunity to smooth out this particular wrinkle, I present it here now. 
-
-The intensional model of state makes use of pomsets of elements drawn from $\setlocations \times \setvalues$. In particular, both the write buffers and heap are represented by pomsets. Hence, an intensional machine state is a four-tuple $(s,h,B,l)$ such that: \begin{enumerate}
-	\item $s$ is a stack; 
-	\item $h : (\setlocations \times \setvalues)~\mathit{pomset}$ is an intensional heap;
-	\item $B : \setprocessors \rightarrow (\setlocations \times \setvalues)~\mathit{pomset}$ is an array of intensional write buffers; and 
-	\item $l : \setprocessors^\bot$ is a global lock.
-\end{enumerate}
-
-The meaning of expressions is as before, but the semantics of primitive commands and commands must be revised to account for the change of machine model. Because we overload notation from lists to pomsets, the textual definition changes little. 
-
-For the primitive commands, only load and store require modification. Informally, the changes to the semantics of primitive commands merely allow for lookups within pomsets instead of within lists (for the write buffers) and partial functions (for the heap) in the extensional semantics. For ease of reference, the complete definition of the intensional semantics of primitive commands is given in Figure~\ref{fig:int-primitive-semantics} below.
-
-\begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-	\begin{align*}
-		\cassume{b} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l) & \text{ if  $\ext{s}(b) = 1$} \\
-		\cassert{b} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l) & \text{ if  $\ext{s}(b) = 1$} \\
-		\cassert{b} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} \top & \text{ if  $\ext{s}(b) = 0$} \\
-		\cassign{x}{e} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,l) & \\ 
-		\cload{x}{e} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{v}},h,B,l) & \text{if $\funof{\restrict{(h \lapp B_i)}{\set{\ext{s}(e)}}}(\ext{s}(e)) = v$, $i \in \live{l}$}\\ 
-		\cload{x}{e} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} \top & \text{if $\restrict{(h \lapp B_i)}{\set{\ext{s}(e)}} = \lnil$, $i \in \live{l}$}\\ 
-		\cstore{e}{e'} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},l) & \text{if $\restrict{(h \lapp B_i)}{\set{\ext{s}(e)}} \neq \lnil$} \\
-		\cstore{e}{e'} \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} \top & \text{if $\restrict{(h \lapp B_i)}{\set{\ext{s}(e)}} = \lnil$} \\
-		\cfence \vdash & (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l) & \text{if $B_i = \lnil$} \\
-		\clock \vdash & (s,h,B,\bot) \stackrel{i}{\rightarrow} (s,h,B,i) & \text{if $B_i = \lnil$} \\
-		\cunlock \vdash & (s,h,B,i) \stackrel{i}{\rightarrow} (s,h,B,\bot) & \text{if $B_i = \lnil$}
-	\end{align*}
-\end{minipage}}
-	\caption{\label{fig:int-primitive-semantics} Intensional semantics of primitive commands}
-\end{figure}
-
-The only substantive change between Figures~\ref{fig:primitive-semantics} and~\ref{fig:int-primitive-semantics} is that the load primitive will only  reduce to $\cskip$ when there is a unique maximum write in the state to the location under consideration. That is, if the heap is empty and $B_i = \lsingle{(\ell,v)} \lapp \lsingle{(\ell,v')}$, then $\cload{x}{\ell}$ has no transitions. This decision will be discussed shortly. 
-
-The semantics of commands similarly requires few updates. The only substantive changes are a generalization of the $\tau$ flushing rule, and the addition of a new silent transition from less to more order-refined states. The latter is defined with the following relation on states: \[ (s,h,B,l) \stackrel{\rho}{\rightarrow} (s,h',B',l) \iffdef h' \refines h \text{ and } \forall i \in \setprocessors \st B'_i \refines B_i.\] The former is defined with the following updated relation: \begin{align*} (s,h,B,l) \stackrel{\tau}{\rightarrow} (s,h\lapp (\uplus_i B^1_i),B^2,l) \iffdef & \forall i \in \setprocessors \st B_i = B^1_i \lapp B^2_i \conj \\ & \forall i \notin \live{l} \st B^1_i = \lnil\end{align*} Whereas in the extensional semantics the oldest write of any buffer could be flushed to memory, in the intensional semantics the lower half of any directed cut of the live buffers can be flushed to memory at once, which reflects a desire to not require order among independent writes to be resolved for flushing to occur. 
-
-The complete definition of the intensional semantics of commands is given in Figure~\ref{fig:int-command-semantics} below. 
-
-\begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-	\begin{align*}
-		\vdash & c,\sigma \rightarrow c,\sigma' & \text{if $\sigma \stackrel{\tau}{\rightarrow} \sigma'$} \\
-		\vdash & c,\sigma \rightarrow c,\sigma' & \text{if $\sigma \stackrel{\rho}{\rightarrow} \sigma'$} \\
-		\vdash & p_e,\sigma \rightarrow \cskip,\sigma' & \text{ if $p \vdash \sigma \stackrel{\ext{s}(e)}{\rightarrow} \sigma'$ and $\sigma' \in \setstates$} \\
-		\vdash & p_e,\sigma \rightarrow \top & \text{ if $p \vdash \sigma \stackrel{\ext{s}(e)}{\rightarrow} \top$} \\
-		\vdash & (\cseq{c}{c'}),\sigma \rightarrow (\cseq{c_0}{c'}),\sigma' & \text{ if $\vdash c,\sigma \rightarrow c_0,\sigma'$} \\
-		\vdash & (\cseq{c}{c'}),\sigma \rightarrow \top & \text{ if $\vdash c,\sigma \rightarrow \top$} \\
-		\vdash & (\cseq{\cskip}{c'}),\sigma \rightarrow c',\sigma & \\
-		\vdash & (\cchoice{c}{c'}),\sigma \rightarrow c,\sigma & \\
-		\vdash & (\cchoice{c}{c'}),\sigma \rightarrow c',\sigma & \\
-		\vdash & \cloop{c},\sigma \rightarrow (\cchoice{\cskip}{(\cseq{c}{\cloop{c}})}),\sigma & \\
-		\vdash & (\cpar{c}{c'}),\sigma \rightarrow (\cpar{c_0}{c'}),\sigma' & \text{ if $\vdash c,\sigma \rightarrow c_0,\sigma'$} \\
-		\vdash & (\cpar{c}{c'}),\sigma \rightarrow \top & \text{ if $\vdash c,\sigma \rightarrow \top$} \\
-		\vdash & (\cpar{\cskip}{c'}),\sigma \rightarrow c',\sigma & \\
-		\vdash & (\cpar{c}{c'}),\sigma \rightarrow (\cpar{c}{c_0}),\sigma' & \text{ if $\vdash c',\sigma \rightarrow c_0,\sigma'$} \\
-		\vdash & (\cpar{c}{c'}),\sigma \rightarrow \top & \text{ if $\vdash c',\sigma \rightarrow \top$} \\
-		\vdash & (\cpar{c}{\cskip}),\sigma \rightarrow c,\sigma &
-	\end{align*}
-\end{minipage}}
-	\caption{\label{fig:int-command-semantics} Intensional semantics of commands}
-\end{figure}
-
-We write $\refines$ for the converse of the reflexive-transitive closure of $\stackrel{\rho}{\rightarrow}$, and $\taurefines$ for converse of the reflexive-transitive closure of the union of the two relations: \[ \sigma \taurefines \sigma' \iffdef \sigma' \left( \stackrel{\tau}{\rightarrow} \cup \stackrel{\rho}{\rightarrow} \right)^{\ast} \sigma.\] 
-
-Every step taken by $\stackrel{\rho}{\rightarrow}$ can be decomposed into two steps, one of which refines only buffered writes, and one of which refines only heap writes. We write $\sigma \stackrel{\rho_h}{\rightarrow} \sigma'$ to indicate that the buffer components of $\sigma$ and $\sigma'$ are equal (i.e., only the heap has been refined), and $\sigma \stackrel{\rho_B}{\rightarrow} \sigma'$ to indicate that the heap component of $\sigma$ and $\sigma'$ are equal (i.e., only the buffers have been refined). We refer to the former as heap refinement steps and the latter as buffer refinement steps. 
-
-\begin{lemma}
-	\label{lem:rho-decompose}
-	If $\sigma \stackrel{\rho}{\rightarrow} \sigma'$ then there exists $\sigma_h$, $\sigma_B$ such that $\sigma \stackrel{\rho_h}{\rightarrow} \sigma_h \stackrel{\rho_B}{\rightarrow} \sigma'$ and $\sigma \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\rho_h}{\rightarrow} \sigma'$. 
-\end{lemma}
-
-Buffer refinement steps commute from right to left with $\tau$ steps, and heap refinement steps commute from left to right with $\tau$ steps. 
-
-\begin{lemma}
-	\label{lem:tau-rho-semi-commute} \hspace{1em}
-	\begin{enumerate}[(i)]
-		\item If $\sigma \stackrel{\tau}{\rightarrow} \sigma' \stackrel{\rho_B}{\rightarrow} \sigma''$ then there exists $\sigma_B$ such that $\sigma \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma''$. 
-		\item If $\sigma \stackrel{\rho_h}{\rightarrow} \sigma' \stackrel{\tau}{\rightarrow} \sigma''$ then there exists $\sigma_h$ such that $\sigma \stackrel{\tau}{\rightarrow} \sigma_h \stackrel{\rho_h}{\rightarrow} \sigma''$. 
-	\end{enumerate}
-	
-\end{lemma}
-
-\begin{lemma}
-	\label{lem:rho-tau-commute}
-	If $\sigma \stackrel{\rho}{\rightarrow} \sigma_\rho \stackrel{\tau}{\rightarrow} \sigma'$ then there exists $\sigma_h,\sigma_B$ such that \[ \sigma \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma_h \stackrel{\rho_h}{\rightarrow} \sigma'.\] 
-\end{lemma}
-
-\begin{proof}
-	\Calc{
-
-		$\sigma \stackrel{\rho}{\rightarrow} \sigma_\rho \stackrel{\tau}{\rightarrow} \sigma'$
-
-		\conn{\onlyif}{Lemma~\ref{lem:rho-decompose}}
-
-		$\sigma \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\rho_h}{\rightarrow} \sigma_\rho \stackrel{\tau}{\rightarrow} \sigma'$
-
-		\conn{\onlyif}{Lemma~\ref{lem:tau-rho-semi-commute} (ii)}
-
-		$\sigma \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma_h \stackrel{\rho_h}{\rightarrow} \sigma'$
-
-	}
-\end{proof}
-
-\begin{lemma}
-	\label{lem:tau-rho-commute}
-	If $\sigma \stackrel{\tau}{\rightarrow} \sigma_\tau \stackrel{\rho}{\rightarrow} \sigma'$ then there exists $\sigma_h,\sigma_B$ such that \[ \sigma \stackrel{\rho_h}{\rightarrow} \sigma_h \stackrel{\tau}{\rightarrow} \sigma_B \stackrel{\rho_B}{\rightarrow} \sigma'.\] 
-\end{lemma}
-
-\begin{proof}
-	\Calc{
-
-		$\sigma \stackrel{\tau}{\rightarrow} \sigma_\tau \stackrel{\rho}{\rightarrow} \sigma'$
-
-		\conn{\onlyif}{Lemma~\ref{lem:rho-decompose}}
-
-		$\sigma \stackrel{\tau}{\rightarrow} \sigma_\tau \stackrel{\rho_h}{\rightarrow} \sigma_B \stackrel{\rho_B}{\rightarrow} \sigma'$
-
-		\conn{\onlyif}{Lemma~\ref{lem:tau-rho-semi-commute} (i)}
-
-		$\sigma \stackrel{\rho_h}{\rightarrow} \sigma_h \stackrel{\tau}{\rightarrow} \sigma_B \stackrel{\rho_B}{\rightarrow} \sigma'$
-
-	}
-\end{proof}
-
-\begin{lemma}
-	\label{lem:taurefines-decompose} $\sigma' \taurefines \sigma$ iff there exists $\sigma_B,\sigma_h$ such that $\sigma \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma_h \stackrel{\rho_h}{\rightarrow} \sigma'$. 
-\end{lemma}
-
-\begin{proof}
-	By Lemmas~\ref{lem:rho-decompose}, \ref{lem:rho-tau-commute} and~\ref{lem:tau-rho-commute}
-\end{proof}
-
-\paragraph{Why a silent refinement transition?} The silent refinement transition is needed to cope with the fact that there may be unordered writes to some location visible to a particular processor in the intensional states, but the load command can only successfully reduce when there is a unique maximum write. The silent refinement transition reduces such states until some write becomes a unique maximum. 
-
-An ostensible alternative would be to allow the load command to return any maximal value in the state. E.g., with $B_i = \lsingle{(\ell,1)} \lapp \lsingle{(\ell,2)}$ we might allow both transitions: \begin{align*}
-	\cload{x}{\ell} \vdash & (s,h,B,l) \rightarrow (\funup{s}{\ptup{x}{1}},h,B,l) \text{ and }\\ 
-	\cload{x}{\ell} \vdash & (s,h,B,l) \rightarrow (\funup{s}{\ptup{x}{2}},h,B,l). 
-\end{align*} But the following example shows why this definition is problematic. Consider the behavior of the following command w.r.t.~the previously defined state: \[ \cseq{\cload{x}{\ell}_i}{\cifthen{x = 1}{(\cseq{\cload{y}{\ell}_i}{\cassert{y = 1}_i})}}.\] In the intensional semantics as defined in Figures~\ref{fig:int-primitive-semantics} and~\ref{fig:int-command-semantics}, the assertion does not fail. In order for the load to have reduced, a refinement transition must first be taken in order to resolve the order between the buffered writes $(\ell,1)$ and $(\ell,2)$. The guard evaluates to 1 only when the refinement transition has resolved the order with $(\ell,1)$ above $(\ell,2)$. The following load command then must find that $1$ is the unique maximum write to location $\ell$. On the other hand, if we were to allow load to return any maximal value, then there are reduction sequences in which the first load results in $1$ and the second results in $2$, which leads to an assertion failure. Finally, note that in the extensional semantics, which is closely reflects the memory model, there also can be no assertion failure. 
-
-\paragraph{Relating Intensional and Extensional States} There is a straightforward relationship between intensional and extensional states. As described informally at the beginning of this section, intensional states differ from extensional ones by representing the history of committed writes  instead of a summary, and by allowing partial order among the writes instead of requiring that the order be total. 
-
-An extensional state can be converted to an intensional one by replacing the heap partial function with any list that has a lookup function equal to the former partial function. An intensional state can be converted to an extensional state by replacing each buffer pomset with a linear extension, and the heap pomset with a partial function equal to one of its linear extensions. 
-
-These relationships can of course be made more precise, and doing so may be one path to eliminating the intensional model entirely.  
-
-\subsection{A Concrete Model}
-
-The model of state just presented can be thought of as an abstraction of a more concrete model of state in which the history of committed writes is recorded by the heap, instead of just the most recently committed write to each memory address. In the concrete model, both the heap and each write buffer is represented by a list of writes. The previously defined abstract states can then be seen as equivalence classes of concrete states, in which concrete states with identical stacks, locks and buffers are related iff their heaps have the same lookup function. 
-
-As the quotient set of the concrete model, the abstract model yields relatively coarse notion of program equivalence. Conversely, a logic that is sound w.r.t.\ the concrete model is sound w.r.t.\ the abstract model as well. Given that the unified representation of shared memory and write buffers used in the concrete model leads to a dramatically simpler algebra of system specifications, we shall proceed with the concrete model. 
-
-A \emph{concrete state} is a four-tuple $(s,h,B,l)$ such that: \begin{enumerate}
-	\item $s : \setidentifiers \tfun \setvalues$ is a stack;
-	\item $h : (\setlocations \times \setvalues)~\mathsf{list}$ is a concrete heap; 
-	\item $B : \setprocessors \tfun ((\setlocations \times \setvalues)~\mathsf{list})$ is an array of write buffers; and 
-	\item $l : \setprocessors^\bot$ is a global lock. 
-\end{enumerate}  
-
-The meaning of expressions is as before, but the semantics of primitive commands and commands must be revised to account for the change of representation of the heap. 
-
-Among the primitive commands, only load and store require modification because only they access the heap. Informally, the changes to the semantics of primitive commands merely allow for lookups within lists instead of direct function application as in the abstract semantics. For ease of reference, the complete definition of the intensional semantics of primitive commands is given in Figure~\ref{fig:concrete-primitive-semantics} below.
-
-\begin{figure}[p]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-
-		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l)}
-
-		\vspace{1em}
-
-		\infrule[p-assert]{ \text{ if  $\ext{s}(b) = 1$}}{\cassert{b} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l)}
-
-		\vspace{1em}
-
-		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} \top}
-
-		\vspace{1em}
-
-		\infrule[p-assign]{}{\cassign{x}{e} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,l)}
-
-		\vspace{1em}
-
-		\infrule[p-load]{\text{if $\funof{(h \lapp B_i)}(\ext{s}(e)) = v$ and $i \in \live{l}$}}{\cload{x}{e} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{v}},h,B,l)}
-
-		\vspace{1em}
-
-		\infrule[p-load-a]{\text{if $\funof{(h \lapp B_i)}(\ext{s}(e)) = \bot$ and $i \in \live{l}$}}{\cload{x}{e} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} \top}
-
-		\vspace{1em}
-
-		\infrule[p-store]{\text{if $\defined{\funof{(h \lapp B_i)}(\ext{s}(e))}$}}{\cstore{e}{e'} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},l)}
-
-		\vspace{1em}
-
-		\infrule[p-store-a]{\text{if $\funof{(h \lapp B_i)}(\ext{s}(e)) = \bot$}}{\cstore{e}{e'} \vdash (s,h,B,l) \stackrel{i}{\rightarrow} \top}
-
-		\vspace{1em}
-
-		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence \vdash (s,h,B,l) \stackrel{i}{\rightarrow} (s,h,B,l)}
-
-		\vspace{1em}
-
-		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock \vdash (s,h,B,\bot) \stackrel{i}{\rightarrow} (s,h,B,i)}
-
-
-		\vspace{1em}
-
-		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock \vdash (s,h,B,i) \stackrel{i}{\rightarrow} (s,h,B,\bot)}
-
-	\end{minipage}}
-	\caption{\label{fig:concrete-primitive-semantics} Concrete semantics of primitive commands}
-\end{figure}
-
-The concrete semantics of commands is defined as in Figure~\ref{fig:command-semantics}; only redefinition of the $\tau$ flushing rule is required: \begin{align*} (s,h,B,l) \stackrel{\tau}{\rightarrow} (s,h\lapp \lsingle{(\ell,v)},\funup{B}{\ptup{i}{b}},l) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \in \live{l}\end{align*} 
 
 \section{Assertions}
 \label{sec:assertions}
@@ -759,7 +515,7 @@ We refer to this as \emph{weak interleaving separation}, because only minimal or
 
 \begin{lemma}
 	\label{lem:separation-refinement}
-	If $\sigma \taurefines \sigma_1 \fhash \sigma_2$ then there exists $\sigma'_1,\sigma'_2$ such that $\sigma'_1 \taurefines \sigma_1$, $\sigma'_2 \taurefines \sigma_2$ and $\sigma \refines \sigma'_1 \fhash \sigma'_2$. 
+	If $\sigma \taurefines \sigma_1 \fhash \sigma_2$ then there exists $\sigma'_1,\sigma'_2$ such that $\sigma'_1 \taurefines \sigma_1$, $\sigma'_2 \taurefines \sigma_2$ and $\sigma \refines \sigma'_1 \fhash \sigma'_2$.
 \end{lemma}
 
 \begin{proof}
