@@ -91,6 +91,7 @@ Related but less relevant to the current problem, compared to the previous two p
 For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$. 
 
 \subsubsection{Functions}
+\label{sec:functions}
 
 For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \lambda x . \begin{cases}
 	b & \text{if $x = a$} \\
@@ -100,15 +101,29 @@ For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, w
 For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \lambda x . \begin{cases}
 	g(x) & \text{if $x \in \dom{g}$} \\
 	f(x) & \text{otherwise.}
-\end{cases} \] Note that if $f$ and $g$ have disjoint domains then $f \override g = f \cup g$. 
+\end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Note also that if $f$ and $g$ have disjoint domains then $f \override g = f \uplus g$. 
 
-\subsubsection{Lists and Pomsets}
+\subsubsection{Lists}
+\label{sec:lists}
 
-The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, and list concatenation by $l \lapp l'$, for lists $l$ and $l'$. For a list $l$ of elements drawn from a set $A \times B$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
+The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for object $o$ and lists $l,l'$. 
+
+For a list $l$ of elements drawn from a set $A \times B$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
 	b &\text{ if $l = l' \lapp \lsingle{(x,b)}$}\\
 	\funof{l'}(x) &\text{ if $l = l' \lapp \lsingle{(y,b)}$ with $x \neq y$}\\
 	\bot & \text{otherwise.}
 \end{cases}\] For $A' \subseteq A$, $\restrict{l}{A'}$ is the sublist restriction of $l$ to domain $A'$.
+
+For convenience, we lift these function definitions pointwise to sets of lists. E.g., for a set $L$ of lists, $a \lcons L \eqdef \setof{a \lcons l}{l \in L}$. 
+
+The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined by recursion on the structure of $m$ and $n$: \begin{align*}
+	m \merge \lnil & = \lnil \merge m = \set{m} \\ 
+	a \lcons m' \merge b \lcons n' & = a \lcons (m' \merge (b\lcons n')) \uplus b \lcons ((a \lcons m') \merge n').
+\end{align*}
+
+We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$.
+
+\subsubsection{Pomsets}
 
 The previous list notation is also carried over for finite pomsets: $\lnil$ for the empty pomset, $\lsingle{o}$ for the singleton pomset with label $o$, and $p \lapp p'$ for the concatenation of pomsets $p$ and $p'$. We additionally write $p \uplus p'$ for the additive union of pomsets. In contrast to the corresponding operations on partially ordered sets, these operations are total.\footnote{I assume the reader has basic familiarity with pomsets; the definition of these operations is presented nicely in \cite{DBLP:conf/icdt/GrumbachM95}.}
 
