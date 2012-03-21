@@ -618,14 +618,6 @@ The requirement that assertions denote sets of states that are closed w.r.t.~flu
 
 Also note that it is important to define the presat relation so that it preserves the flushing closure of atomic formulas, as opposed to closing the entire relation at once as with the refinement and partial-join closures.\footnote{Those closures could also be built into the presat relation, I think, but it seemed more concise to factor them out.} E.g., if $\presat{e \fwrite{i} e'}$ is not closed w.r.t.~flushing, then $\presat{\fbar{i} \conj e \fwrite{i} e'}$ is empty, and hence so too would be its flushing closure.  
 
-\paragraph{Refinement and Partial-Join Closure}
-
-The importance of the refinement and partial-meet closure conditions in the context of the intensional model can been seen with the following examples. Consider the following strong interleaving composition, $(x \fwrite{i} 1) \fsep (y \fwrite{i} 2)$, which consists of two unordered writes on processor $i$. The memory model is described using totally ordered write buffers, so it ought intuitively be that either the $x$ write precedes the $y$ write, or vice versa---i.e., there is no true concurrency among writes on the same buffer in the basic machine model---and so the following semantic implication ought to hold: \[ (x \fwrite{i} 1) \fsseq (y \fwrite{i} 2) \sentails (x \fwrite{i} 1) \fsep (y \fwrite{i} 2). \] This does, in fact, hold in the semantics as given because of refinement closure. Before this closure, the right-hand assertion includes only states in which the $x$ and $y$ writes are unordered. The refinement closure ensures that all linear extensions are included as well, including, e.g., the one in which the $x$ write precedes the $y$ write, as in the left-hand assertion. 
-
-The partial-join closure, on the other hand, ensures that an assertion which denotes all possible interleavings of some writes also includes the state in which those writes are unordered. That means, in this example, that the following ought to hold as well: \[ (x \fwrite{i} 1) \fsep (y \fwrite{i} 2) \sentails ((x \fwrite{i} 1) \fsseq (y \fwrite{i} 2)) \disj ((y \fwrite{i} 2) \fsseq (x \fwrite{i} 1)). \] The partial join closure ensures this, by adding to the set of states that satisfy the right-hand assertion the join of the two states with the writes in either total order. 
-
-Combining the previous two examples, we have the following nice semantic equivalence: \[ (x \fwrite{i} 1) \fsep (y \fwrite{i} 2) \sequiv ((x \fwrite{i} 1) \fsseq (y \fwrite{i} 2)) \disj ((y \fwrite{i} 2). \]
-
 \subsection{Algebra}
 \label{sec:algebra}
 
