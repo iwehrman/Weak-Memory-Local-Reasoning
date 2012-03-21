@@ -407,11 +407,11 @@ The Kleene closure is not necessary for expressing the axioms and inference rule
 \subsection{Predicates}
 \label{sec:predicates}
 
-Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.~the memory model, which indicates that non-blocked processors may commit buffered writes to memory nondeterministically.  
+Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which indicates that non-blocked processors may commit buffered writes to memory nondeterministically.  
 
 \subsection{Separating Conjunctions}
 
-We now digress to define a series of functions on states, which will later be used to define the predicates for each of the four separating conjunctions. With these definitions in hand, the predicate definitions will be straightforward. 
+We now digress to define a series of functions on states, which will later be used to define the predicates for each of the four separating conjunctions. With these definitions in hand, the predicate definitions will be straightforward.
 
 \subsubsection{Weak Interleaving Separation}
 
@@ -550,36 +550,36 @@ Observe that if $\sigma \fsseq \sigma'$ then $\sigma \fseq \sigma'$ is defined a
 
 \subsection{Satisfaction}
 
-The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. This relation is defined in two steps: first be relating some ``initial'' states to assertions, definining the \emph{kernel} of the satisfaction relation, and then closing this relation w.r.t.~refinement for the full satisfaction relation. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
+The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
 
-We write $\sigma \in \presat{P}$ to indicate membership of $\sigma$ and $P$ in the kernel of the satisfaction relation, and $\presat{P}$ for the set of states related to $P$. This relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:presat-relation}. 
+The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}. 
 
 \begin{figure}[ht]
 	\centering
 	\resizebox{\columnwidth}{!}{
 	\begin{minipage}{\columnwidth}
 	\begin{align*}
-		(s,h,B,l) \in \presat{b} \iffdef & \ext{s}(b) = 1 \\
-		(s,h,B,l) \in \presat{P \disj Q} \iffdef & (s,h,B,l) \in \presat{P} \disj (s,h,B,l) \in \presat{Q} \\
-		(s,h,B,l) \in \presat{P \conj Q} \iffdef & (s,h,B,l) \in \presat{P} \conj (s,h,B,l) \in \presat{Q} \\
-		(s,h,B,l) \in \presat{\exists x \st P} \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,l) \in \presat{P} \\
-		(s,h,B,l) \in \presat{\forall x \st P} \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,l) \in \presat{P} \\
-		(s,h,B,l) \in \presat{\femp} \iffdef & h = \lnil \conj \forall i \in \setprocessors \st B_i = \lnil \\ 
-		(s,h,B,l) \in \presat{\fbar{e}} \iffdef & \ext{s}(e) \in \setprocessors \conj B_{\ext{s}(e)} = \lnil \\ 
-		(s,h,B,l) \in \presat{\flock{e,P}} \iffdef & \ext{s}(e) \in \setprocessors \conj l = \ext{s}(e) \conj (s,h,B,\bot) \in \presat{P} \\ 
-		(s,h,B,l) \in \presat{e \fwrite{e'} e''} \iffdef & \ext{s}(e') \in \setprocessors \conj \\ & ((B = \ext{s}(e') \mapsto \lsingle{(\ext{s}(e),\ext{s}(e''))} \conj h = \lnil) \disj \\ 
-		& \,\;(\ext{s}(e') \in \live{l} \conj B = \nil \conj h = \lsingle{(\ext{s}(e),\ext{s}(e''))})) \\
-		(s,h,B,l) \in \presat{P \fhash P'} \iffdef & \exists \sigma \in \presat{P}, \sigma' \in \presat{P'} \st \sigma \fhash \sigma' = (s,h,B,l) \\
-		(s,h,B,l) \in \presat{P \fsep P'} \iffdef & \exists \sigma \in \presat{P}, \sigma' \in \presat{P'} \st \sigma \fsep \sigma' = (s,h,B,l) \\
-		(s,h,B,l) \in \presat{P \fseq P'} \iffdef & \exists \sigma \in \presat{P}, \sigma' \in \presat{P'} \st \sigma \fseq \sigma' = (s,h,B,l) \\
-		(s,h,B,l) \in \presat{P \fsseq P'} \iffdef & \exists \sigma \in \presat{P}, \sigma' \in \presat{P'} \st \sigma \fsseq \sigma' = (s,h,B,l) \\
-		(s,h,B,l) \in \presat{\fiter{P}} \iffdef & (s,h,B,l) \in \presat{\femp} \disj \\ &  \exists \sigma \in \presat{P},\sigma' \in \presat{\fiter{P}} \st (s,h,B,l) = \sigma \fseq \sigma'
+		(s,h,B,k) \sentails{b} \iffdef & \ext{s}(b) = 1 \\
+		(s,h,B,k) \sentails{P \disj Q} \iffdef & (s,h,B,k) \sentails{P} \disj (s,h,B,k) \sentails{Q} \\
+		(s,h,B,k) \sentails{P \conj Q} \iffdef & (s,h,B,k) \sentails{P} \conj (s,h,B,k) \sentails{Q} \\
+		(s,h,B,k) \sentails{\exists x \st P} \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,k) \sentails{P} \\
+		(s,h,B,k) \sentails{\forall x \st P} \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,k) \sentails{P} \\
+		(s,\nil,B,\nil) \sentails{\femp} \iffdef & \forall i \in \setprocessors \st B_i = \lnil \\ 
+		(s,h,B,k) \sentails{\fbar{e}} \iffdef & B_{\ext{s}(e)} = \lnil \\ 
+		(s,\nil,B,k) \sentails{\flock{e}} \iffdef & \forall i \in \setprocessors \st B_i = \lnil \conj \ext{s}(e) \in \setprocessors \conj k = \setprocessors \setminus \set{\ext{s}(e)}\\ 
+		(s,h,B,k) \sentails{e \fwrite{e'} e''} \iffdef & k \subseteq \set{\ext{s}(e)} \conj \forall i \in \setprocessors \st i \neq \ext{s}(e) \onlyif B_i = \lnil \\ & ((h = \nil \conj B_{\ext{s}(e')} = \lsingle{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+		& \,\;(h = (\ext{s}(e) \mapsto \ext{s}(e'')) \conj B_{\ext{s}(e')} = \lnil \conj \ext{s}(e') \notin k)) \\
+		(s,h,B,k) \sentails{P \fhash P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fhash \sigma' = (s,h,B,k) \\
+		(s,h,B,k) \sentails{P \fsep P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fsep \sigma' = (s,h,B,k) \\
+		(s,h,B,k) \sentails{P \fseq P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fseq \sigma' = (s,h,B,k) \\
+		(s,h,B,k) \sentails{P \fsseq P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fsseq \sigma' = (s,h,B,k) \\
+		(s,h,B,k) \sentails{\fiter{P}} \iffdef & (s,h,B,k) \sentails{\femp} \disj (\exists \sigma,\sigma \st \\ & \sigma \sentails P \conj \sigma' \sentails \fiter{P} \conj (s,h,B,k) = \sigma \fseq \sigma')
 	\end{align*}
 \end{minipage}}
-	\caption{\label{fig:presat-relation} The kernel of the satisfaction relation}
+	\caption{\label{fig:satisfaction-relation} The satisfaction relation}
 \end{figure}
 
-The full satisfaction relation is then defined as follows: \[ \sigma \sentails P \iffdef \exists \sigma_1,\sigma_2 \in \presat{P} \st \sigma \refines (\sigma_1 \pjoin \sigma_2).\] We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef \setof{\sigma}{\sigma \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
+We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef \setof{\sigma}{\sigma \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
 	P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
 	P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
