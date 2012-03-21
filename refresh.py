@@ -100,7 +100,6 @@ if __name__ == '__main__':
         env = make_environ(latex_dir)   
     
         cvs_output = call_git(root).split('\n')
-        print cvs_output
         for word in cvs_output: 
             if ('.tex' in word) | ('.bib' in word):
                 serial = make_serial(root)
