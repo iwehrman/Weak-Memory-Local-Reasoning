@@ -407,11 +407,7 @@ The Kleene closure is not necessary for expressing the axioms and inference rule
 \subsection{Predicates}
 \label{sec:predicates}
 
-Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate $S$ satisfies the following three closure properties: \begin{enumerate}
-	\item closure w.r.t.~flushing: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$; 
-	\item closure w.r.t.~refinement: if $\sigma \in S$ and $\sigma \stackrel{\rho}{\rightarrow} \sigma'$ then $\sigma' \in S$; 
-	\item closure w.r.t.~partial joins: if $\sigma_1,\sigma_2 \in S$ and $\sigma_1 \pjoin \sigma_2 = \sigma'$ then $\sigma' \in S$. 
-\end{enumerate} The first closure property is needed for soundness w.r.t.~the memory model. The second reflects the fact that there is no true concurrency among writes on a particular buffer, and that the partiality of ordering only represents the set of possible interleavings. The third reflects the fact that a set of possible interleavings can in turn be represented by a single partial order. Note that closure w.r.t.~partial meets is implied by the second closure property. Note also that, in an extensional model, only the first closure property is relevant. 
+Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.~the memory model, which indicates that non-blocked processors may commit buffered writes to memory nondeterministically.  
 
 \subsection{Separating Conjunctions}
 
