@@ -209,7 +209,9 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 	\item $\cunlock$ releases the global lock and fences.
 \end{itemize}
 
-The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p \vdash \sigma \stackrel{i}{\rightarrow} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) 
+The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p \vdash \sigma \stackrel{i}{\rightarrow} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p \vdash \sigma \stackrel{i}{\rightarrow} \top. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
+
+To defined these relations formally, we must first define the notion of a machine state. 
 
 \begin{definition}
 A partial machine state is a four-tuple $(s,h,B,k)$ such that: \begin{itemize}
@@ -225,15 +227,6 @@ Note that the notion of machine state given here differs from that used to defin
 Second, the global lock value from the memory model replaced in the machine model by a set of ``blocked'' processors, which are not allowed to access main memory. In the memory model an available lock indicates that no processors are blocked, while all lock held by processor $i$ indicates that all processors but $i$ are blocked. The machine model is more general, allowing an arbitrary subset of processors to be blocked. 
 
 A partial state is called \emph{complete} if its set of blocked processors is a valid representation of a global lock, insofar as no processors are blocked when the lock is free, and all processors but $i$ are blocked when $i$ holds the lock: \[ \complete{s,h,B,k} \iffdef k = \nil \disj \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}.\]
-
-A primitive command may alternatively abort upon execution: \[ p \vdash \sigma \stackrel{i}{\rightarrow} \top. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
-
-As dictated by the memory model, the execution of some primitive commands is restricted by the status of the global lock. The primitive $\clock$ (resp.~$\cunlock$) can only evaluate on processor $i$ when the lock value is $\bot$ (resp.~$i$), and load can only evaluate when the lock value is either $\bot$ or $i$. There is no such restriction for store or fence, or for the other operations, which do not access the heap. 
-
-For convenience, we define the set of \emph{live processors} w.r.t.~a given lock value as follows: \[ \live{l} \eqdef \begin{cases}
-	\setprocessors &\text{ if } l = \bot\\
-	\set{l} &\text{ if } l \in \setprocessors.
-\end{cases}\] With this terminology, we may say that a load primitive may only evaluate on a \emph{live} processors. 
 
 The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics} below. 
 
