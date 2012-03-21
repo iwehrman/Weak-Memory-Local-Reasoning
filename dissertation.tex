@@ -558,23 +558,25 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 	\centering
 	\resizebox{\columnwidth}{!}{
 	\begin{minipage}{\columnwidth}
-	\begin{align*}
-		(s,h,B,k) \sentails{b} \iffdef & \ext{s}(b) = 1 \\
-		(s,h,B,k) \sentails{P \disj Q} \iffdef & (s,h,B,k) \sentails{P} \disj (s,h,B,k) \sentails{Q} \\
-		(s,h,B,k) \sentails{P \conj Q} \iffdef & (s,h,B,k) \sentails{P} \conj (s,h,B,k) \sentails{Q} \\
-		(s,h,B,k) \sentails{\exists x \st P} \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,k) \sentails{P} \\
-		(s,h,B,k) \sentails{\forall x \st P} \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,k) \sentails{P} \\
-		(s,\nil,B,\nil) \sentails{\femp} \iffdef & \forall i \in \setprocessors \st B_i = \lnil \\ 
-		(s,h,B,k) \sentails{\fbar{e}} \iffdef & B_{\ext{s}(e)} = \lnil \\ 
-		(s,\nil,B,k) \sentails{\flock{e}} \iffdef & \forall i \in \setprocessors \st B_i = \lnil \conj \ext{s}(e) \in \setprocessors \conj k = \setprocessors \setminus \set{\ext{s}(e)}\\ 
-		(s,h,B,k) \sentails{e \fwrite{e'} e''} \iffdef & k \subseteq \set{\ext{s}(e)} \conj \forall i \in \setprocessors \st i \neq \ext{s}(e) \onlyif B_i = \lnil \\ & ((h = \nil \conj B_{\ext{s}(e')} = \lsingle{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
-		& \,\;(h = (\ext{s}(e) \mapsto \ext{s}(e'')) \conj B_{\ext{s}(e')} = \lnil \conj \ext{s}(e') \notin k)) \\
-		(s,h,B,k) \sentails{P \fhash P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fhash \sigma' = (s,h,B,k) \\
-		(s,h,B,k) \sentails{P \fsep P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fsep \sigma' = (s,h,B,k) \\
-		(s,h,B,k) \sentails{P \fseq P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fseq \sigma' = (s,h,B,k) \\
-		(s,h,B,k) \sentails{P \fsseq P'} \iffdef & \exists \sigma \sentails{P}, \sigma' \sentails{P'} \st \sigma \fsseq \sigma' = (s,h,B,k) \\
-		(s,h,B,k) \sentails{\fiter{P}} \iffdef & (s,h,B,k) \sentails{\femp} \disj (\exists \sigma,\sigma \st \\ & \sigma \sentails P \conj \sigma' \sentails \fiter{P} \conj (s,h,B,k) = \sigma \fseq \sigma')
-	\end{align*}
+	\[
+	\begin{array}{llllll}
+		(s,h,B,k) & \sentails & {b} & \iffdef & \ext{s}(b) = 1 \\
+		(s,h,B,k) & \sentails & {P \disj Q} & \iffdef & (s,h,B,k) \sentails{P} \disj (s,h,B,k) \sentails{Q} \\
+		(s,h,B,k) & \sentails & {P \conj Q} & \iffdef & (s,h,B,k) \sentails{P} \conj (s,h,B,k) \sentails{Q} \\
+		(s,h,B,k) & \sentails & {\exists x \st P} & \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,k) \sentails{P} \\
+		(s,h,B,k) & \sentails & {\forall x \st P} & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,B,k) \sentails{P} \\
+		(s,\nil,B,\nil) & \sentails & {\femp} & \iffdef & B = (\lambda x . \lnil) \\ 
+		(s,h,B,k) & \sentails & {\fbar{e}} & \iffdef & B_{\ext{s}(e)} = \lnil \\ 
+		(s,\nil,B,k) & \sentails & {\flock{e}} & \iffdef & B = (\lambda x . \lnil) \conj k = \setprocessors \setminus \set{\ext{s}(e)}\\ 
+		(s,h,B,k) & \sentails & {e \fwrite{e'} e''} & \iffdef & k \subseteq \set{\ext{s}(e)} \conj (\forall i \neq \ext{s}(e) \st B_i = \lnil) \conj \\ & & & & ((h = \nil \conj B_{\ext{s}(e')} = \lsingle{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+		& & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e'') \conj B_{\ext{s}(e')} = \lnil \conj k = \nil)) \\
+		(s,h,B,k) & \sentails & {P \fhash P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fhash \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
+		(s,h,B,k) & \sentails & {P \fsep P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsep \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
+		(s,h,B,k) & \sentails & {P \fseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
+		(s,h,B,k) & \sentails & {P \fsseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
+		(s,h,B,k) & \sentails & {\fiter{P}} & \iffdef & (s,h,B,k) \sentails{\femp} \disj (\exists \sigma,\sigma \st \\ & & & & \sigma \sentails P \conj \sigma' \sentails \fiter{P} \conj \sigma \fseq \sigma' = (s,h,B,k))
+	\end{array}
+	\]
 \end{minipage}}
 	\caption{\label{fig:satisfaction-relation} The satisfaction relation}
 \end{figure}
