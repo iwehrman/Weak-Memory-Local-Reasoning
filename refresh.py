@@ -48,6 +48,12 @@ def call_cvs(root):
     p.wait()
     return p.stdout.read()
     
+def call_git(root):
+    os.chdir(root)
+    p = subprocess.Popen(['git', 'pull', 'origin'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p.wait()
+    return p.stdout.read()
+
 def refresh(env, root, serial):
     with open(root + '/' + LATEX_LOG, 'wa') as log:
         log.write("Refreshing document...\n")
@@ -93,7 +99,7 @@ if __name__ == '__main__':
     
         env = make_environ(latex_dir)   
     
-        cvs_output = call_cvs(root).split('\n')
+        cvs_output = call_git(root).split('\n')
         for word in cvs_output: 
             if word.endswith('tex') | word.endswith('bib'): 
                 serial = make_serial(root)
