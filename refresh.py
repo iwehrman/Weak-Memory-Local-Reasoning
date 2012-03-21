@@ -100,8 +100,9 @@ if __name__ == '__main__':
         env = make_environ(latex_dir)   
     
         cvs_output = call_git(root).split('\n')
+        print cvs_output
         for word in cvs_output: 
-            if word.endswith('tex') | word.endswith('bib'): 
+            if ('.tex' in word) | ('.bib' in word):
                 serial = make_serial(root)
                 setup(root, serial)
                 log.write(str(datetime.now()) + ': Refreshing document...\n')
