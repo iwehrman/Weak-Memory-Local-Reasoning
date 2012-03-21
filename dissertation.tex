@@ -288,7 +288,7 @@ The language of commands is defined by the following grammar: \[ \comms~c \bnfde
 The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \top. \] 
 
 The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation between states $\stackrel{\tau}{\rightarrow}$ defined as follows: \begin{align*} (s,h,B,k) \stackrel{\tau}{\rightarrow} (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
-\end{align*} 
+\end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\stackrel{\tau}{\rightarrow}$. 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below.
 
@@ -471,45 +471,59 @@ This, along with the requirement that the stacks and locks of the two states agr
 
 We refer to this as \emph{weak interleaving separation}, because only minimal ordering is created among the writes in the conjoined states (and unordered writes represent their various interleavings), and because memory addresses are not partitioned, but instead only weakly separated. 
 
-\begin{lemma}
-	\label{lem:hash-app-exchange}
-	For pomsets $p,q,r,s$, $(p \fhash q) \lapp (r \fhash s) \refines (p \lapp r) \fhash (q \lapp s)$ when $\dom{q} \cap \dom{r} = \nil$. 
-\end{lemma}
+% \begin{lemma}
+% 	\label{lem:hash-app-exchange}
+% 	For pomsets $p,q,r,s$, $(p \fhash q) \lapp (r \fhash s) \refines (p \lapp r) \fhash (q \lapp s)$ when $\dom{q} \cap \dom{r} = \nil$. 
+% \end{lemma}
+
+% \begin{lemma}
+% 	\label{lem:separation-tau}
+% 	If $\sigma \fhash \sigma' \stackrel{\tau}{\rightarrow} \upsilon$ then there exists $\sigma_\tau,\sigma'_\tau$ such that $\sigma \stackrel{\tau}{\rightarrow} \sigma_\tau$, $\sigma' \stackrel{\tau}{\rightarrow} \sigma'_\tau$ and $\upsilon \refines \sigma_\tau \fhash \sigma'_\tau$. 
+% \end{lemma}
+
+% \begin{proof}
+% 	Let $\sigma = (s,h,B,l)$ and $\sigma = (s,h',B',l)$, and so \[\sigma \fhash \sigma' = (s,h \fhash h',B \fhash B',l),\] and there exists $B_\tau^1,B_\tau^2$ such that, for all $i$, $B(i) \fhash B'(i) = B_\tau^1(i) \lapp B_\tau^2(i)$, and if $i \notin \live{l}$ then $B_\tau^1(i) = \lnil$, and \begin{align*}
+% 		\upsilon = (s,(h \fhash h') \lapp B_\tau^1, B_\tau^2,l).
+% 	\end{align*}
+
+% 	Each of $B_\tau^1$, $B_\tau^2$ can be partitioned according to $B \fhash B'$ and rewritten as follows: \begin{align*}
+% 		B_\tau^1 \refines & B_\tau^{1a} \fhash B_\tau^{1b} \\
+% 		B_\tau^2 \refines & B_\tau^{2a} \fhash B_\tau^{2b}
+% 	\end{align*} Let $\sigma_\tau = (s,h \lapp B_\tau^{1a}, B_\tau^{2a})$ and $\sigma'_\tau = (s,h' \lapp B_\tau^{1b}, B_\tau^{2b})$, and so: \begin{align*} \sigma_\tau \fhash \sigma'_\tau = (s, (h \lapp B_\tau^{1a}) \fhash (h' \lapp B_\tau^{1b}), B_\tau^{2a} \fhash B_\tau^{2b},l).
+% 	\end{align*} To show that $\upsilon \refines \sigma_\tau \fhash \sigma'_\tau$, we must show both \begin{align*} (h \fhash h') \lapp B_\tau^1 \refines&  (h \lapp B_\tau^{1a}) \fhash (h' \lapp B_\tau^{1b}) \\ B_\tau^2 \refines&  B_\tau^{2a} \fhash B_\tau^{2b} \end{align*} The latter follows from the definition of $B_\tau^{2a}$ and $B_\tau^{2b}$. The former follows from the definition of $B_\tau^{1a}$ and $B_\tau^{2b}$ and Lemma~\ref{lem:hash-app-exchange}, using the fact that $\dom{B} \cap \dom{h'} = \nil$ and $\dom{B_\tau^{1a}} \subseteq \dom{B}$. 
+% \end{proof}
+
+% \begin{lemma}
+% 	\label{lem:separation-rho-buffer}
+% 	If $\sigma_1 \fhash \sigma_2 \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma'$ then there exists $\sigma_{B1},\sigma_{B2}$ such that $\sigma_{1} \stackrel{\rho_B}{\rightarrow} \sigma_{B1} \stackrel{\tau}{\rightarrow} \sigma_{\tau1}$, $\sigma_{2} \stackrel{\rho_B}{\rightarrow} \sigma_{B2} \stackrel{\tau}{\rightarrow} \sigma_{\tau2}$, and $\sigma_{\tau1} \fhash \sigma_{\tau2} \stackrel{\rho}{\rightarrow} \sigma'$. 
+% \end{lemma}
+
+% \begin{proof}
+% 	Here is a proof sketch. The first step involves collapsing independencies among various writes. Let $\sigma_{B1}$ be the result of collapsing those independencies among the writes of $\sigma_1$, and similarly for $\sigma_{B2}$. (This lemma does \emph{not} follow from Lemma~\ref{lem:separation-tau} because it is only the case that $\sigma_B \refines \sigma_{B1} \fhash \sigma_{B2}$, but not the other way around.) Similarly, the second step involves moving some strongly connected writes from the heap to the buffer. Let $\sigma_{\tau1}$ be the result of moving just these writes from $\sigma_{B2}$ (a fortiori, they too are strongly connected), and similarly for $\sigma_{\tau2}$. Finally, collapse independencies among the remaining writes (which may be either in the buffer or in the heap) to arrive back at $\sigma1$. 
+% \end{proof}
 
 \begin{lemma}
 	\label{lem:separation-tau}
-	If $\sigma \fhash \sigma' \stackrel{\tau}{\rightarrow} \upsilon$ then there exists $\sigma_\tau,\sigma'_\tau$ such that $\sigma \stackrel{\tau}{\rightarrow} \sigma_\tau$, $\sigma' \stackrel{\tau}{\rightarrow} \sigma'_\tau$ and $\upsilon \refines \sigma_\tau \fhash \sigma'_\tau$. 
+	If $\sigma \in \sigma_1 \fhash \sigma_2$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$, then either there exists $\sigma'_1$ such that $\sigma' \in \sigma'_1 \fhash \sigma_2$, or there exists $\sigma'_2$ such that $\sigma' \in \sigma_1 \fhash \sigma'_2$.
 \end{lemma}
 
 \begin{proof}
-	Let $\sigma = (s,h,B,l)$ and $\sigma = (s,h',B',l)$, and so \[\sigma \fhash \sigma' = (s,h \fhash h',B \fhash B',l),\] and there exists $B_\tau^1,B_\tau^2$ such that, for all $i$, $B(i) \fhash B'(i) = B_\tau^1(i) \lapp B_\tau^2(i)$, and if $i \notin \live{l}$ then $B_\tau^1(i) = \lnil$, and \begin{align*}
-		\upsilon = (s,(h \fhash h') \lapp B_\tau^1, B_\tau^2,l).
-	\end{align*}
+	Without loss of generality, assume $\sigma = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\sigma' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\sigma_1 = (s,h_1,B_1,k_1)$ and $\sigma_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-	Each of $B_\tau^1$, $B_\tau^2$ can be partitioned according to $B \fhash B'$ and rewritten as follows: \begin{align*}
-		B_\tau^1 \refines & B_\tau^{1a} \fhash B_\tau^{1b} \\
-		B_\tau^2 \refines & B_\tau^{2a} \fhash B_\tau^{2b}
-	\end{align*} Let $\sigma_\tau = (s,h \lapp B_\tau^{1a}, B_\tau^{2a})$ and $\sigma'_\tau = (s,h' \lapp B_\tau^{1b}, B_\tau^{2b})$, and so: \begin{align*} \sigma_\tau \fhash \sigma'_\tau = (s, (h \lapp B_\tau^{1a}) \fhash (h' \lapp B_\tau^{1b}), B_\tau^{2a} \fhash B_\tau^{2b},l).
-	\end{align*} To show that $\upsilon \refines \sigma_\tau \fhash \sigma'_\tau$, we must show both \begin{align*} (h \fhash h') \lapp B_\tau^1 \refines&  (h \lapp B_\tau^{1a}) \fhash (h' \lapp B_\tau^{1b}) \\ B_\tau^2 \refines&  B_\tau^{2a} \fhash B_\tau^{2b} \end{align*} The latter follows from the definition of $B_\tau^{2a}$ and $B_\tau^{2b}$. The former follows from the definition of $B_\tau^{1a}$ and $B_\tau^{2b}$ and Lemma~\ref{lem:hash-app-exchange}, using the fact that $\dom{B} \cap \dom{h'} = \nil$ and $\dom{B_\tau^{1a}} \subseteq \dom{B}$. 
-\end{proof}
+	In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\sigma'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\sigma_1 \stackrel{\tau}{\rightarrow} \sigma'_1$. By definedness of $\sigma_1 \fhash \sigma_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\sigma' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \sigma'_1 \fhash \sigma_2$. 
 
-\begin{lemma}
-	\label{lem:separation-rho-buffer}
-	If $\sigma_1 \fhash \sigma_2 \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma'$ then there exists $\sigma_{B1},\sigma_{B2}$ such that $\sigma_{1} \stackrel{\rho_B}{\rightarrow} \sigma_{B1} \stackrel{\tau}{\rightarrow} \sigma_{\tau1}$, $\sigma_{2} \stackrel{\rho_B}{\rightarrow} \sigma_{B2} \stackrel{\tau}{\rightarrow} \sigma_{\tau2}$, and $\sigma_{\tau1} \fhash \sigma_{\tau2} \stackrel{\rho}{\rightarrow} \sigma'$. 
-\end{lemma}
-
-\begin{proof}
-	Here is a proof sketch. The first step involves collapsing independencies among various writes. Let $\sigma_{B1}$ be the result of collapsing those independencies among the writes of $\sigma_1$, and similarly for $\sigma_{B2}$. (This lemma does \emph{not} follow from Lemma~\ref{lem:separation-tau} because it is only the case that $\sigma_B \refines \sigma_{B1} \fhash \sigma_{B2}$, but not the other way around.) Similarly, the second step involves moving some strongly connected writes from the heap to the buffer. Let $\sigma_{\tau1}$ be the result of moving just these writes from $\sigma_{B2}$ (a fortiori, they too are strongly connected), and similarly for $\sigma_{\tau2}$. Finally, collapse independencies among the remaining writes (which may be either in the buffer or in the heap) to arrive back at $\sigma1$. 
+	In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\sigma'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\sigma_2 \stackrel{\tau}{\rightarrow} \sigma'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\sigma' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \sigma_1 \fhash \sigma_2$. 
 \end{proof}
 
 \begin{lemma}
 	\label{lem:separation-refinement}
-	If $\sigma \taurefines \sigma_1 \fhash \sigma_2$ then there exists $\sigma'_1,\sigma'_2$ such that $\sigma'_1 \taurefines \sigma_1$, $\sigma'_2 \taurefines \sigma_2$ and $\sigma \refines \sigma'_1 \fhash \sigma'_2$.
+	If $\sigma \in \sigma_1 \fhash \sigma_2$ and $\sigma' \taurefines \sigma$ then there exists $\sigma'_1,\sigma'_2$ such that $\sigma'_1 \taurefines \sigma_1$, $\sigma'_2 \taurefines \sigma_2$ and $\sigma' \in \sigma'_1 \fhash \sigma'_2$. 
 \end{lemma}
 
 \begin{proof}
-	By Lemma~\ref{lem:taurefines-decompose}, there exists $\sigma_B,\sigma_h$ such that $\sigma_1 \fhash \sigma_2 \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma_h \stackrel{\rho_h}{\rightarrow} \sigma$. By Lemma~\ref{lem:separation-refinement}, there exists $\sigma_{B1},\sigma_{\tau1},\sigma_{B2},\sigma_{\tau2}$ such that $\sigma_{1} \stackrel{\rho_B}{\rightarrow} \sigma_{B1} \stackrel{\tau}{\rightarrow} \sigma_{\tau1}$, $\sigma_{2} \stackrel{\rho_B}{\rightarrow} \sigma_{B2} \stackrel{\tau}{\rightarrow} \sigma_{\tau2}$, and $\sigma_{\tau1} \fhash \sigma_{\tau2} \stackrel{\rho}{\rightarrow} \sigma_h$. I.e., $\sigma_{\tau1} \taurefines \sigma_1$, $\sigma_{\tau2} \taurefines \sigma_2$ and $\sigma_h \refines \sigma_{\tau1} \fhash \sigma_{\tau2}$. Because $\sigma \refines \sigma_h$, we also have $\sigma \refines \sigma_{\tau1} \fhash \sigma_{\tau2}$. 
+	By induction on the number of $\tau$ steps from $\sigma$ to $\sigma'$. The base case is trivial. Otherwise, assume that $\sigma'' \taurefines \sigma$ and $\sigma'' \stackrel{\tau}{\rightarrow} \sigma'$, and by the induction hypothesis that there exists $\sigma''_1,\sigma''_2$ such that $\sigma''_1 \taurefines \sigma_1$, $\sigma''_2 \taurefines \sigma_2$ and $\sigma'' \in \sigma''_1 \fhash \sigma''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
 \end{proof}
+
 
 It is possible to imagine strengthening this conjunction in two ways: \begin{enumerate}
 	\item With stronger disjointness requirements, barring \emph{any} overlap in the addresses to which there are writes between the conjuncts, regardless of the lock status and the presence of ``covering'' writes in the present state.  
@@ -632,6 +646,7 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
 		\femp \bullet P \sequiv & P \\
 		(P \bullet P') \bullet P'' \sequiv & P \bullet (P' \bullet P'') \\
 		P \fsep P' \sequiv & P' \fsep P \\
+		P \bullet \flock{e} \sequiv & \flock{e} \bullet P \\
 		e \fwrite{x} e' \conj \fbar{x} \sequiv & e \fwrite{y} e' \conj \fbar{y}
  	\end{align*}
 	\end{minipage}}
@@ -666,29 +681,32 @@ We note that the four separating conjunctions naturally form a sort of lattice, 
 The language of specifications is given by the following schema: \[ \spec{J}{P}{c}{Q}, \] where $c$ is a command and $J,P,Q$ are assertions, referred to as the \emph{invariant}, \emph{precondition} and \emph{postcondition}, respectively. 
 
 \subsection{Semantics}
+\label{specification-semantics}
 
 A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
 
 Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,\sigma,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $\sigma$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall \sigma \sentails P \st \forall n \in \setnaturals \st \safe{n}{c,\sigma,J,Q}.\]
 
-In the sequel, let $\locked{\sigma}$ indicate that some processor holds the lock state $\sigma$: \[ \locked{s,h,B,l} \iffdef l \in \setprocessors. \]
+In the sequel, let $\locked{\sigma}$ indicate that some processor holds the lock state $\sigma$: \[ \locked{s,h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
 
 We now give a formal definition of $\safe{n}{c,\sigma,J,Q}$ by natural number induction on $n$. $\safe{0}{c,\sigma,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,\sigma,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
-	\item If $c = \cskip$ then $\sigma \in Q$
+	\item If $c = \cskip$ then $\sigma \in Q$.
 
-	\item For all $\sigma_J,\sigma_F$ such that \begin{enumerate}[(i)]
-		\item $\defined{\sigma_J \fsep (\sigma_F \fhash \sigma)}$, and 
-		\item either $\sigma_J \sentails J$ or $\locked{\sigma_J}$,
-	\end{enumerate} $c,(\sigma_J \fsep (\sigma_F \fhash \sigma)) \nrightarrow \top$
+	\item For all $\sigma_0,\sigma_J,\sigma_F$ such that \begin{enumerate}[(i)]
+		\item $\sigma_0 \in (\sigma_J \fsep (\sigma_F \fhash \sigma)$,
+		\item $\complete{\sigma_0}$, and
+		\item either $\sigma_J \sentails J$ or $\locked{\sigma_1}$,
+	\end{enumerate} $c,\sigma_1 \nrightarrow \top$.
 
-	\item For all $\sigma_J,\sigma_F,\sigma_1,c'$ such that \begin{enumerate}[(i)]
-		\item $\defined{\sigma_J \fsep (\sigma_F \fhash \sigma)}$,
-		\item either $\sigma_J \sentails J$ or $\locked{\sigma_J}$, and 
-		\item $c, (\sigma_J \fsep (\sigma_F \fhash \sigma)) \rightarrow c',\sigma_1$,
+	\item For all $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that \begin{enumerate}[(i)]
+		\item $\sigma_0 \in (\sigma_J \fsep (\sigma_F \fhash \sigma))$,
+		\item $\complete{\sigma_0}$,
+		\item either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and 
+		\item $c,\sigma_0 \rightarrow c',\sigma_1$,
 	\end{enumerate} there exists $\sigma'_J,\sigma'_F,\sigma'$ such that \begin{enumerate}
-		\item $\sigma_1 \refines \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
+		\item $\sigma_1 \in (\sigma'_J \fsep (\sigma'_F \fhash \sigma'))$,
 		\item $\sigma'_F \taurefines \sigma_F$,
-		\item either $\sigma'_J \sentails J$ or $\locked{\sigma'_J}$, and
+		\item either $\sigma'_J \sentails J$ or $\locked{\sigma_1}$, and
 		\item $\safe{n}{c',\sigma',J,Q}$.
 	\end{enumerate}
 
@@ -729,10 +747,10 @@ The axioms of the logic are given in Figure~\ref{fig:axioms}.
 		\infax[fence]{\spec{J}{P}{\cfence_i}{P \conj \fbar{i}}}
 		\vspace{1em}
 		
-		\infax[lock]{\spec{J}{P}{\clock_i}{\flock{i,P} \conj \fbar{i}}}
+		\infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i}}}
 		\vspace{1em}
 		
-		\infax[unlock]{\spec{J}{\flock{i,P}}{\cunlock_i}{P \conj \fbar{i}}}
+		\infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\fbar{i}}}
 	\end{minipage}}
 	\caption{\label{fig:axioms}Axioms}
 \end{figure}
@@ -743,7 +761,12 @@ The write in the precondition of the store axiom is a witness to the allocation 
 	\infax[store-buf]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwrite{i} e'}}
 
 	\infax[store-mem]{\spec{J}{(e \fwrote e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrote e'') \fsseq P) \fseq e \fwrite{i} e'}}
-These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. The axioms for $\clock$ and $\cunlock$ reflect the fact those commands are associated with implicit fences.
+These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
+
+The axioms for $\clock$ and $\cunlock$ may be strengthened as follows to reflect the fact those commands are associated with implicit fences: 
+	\infax[lock]{\spec{J}{P}{\clock_i}{(P \fhash \flock{i}) \conj \fbar{i}}}
+
+	\infax[unlock]{\spec{J}{P \fhash \flock{i}}{\cunlock_i}{P \conj \fbar{i}}}
 
 The logical and structural inference rules of the logic are given in Figures~\ref{fig:logical-inference-rules} and~\ref{fig:structural-inference-rules}, respectively.
 
@@ -806,7 +829,7 @@ There has been no attempt to provide a conjunction rule because there has been n
 
 The structural rules for sequential composition, nondeterministic choice, loops and concurrency are as in Concurrent Separation Logic. In particular, the concurrency rule requires agreement between the two processes on the value shared invariant, and the strong interleaving separating conjunction is used to partition the local states. Note that both this conjunction and the concurrent composition command are commutative. Only the invariant rule differs from Concurrent Separation Logic. There, we require that the lock be held while accessing the shared invariant. 
 
-Using the invariant rule and the axioms for $\clock$ and $\cunlock$, we can derive the following rule for reasoning about ``locked'' commands implemented on x86, like atomic increment or compare-and-swap: \infrule[locked]{\spec{\femp}{J \fsep \flock{i,P} \conj \fbar{i}}{c}{J \fsep \flock{i,Q}}}{\spec{J}{P}{\cseq{\clock_i}{\cseq{c}{\cunlock_i}}}{Q \conj \fbar{i}}}
+Using the invariant rule and the axioms for $\clock$ and $\cunlock$, we can derive the following rule for reasoning about ``locked'' commands implemented on x86, like atomic increment or compare-and-swap: \infrule[locked]{\spec{\femp}{J \fsep ((\flock{i} \fhash P) \conj \fbar{i})}{c}{J \fsep (\flock{i} \fhash Q)}}{\spec{J}{P}{\cseq{\clock_i}{\cseq{c}{\cunlock_i}}}{Q \conj \fbar{i}}}
 
 \begin{figure}[ht]
 	\centering
@@ -828,6 +851,8 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 
 \subsection{Soundness}
 
+Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
+
 \begin{lemma}
 	\label{lem:weak-interleaving-safe}
 	If $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, then $\safe{n}{c, \sigma_R \fhash \sigma,J,R \fhash Q}$. 
@@ -840,19 +865,19 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 	\begin{enumerate}
 		\item Suppose $c = \cskip$. By assumption, $\sigma_R \sentails R$, $\defined{\sigma_R \fhash \sigma}$, and if $c = \cskip$ then $\sigma \sentails Q$, and so $\sigma \sentails Q$. Hence $\sigma_R \fhash \sigma \sentails R \fhash Q$. 
 
-		\item Let $\sigma_J,\sigma_F$ such that $\defined{\sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))}$, and either $\locked{\sigma_J}$ or $\sigma_J \sentails J$. We must show that $\sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) \nrightarrow \top$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
+		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \top$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
 
-		\item Let $\sigma_J,\sigma_F,\sigma_1,c'$ such that $\defined{\sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))}$, either $\locked{\sigma_J}$ or $\sigma_J \sentails J$, and $c,(\sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))) \rightarrow c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
-			\item $\sigma_1 \refines \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
+		\item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \rightarrow c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
+			\item $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
 			\item $\sigma'_F \taurefines \sigma_F$, 
-			\item either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$, and
+			\item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
 			\item $\safe{n}{c',\sigma',J,R \fhash Q}$. 
 		\end{enumerate}
 
 		We instantiate part 3 of assumption $\safe{n+1}{c,\sigma,J,Q}$ with $\sigma_J$, $\sigma_F \fhash \sigma_R$, $\sigma_1$ and $c'$, which gives us $\sigma'_J, \sigma'_{FR}, \sigma'$ such that: \begin{enumerate}[(a)]
-			\item $\sigma_1 \refines \sigma'_J \fsep (\sigma'_{FR} \fhash \sigma')$
+			\item $\sigma_1 \in \sigma'_J \fsep (\sigma'_{FR} \fhash \sigma')$
 			\item $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$
-			\item either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$, and
+			\item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
 			\item $\safe{n}{c',\sigma',J,Q}$.
 		\end{enumerate}	
 
