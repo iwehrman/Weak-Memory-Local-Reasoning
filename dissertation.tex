@@ -218,8 +218,8 @@ A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
 	\item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
 	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is an array of write buffers; and
-	\item $k : \powerset{\setprocessors}$ is a set of blocked processors. 
-\end{itemize}  
+	\item $k : \powerset{\setprocessors}$ is a set of blocked processors, 
+\end{itemize} in which the following coherence condition is satisfied: \[ \forall i,j \in \setprocessors \setminus k \st i \neq j \onlyif \dom{B(i)} \cap \dom{B(j)} = \nil.\]
 \end{definition} 
 The collection of states is written $\setstates$. 
 
@@ -367,7 +367,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 
 By contrast, from the state $\sigma_1 = (s,h,B,\set{j})$, where $h$ and $B$ are defined as in $\sigma_0$, the \emph{only} reduction of $\cload{y}{\ell}_i$ is: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] This is because processor $j$ is blocked, and so its buffered write may not commit to memory. As a consequence, it is not possible for the load on processor $i$ to observe the write buffered on processor $j$. 
 
-We call states like $\sigma_0$ for which the result of a load is determined by the relative ordering of the flushing operations \emph{unstable}. Conversely, states like $\sigma_1$ are called \emph{stable} because the result of loading is unaffected by the flushing operation. 
+We call states like $\sigma_0$ for which the result of a load is determined by the relative ordering of the flushing operations \emph{unstable}. Conversely, states like $\sigma_1$ are called \emph{stable} because the result of loading is unaffected by the flushing operation. Note that the coherence condition for states is necessary but not sufficient for stability.
 
 \paragraph{Interleaving versus Parallelism} A pleasant property of this semantics is the uniform description of both interleaving and parallel concurrency. Let $c_i$ be a sequential command $c$ in which each primitive has processor annotation $i$. Then, e.g., $(\cpar{c_1}{c'_1})$ describes the interleaving concurrent execution of commands $c$ and $c'$ on processor 1, while $(\cpar{c_1}{c'_2})$ describes the parallel concurrent execution of $c$ and $c'$ on processors 1 and 2, respectively. But one does not typically have control over the particular processor on which a command executes (e.g., $c_1$ instead of $c_2$). Thus, $(\cpar{c_x}{c'_x})$ describes the interleaving concurrent execution of commands $c$ and $c'$ on some individual processor, denoted by the free variable $x$. For $x \neq y$, $(\cpar{c_x}{c'_y})$ describes the parallel concurrent execution of $c$ and $c'$ on distinct processors given by $x$ and $y$ respectively. Furthermore, without any assumptions about the relationship between $x$ and $y$, $(\cpar{c_x}{c'_y})$ describes both interleaving and parallel executions of $c$ and $c'$. This presumably is the most common situation with concurrent composition: it is up to the operating system to assign processors to threads, and correctness of a program ought to encompass any such assignment. 
 \paragraph{Command Abbreviations} A few standard command abbreviations are shown in Figure~\ref{fig:command-abbreviations}. Some would benefit greatly from local variable declarations, which I have not yet added to the language. 
