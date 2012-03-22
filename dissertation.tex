@@ -387,27 +387,23 @@ The complete relation that defines the semantics of commands is given in Figure~
 \label{sec:assertions}
 
 Assertions denote sets of machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
-	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \\
-	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar \fiter{P} \bnfbar \\ 
+	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
+	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar  \\ 
 	& (P \fhash P') \bnfbar (P \fsep P') \bnfbar (P \fseq P') \bnfbar (P \fsseq P')
 \end{align*} 
 
-The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffer on processor $e$ or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes, and $\fiter{P}$ is the Kleene closure of $P$ w.r.t.~this notion of concatenation. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffer on processor $e$ or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
 
 The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
 
 \paragraph{Abbreviations} The following abbreviation describes the result of flushing a single write to memory: \begin{align*}
-	e \fwrote e'' \eqdef & (\exists x \st e \fwrite{x} e'' \conj \fbar{x}) \\
-\end{align*} (We will note later that $(e \fwrite{x} e' \conj \fbar{x})\sequiv e \fwrite{y} e' \conj \fbar{y}$, which justifies this notation.)
-
-The Kleene closure is not necessary for expressing the axioms and inference rules of the specification logic, but is useful for defining points-to as an abbreviation. \begin{align*}
-	e \fpointsto e'' \eqdef & (\exists x \st \fiter{(\exists y \st e \fwrite{x} y)} \conj \fbar{x})
-\end{align*} The Kleene closure may also be useful for describing resource invariants. I have also explored other atomic formulas with more elaborate semantics for describing resource invariants, but do not bother to describe them here because of a lack of evidence for their usefulness.
+	e \fpointsto e' \eqdef & \exists x \st e \fwrite{x} e' \conj \fbar{x}\\
+\end{align*} We will note later that $(e \fwrite{x} e' \conj \fbar{x})\sequiv e \fwrite{y} e' \conj \fbar{y}$, which justifies this notation.
 
 \subsection{Predicates}
 \label{sec:predicates}
 
-Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which indicates that non-blocked processors may commit buffered writes to memory nondeterministically.  
+Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
 
 \subsection{Separating Conjunctions}
 
@@ -470,37 +466,6 @@ To recover consistency, we must rule out the case in which the additional buffer
 This, along with the requirement that the stacks and locks of the two states agree, is the definedness condition for $\sigma \fhash \sigma'$.
 
 We refer to this as \emph{weak interleaving separation}, because only minimal ordering is created among the writes in the conjoined states (and unordered writes represent their various interleavings), and because memory addresses are not partitioned, but instead only weakly separated. 
-
-% \begin{lemma}
-% 	\label{lem:hash-app-exchange}
-% 	For pomsets $p,q,r,s$, $(p \fhash q) \lapp (r \fhash s) \refines (p \lapp r) \fhash (q \lapp s)$ when $\dom{q} \cap \dom{r} = \nil$. 
-% \end{lemma}
-
-% \begin{lemma}
-% 	\label{lem:separation-tau}
-% 	If $\sigma \fhash \sigma' \stackrel{\tau}{\rightarrow} \upsilon$ then there exists $\sigma_\tau,\sigma'_\tau$ such that $\sigma \stackrel{\tau}{\rightarrow} \sigma_\tau$, $\sigma' \stackrel{\tau}{\rightarrow} \sigma'_\tau$ and $\upsilon \refines \sigma_\tau \fhash \sigma'_\tau$. 
-% \end{lemma}
-
-% \begin{proof}
-% 	Let $\sigma = (s,h,B,l)$ and $\sigma = (s,h',B',l)$, and so \[\sigma \fhash \sigma' = (s,h \fhash h',B \fhash B',l),\] and there exists $B_\tau^1,B_\tau^2$ such that, for all $i$, $B(i) \fhash B'(i) = B_\tau^1(i) \lapp B_\tau^2(i)$, and if $i \notin \live{l}$ then $B_\tau^1(i) = \lnil$, and \begin{align*}
-% 		\upsilon = (s,(h \fhash h') \lapp B_\tau^1, B_\tau^2,l).
-% 	\end{align*}
-
-% 	Each of $B_\tau^1$, $B_\tau^2$ can be partitioned according to $B \fhash B'$ and rewritten as follows: \begin{align*}
-% 		B_\tau^1 \refines & B_\tau^{1a} \fhash B_\tau^{1b} \\
-% 		B_\tau^2 \refines & B_\tau^{2a} \fhash B_\tau^{2b}
-% 	\end{align*} Let $\sigma_\tau = (s,h \lapp B_\tau^{1a}, B_\tau^{2a})$ and $\sigma'_\tau = (s,h' \lapp B_\tau^{1b}, B_\tau^{2b})$, and so: \begin{align*} \sigma_\tau \fhash \sigma'_\tau = (s, (h \lapp B_\tau^{1a}) \fhash (h' \lapp B_\tau^{1b}), B_\tau^{2a} \fhash B_\tau^{2b},l).
-% 	\end{align*} To show that $\upsilon \refines \sigma_\tau \fhash \sigma'_\tau$, we must show both \begin{align*} (h \fhash h') \lapp B_\tau^1 \refines&  (h \lapp B_\tau^{1a}) \fhash (h' \lapp B_\tau^{1b}) \\ B_\tau^2 \refines&  B_\tau^{2a} \fhash B_\tau^{2b} \end{align*} The latter follows from the definition of $B_\tau^{2a}$ and $B_\tau^{2b}$. The former follows from the definition of $B_\tau^{1a}$ and $B_\tau^{2b}$ and Lemma~\ref{lem:hash-app-exchange}, using the fact that $\dom{B} \cap \dom{h'} = \nil$ and $\dom{B_\tau^{1a}} \subseteq \dom{B}$. 
-% \end{proof}
-
-% \begin{lemma}
-% 	\label{lem:separation-rho-buffer}
-% 	If $\sigma_1 \fhash \sigma_2 \stackrel{\rho_B}{\rightarrow} \sigma_B \stackrel{\tau}{\rightarrow} \sigma'$ then there exists $\sigma_{B1},\sigma_{B2}$ such that $\sigma_{1} \stackrel{\rho_B}{\rightarrow} \sigma_{B1} \stackrel{\tau}{\rightarrow} \sigma_{\tau1}$, $\sigma_{2} \stackrel{\rho_B}{\rightarrow} \sigma_{B2} \stackrel{\tau}{\rightarrow} \sigma_{\tau2}$, and $\sigma_{\tau1} \fhash \sigma_{\tau2} \stackrel{\rho}{\rightarrow} \sigma'$. 
-% \end{lemma}
-
-% \begin{proof}
-% 	Here is a proof sketch. The first step involves collapsing independencies among various writes. Let $\sigma_{B1}$ be the result of collapsing those independencies among the writes of $\sigma_1$, and similarly for $\sigma_{B2}$. (This lemma does \emph{not} follow from Lemma~\ref{lem:separation-tau} because it is only the case that $\sigma_B \refines \sigma_{B1} \fhash \sigma_{B2}$, but not the other way around.) Similarly, the second step involves moving some strongly connected writes from the heap to the buffer. Let $\sigma_{\tau1}$ be the result of moving just these writes from $\sigma_{B2}$ (a fortiori, they too are strongly connected), and similarly for $\sigma_{\tau2}$. Finally, collapse independencies among the remaining writes (which may be either in the buffer or in the heap) to arrive back at $\sigma1$. 
-% \end{proof}
 
 \begin{lemma}
 	\label{lem:separation-tau}
@@ -588,7 +553,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 		(s,h,B,k) & \sentails & {P \fsep P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsep \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
 		(s,h,B,k) & \sentails & {P \fseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
 		(s,h,B,k) & \sentails & {P \fsseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
-		(s,h,B,k) & \sentails & {\fiter{P}} & \iffdef & (s,h,B,k) \sentails{\femp} \disj (\exists \sigma,\sigma \st \\ & & & & \sigma \sentails P \conj \sigma' \sentails \fiter{P} \conj \sigma \fseq \sigma' = (s,h,B,k))
+		%(s,h,B,k) & \sentails & {\fiter{P}} & \iffdef & (s,h,B,k) \sentails{\femp} \disj (\exists \sigma,\sigma \st \\ & & & & \sigma \sentails P \conj \sigma' \sentails \fiter{P} \conj \sigma \fseq \sigma' = (s,h,B,k))
 	\end{array}
 	\]
 \end{minipage}}
