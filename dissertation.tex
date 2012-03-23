@@ -74,6 +74,46 @@ Nonetheless, I still consider the project to have scientific merit. It faces the
 
 In the best case, this work could someday provide a foundation for practically useful reasoning about a class of difficult programs. In the worst case, it sheds some light on the the problem of local program reasoning in general by providing an additional---fairly extreme---data point in the space of program logics, illustrating the difficulty and complexity of reasoning about the behavior of programs w.r.t.~a widespread and weak memory model. 
 
+\section{Program Logics}
+
+TODO 
+
+\paragraph{Hoare Logic}
+
+\paragraph{Pointers} Separation Logic and Bunched Implications 
+
+\paragraph{Concurrency} Owicki-Gries; Rely-Guarantee
+
+\paragraph{Pointers and Concurrency} Concurrent Separation Logic; RG-Sep
+
+\section{Memory Consistency Models}
+
+TODO 
+
+\paragraph{Sequential Consistency} 
+
+\subsection{The x86-TSO Memory Model}
+\label{sec:memory-model}
+
+This section contains a brief, informal review of the x86-TSO memory model as defined by Owens, Sarkar and Sewell \cite{DBLP:conf/tphol/OwensSS09}. The model is given as a collection of legal traces of memory events. Legal traces are defined axiomatically and operationally, the latter via a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
+	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ is a register file for each processor;
+	\item $m : \setlocations \pfun \setvalues$ is a shared memory; 
+	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is a write buffer for each processor; 
+	\item $l : \setprocessors^\bot$ is a global lock. 
+\end{itemize}
+
+Transitions (labeled by memory events) between states indicate the possibility and effect of those memory events. For example, in any state $(R,m,B,l)$, processor $p$ may write a value $v$ into its register $i$; i.e., it may update the state such that $R_p(i) = v$. Similarly, if $R_p(i) = v$ then $p$ may read value $v$ from its register $i$. A summary of the other events processor $p$ may perform is as follows: \begin{itemize}
+	\item it may load from its write buffer the most recent value of a location---or, if a write to that location is not found in its write buffer, from memory---if the lock is either available ($i.e.$, the lock value is $\bot$) or is held by $p$, but not if some other processor $q \neq p$ holds the lock;
+	\item it may store a value to a memory location by adding a new write to the head of its write buffer regardless of the status of the lock; 
+	\item it may flush (or, synonymously in this document, commit) the least recent write in its buffer to memory if it holds the lock or the lock is available;  
+	\item it may fence if its buffer is empty;
+	\item it may acquire the lock (i.e., change the lock value in the current state to $p$) if the lock is available; 
+	\item it may release the lock (i.e., change the lock value in the current state to $\bot$) if it holds the lock.
+\end{itemize}
+
+This specification bounds the sort of memory events that can occur in program executions, but it does not give meaning to the programs of a particular language. The semantics of the programming language used in this project is however guided by the memory model, and it ought be possible to prove that it respects the bounds of the model. But this is not the focus of this project; and, even without such a correspondence proof, it will still be clear that the semantics of the programming language is manifestly weak. 
+
+
 \section{Related Work}
 
 Technical inspiration for this project comes primarily from work on separation logic \cite{DBLP:conf/lics/Reynolds02,DBLP:conf/csl/OHearnRY01,DBLP:journals/bsl/OHearnP99} and abstract separation logic \cite{DBLP:conf/lics/CalcagnoOY07}, as well as concurrent separation logic  \cite{DBLP:journals/tcs/OHearn07,DBLP:journals/tcs/Brookes07}, which this program logic resembles insofar as it strives to enable local (instead of global) reasoning about shared-state invariants (instead of two-place state relations). Although perhaps not obviously so, the semantics of the programming language was influenced by work on graphical models \cite{DBLP:journals/ipl/WehrmanHO09,DBLP:conf/RelMiCS/HoareMSW09,DBLP:journals/jlp/HoareMSW11} and the pomset model of true concurrency from Pratt \cite{DBLP:conf/popl/Pratt82,DBLP:conf/concur/Pratt84}. The style of semantics of specifications, and the associated soundness proof, is taken almost directly from Vafeiadis' recent soundness proof of concurrent separation logic \cite{V11}. Vafeiadis' excellent dissertation has also been an invaluable guide \cite{VafeiadisDissertation}. 
@@ -83,6 +123,10 @@ Also of note are two works that present solutions to the same weak-memory reason
 A second work of note is Cohen and Schirmer's \cite{DBLP:conf/itp/CohenS10} reduction from x86-TSO to sequential consistency for certain programs. This is notable because the class of programs they consider is larger than just the well locked programs. They show that many concurrent programming paradigms, although racy, in fact remain sequentially consistent. They furthermore provide a method of syntactic restriction for an Owicki-Gries-style program logic that allows sound reasoning about such programs. Although they describe some useful programs that fall outside of this boundary, this seems to be a work of great practical importance. Although their logic also offers no frame rule, Cohen has suggested in private communication that a similar restriction may be applied concurrent separation logic for sound local reasoning.
 
 Related but less relevant to the current problem, compared to the previous two papers, is work by Ferreira, Feng and Shao which gives soundness proofs for concurrent separation logic in a variety relaxed-memory settings \cite{DBLP:conf/esop/FerreiraFS10}. As with the original soundness proof by Brooks \cite{DBLP:journals/tcs/Brookes07}, their theorem applies to well locked programs only, which are necessarily sequentially consistent. 
+
+\subsection{Concurrent Kleene Algebra}
+
+TODO 
 
 \section{Basics}
 
@@ -139,26 +183,6 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 	\caption{\label{fig:universes}Universal Sets}
 \end{figure}
 
-\subsection{The x86-TSO Memory Model}
-\label{sec:memory-model}
-
-This section contains a brief, informal review of the x86-TSO memory model as defined by Owens, Sarkar and Sewell \cite{DBLP:conf/tphol/OwensSS09}. The model is given as a collection of legal traces of memory events. Legal traces are defined axiomatically and operationally, the latter via a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
-	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ is a register file for each processor;
-	\item $m : \setlocations \pfun \setvalues$ is a shared memory; 
-	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is a write buffer for each processor; 
-	\item $l : \setprocessors^\bot$ is a global lock. 
-\end{itemize}
-
-Transitions (labeled by memory events) between states indicate the possibility and effect of those memory events. For example, in any state $(R,m,B,l)$, processor $p$ may write a value $v$ into its register $i$; i.e., it may update the state such that $R_p(i) = v$. Similarly, if $R_p(i) = v$ then $p$ may read value $v$ from its register $i$. A summary of the other events processor $p$ may perform is as follows: \begin{itemize}
-	\item it may load from its write buffer the most recent value of a location---or, if a write to that location is not found in its write buffer, from memory---if the lock is either available ($i.e.$, the lock value is $\bot$) or is held by $p$, but not if some other processor $q \neq p$ holds the lock;
-	\item it may store a value to a memory location by adding a new write to the head of its write buffer regardless of the status of the lock; 
-	\item it may flush (or, synonymously in this document, commit) the least recent write in its buffer to memory if it holds the lock or the lock is available;  
-	\item it may fence if its buffer is empty;
-	\item it may acquire the lock (i.e., change the lock value in the current state to $p$) if the lock is available; 
-	\item it may release the lock (i.e., change the lock value in the current state to $\bot$) if it holds the lock.
-\end{itemize}
-
-This specification bounds the sort of memory events that can occur in program executions, but it does not give meaning to the programs of a particular language. The semantics of the programming language used in this project is however guided by the memory model, and it ought be possible to prove that it respects the bounds of the model. But this is not the focus of this project; and, even without such a correspondence proof, it will still be clear that the semantics of the programming language is manifestly weak. 
 
 \section{The Programming Language}
 \label{sec:programming-language}
@@ -218,8 +242,8 @@ A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
 	\item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
 	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is an array of write buffers; and
-	\item $k : \powerset{\setprocessors}$ is a set of blocked processors, 
-\end{itemize} in which the following coherence condition is satisfied: \[ \forall i,j \in \setprocessors \setminus k \st i \neq j \onlyif \dom{B(i)} \cap \dom{B(j)} = \nil.\]
+	\item $k : \powerset{\setprocessors}$ is a set of blocked processors. 
+\end{itemize}
 \end{definition} 
 The collection of states is written $\setstates$. 
 
@@ -367,7 +391,9 @@ The complete relation that defines the semantics of commands is given in Figure~
 
 By contrast, from the state $\sigma_1 = (s,h,B,\set{j})$, where $h$ and $B$ are defined as in $\sigma_0$, the \emph{only} reduction of $\cload{y}{\ell}_i$ is: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] This is because processor $j$ is blocked, and so its buffered write may not commit to memory. As a consequence, it is not possible for the load on processor $i$ to observe the write buffered on processor $j$. 
 
-We call states like $\sigma_0$ for which the result of a load is determined by the relative ordering of the flushing operations \emph{unstable}. Conversely, states like $\sigma_1$ are called \emph{stable} because the result of loading is unaffected by the flushing operation. Note that the coherence condition for states is necessary but not sufficient for stability.
+We say that location $\ell$ is \emph{unstable} in state $\sigma_0$ for processor $i$ because the result of loading $\ell$ is determined by the relative ordering of the flushing operations. On the other hand, $\ell$ is \emph{stable} in $\sigma_1$ for $i$ because the load of $\ell$ is oblivious to the flushing operations. 
+
+A state is called \emph{coherent} if each location has writes buffered by at most one processor: \[ \forall i,j \in \setprocessors \setminus k \st i \neq j \onlyif \dom{B(i)} \cap \dom{B(j)} = \nil.\] The memory locations in a coherent state may be partitioned among the processors, such that the locations of a partition are all stable for their respective processor.
 
 \paragraph{Interleaving versus Parallelism} A pleasant property of this semantics is the uniform description of both interleaving and parallel concurrency. Let $c_i$ be a sequential command $c$ in which each primitive has processor annotation $i$. Then, e.g., $(\cpar{c_1}{c'_1})$ describes the interleaving concurrent execution of commands $c$ and $c'$ on processor 1, while $(\cpar{c_1}{c'_2})$ describes the parallel concurrent execution of $c$ and $c'$ on processors 1 and 2, respectively. But one does not typically have control over the particular processor on which a command executes (e.g., $c_1$ instead of $c_2$). Thus, $(\cpar{c_x}{c'_x})$ describes the interleaving concurrent execution of commands $c$ and $c'$ on some individual processor, denoted by the free variable $x$. For $x \neq y$, $(\cpar{c_x}{c'_y})$ describes the parallel concurrent execution of $c$ and $c'$ on distinct processors given by $x$ and $y$ respectively. Furthermore, without any assumptions about the relationship between $x$ and $y$, $(\cpar{c_x}{c'_y})$ describes both interleaving and parallel executions of $c$ and $c'$. This presumably is the most common situation with concurrent composition: it is up to the operating system to assign processors to threads, and correctness of a program ought to encompass any such assignment. 
 \paragraph{Command Abbreviations} A few standard command abbreviations are shown in Figure~\ref{fig:command-abbreviations}. Some would benefit greatly from local variable declarations, which I have not yet added to the language. 
