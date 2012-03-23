@@ -310,7 +310,7 @@ Structured commands consist of either a primitive command; a sequential or concu
 
 The language of commands is defined by the following grammar: \[ \comms~c \bnfdef p_e \bnfbar (\cseq{c}{c'}) \bnfbar (\cchoice{c}{c'}) \bnfbar \cloop{c} \bnfbar (\cpar{c}{c'}),\] where $p$ is a primitive command and $e$ is an expression which (hopefully) denotes a processor identifier.  
 
-The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \top. \] 
+The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \top. \] We refer collectively to command-state pairs and the erroneous state $\top$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
 
 The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation between states $\stackrel{\tau}{\rightarrow}$ defined as follows: \begin{align*} (s,h,B,k) \stackrel{\tau}{\rightarrow} (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
 \end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\stackrel{\tau}{\rightarrow}$. 
@@ -387,6 +387,8 @@ The complete relation that defines the semantics of commands is given in Figure~
 	\caption{\label{fig:command-semantics} Semantics of commands}
 \end{figure} 
 
+The reflexive-transitive closure of command evaluation semantics, written $\vdash c,\sigma \rightarrow^\ast \mathcal{C}$, is defined as usual. 
+
 \paragraph{Stability} Consider a state $\sigma_0 = (s,h,B,\nil)$ in which $h = \ell \mapsto 0$, $B(j) = \lsingle{(\ell,1)}$ and $B(x) = \lnil$ for all $x \neq j$. From this state, a load on processor $i$ may evaluate as follows: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] Because $j$ is not blocked, it is also possible for a flushing operation to take place: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil),\] and afterward for the load to evaluate as follows: \[ \vdash \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil) \rightarrow \cskip(\funup{s}{\ptup{y}{1}},\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil).\] Note that in the first evaluation the load resolves $\ell$ to $0$, and in the second evaluation it resolves $\ell$ to $1$, with the distinguishing characteristic of the latter being the preceding nondeterministic flushing operation. 
 
 By contrast, from the state $\sigma_1 = (s,h,B,\set{j})$, where $h$ and $B$ are defined as in $\sigma_0$, the \emph{only} reduction of $\cload{y}{\ell}_i$ is: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] This is because processor $j$ is blocked, and so its buffered write may not commit to memory. As a consequence, it is not possible for the load on processor $i$ to observe the write buffered on processor $j$. 
@@ -444,6 +446,19 @@ We now digress to define a series of functions on states, which will later be us
 
 \subsubsection{Weak Interleaving Separation}
 
+We begin by lifting the the \emph{overriding} operation---as in the overriding of functions (Section~\ref{sec:functions}) and lists (Section~\ref{sec:lists})---to states. First, we lift list overriding to functions into lists: \[ B \in B_1 \override B_2 \iffdef \forall i \in \dom{B} \st B(i) \in B_1(i) \override B_2(i). \] Overriding $\sigma_1 = (s,h_1,B_1,k_1)$ by $\sigma = (s_2,h_2,B_2,k_2)$, is then given by $\sigma_1 \override \sigma_2$: \[ \sigma_1 \fhash \sigma_2 \eqdef \setof{(s,h_1 \override h_2, B,k_1 \uplus k_2)}{B \in B_1 \override B_2},\] The \emph{weak interleaving separation} of states is defined as the overriding of compatible states: \[ \sigma_1 \fhash \sigma_2 \eqdef \begin{cases}
+	\sigma_1 \override \sigma_2 & \text{if $\sigma_1 \compat \sigma_2$} \\ 
+	\nil & \text{otherwise,} \end{cases} \] where the compatibility relation $\sigma_1 \compat \sigma_2$ is defined as the conjunction of the following conditions: \begin{enumerate}
+	\item $k_1 \cap k_2 = \nil$,
+	\item $\forall i \in \setprocessors \setminus (k_1 \cup k_2) \st \dom{B_1(i)} \cap \dom{h_2} = \nil$, 
+	\item $\forall i,j \in \setprocessors \setminus (k_1 \cup k_2) \st i \neq j \onlyif \dom{B_1(i)} \cap \dom{B_2(j)}$. 
+\end{enumerate}
+
+For convenience, we overload the symbol $\fhash$ to indicate the pointwise lifting of this function to sets of states: \[ S_1 \fhash S_2 \eqdef \cup \setof{s_1 \fhash s_2}{s_1 \in S_1 \conj s_2 \in S_2 \conj s_1 \compat s_2}.\] We use these functions interchangeably when the intended meaning is clear from context, e.g.: \[ s_1 \fhash (s_2 \fhash s_3) = \cup \setof{s_1 \fhash s_{23}}{s_{23} \in s_2 \fhash s_3}.\]
+
+
+\subsubsection{Weak Interleaving Separation Old}
+
 We begin by defining a partial semantic function for the most general separating conjunction, written $\sigma \fhash \sigma'$, from which the others are derived. This operation will be particularly useful for giving meaning to program specifications, while the other, stronger conjunctions will be more useful for expressing the axioms for commands in the specification logic. 
 
 We wish for commands to be local w.r.t.~this conjunction so that it may have a corresponding frame rule. By way of example, consider a load $\cload{x}{\ell}$ on processor $i$ in a state $\sigma$. Let us consider the manners in which the state $\sigma$ can be extended while preserving the essential behavior of the command---viz.~the resultant value of the load. \begin{enumerate}
@@ -457,43 +472,39 @@ We wish for commands to be local w.r.t.~this conjunction so that it may have a c
 	
 	\item We \emph{may} augment $\sigma$ with additional writes to locations distinct from $\ell$ on other buffers as well. Although those writes may commit before or after the $\ell$-writes being loaded by $i$, they do not affect the result. 
 	
-	\item Finally, consider writes to address $\ell$ on buffers other than $i$. In general, this may adversely affect the load on $i$ because we are unable to predict the order in which these writes will commit to memory. It is possible that they will commit after buffered writes on $i$ have committed but before the load has completed, thus affecting the result of the load. So it would seem that such writes must be disallowed. 
+	\item Finally, consider writes to address $\ell$ on buffer $j$ with $j \neq i$. In general, this may adversely affect the load on $i$ because we are unable to predict the order in which the writes buffered by $j$ will commit to memory. It is possible that they will commit after buffered writes on $i$ have committed but before the load has completed, thus affecting the result of the load. So it would seem that such writes must be disallowed. 
 	
-	There are however cases in which it is safe to augment $\sigma$ in this way: e.g., when the lock is held by $i$. For in this case writes on other buffers will not be committed to memory, and so there is no risk that these writes will be made visible to the load on $i$. Hence, we \emph{may} augment other buffers with writes to $\ell$ when $i$ holds the lock, but we \emph{may not} when the lock is available. 
+	There is however a case in which it is safe to augment $\sigma$ in this way: namely, when buffer $j$ is blocked. For in this case writes buffered by $j$ will not be committed to memory, and so there is no risk that these writes will be made visible to the load on $i$. Hence, we \emph{may} augment other buffers with writes to $\ell$ when $j$ is blocked. 
 
 	Furthermore, it is safe to augment the state with $\ell$-writes to other buffers when the lock is held by \emph{any} processor, and not just by $i$. For if $j$, with $j \neq i$, holds the lock, then a load on processor $i$ cannot proceed! And so, from a partial correctness standpoint, the writes on other processors are quite irrelevant.
 \end{enumerate}
 
-We now define a function motivated by these scenarios, which maps pairs of states into a set of states. This is accomplished by specifying with which states $\sigma_0$ a given state $\sigma$ may be augmented, and define the possible results of this augmentation as the set of states denoted by $\sigma_0 \fhash \sigma$. Note that because some of the preceding scenarios are asymmetric---e.g., we may augment $\sigma$ with earlier writes to a particular location, but not later writes---the resulting operation will not be commutative. This is, of course, in contrast to the semantic function for the separating conjunction of traditional separation logic. 
+We now define a function motivated by these scenarios, which maps pairs of states into a set of states. This is accomplished by specifying with which states $\sigma_0$ a given state $\sigma$ may be augmented, and by defining the possible results of this augmentation as the set of states $\sigma_0 \fhash \sigma$. Note that because some of the preceding scenarios are asymmetric---e.g., we may augment $\sigma$ with earlier writes to a particular location, but not later writes---the resulting operation will not be commutative. This is, of course, in contrast to the semantic function for the separating conjunction of traditional separation logic. 
 
-We define $\sigma \fhash \sigma'$ approximately as the product of operations; one of that combines the heaps of $\sigma$ and $\sigma'$, and one that combines the individual buffers of $\sigma$ and $\sigma'$. These operations shall only constrain the order among the writes in $\sigma$ and $\sigma'$ when necessary.  Furthermore, both operations are essentially the same: the \emph{overriding} of heaps and buffers, as defined in Sections~\ref{sec:functions} and~\ref{sec:lists}, respectively. From the scenarios above, we see that the only additional ordering constraints required are between writes to the same address, which is exactly what is provided by the overriding operations. 
+We begin by proposing a definition for $\sigma \fhash \sigma'$, and afterward determine compatibility between states. $\sigma \fhash \sigma'$ is defined approximately as the product of operations; one of that combines the heaps of $\sigma$ and $\sigma'$, and one that combines the individual buffers of $\sigma$ and $\sigma'$. These operations shall only constrain the order among the writes in $\sigma$ and $\sigma'$ when necessary.  Furthermore, both operations are essentially the same: the \emph{overriding} of heaps and buffers, as defined in Sections~\ref{sec:functions} and~\ref{sec:lists}, respectively. From the scenarios above, we see that the only additional ordering constraints required are between writes to the same address, which is exactly what is provided by the overriding operations. 
 
-We begin by lifting the overriding of lists to functions into lists: \[ B \in B_1 \override B_2 \iffdef \forall i \in \dom{B} \st B(i) \in B_1(i) \override B_2(i). \]
-
-\[ (s,h_1,B_1,k_1) \fhash (s,h_2,B_2,k_2) \eqdef \bigcup_{B \in B_1 \override B_2} \set{(s,h_1 \override h_2, B,k_1 \uplus k_2)}.\]
-
-% Thus, the \emph{TSO union} of pomsets $p$ and $p'$, written $p \fhash p'$, is an operation that preserves the ordering among writes within $p$ and $p'$, and additionally requires, for each location $\ell$, that each write to address $\ell$ in $p$ precedes all writes to $\ell$ in $p'$. Formally, let $p = \eqclass{V,<,L,m}$ and $p' = \eqclass{V',<',L,m'}$. Then $p \fhash p'$ is defined as follows: \begin{align*}
-% 	\eqclass{V \uplus V', < \uplus <' \uplus \setof{(v,v') \in V \times V'}{\pi_1(m(v)) = \pi_1(m'(v'))}, L, m \uplus m'},
-% \end{align*} where $\pi_1$ is the first projection function (i.e., $\pi_1(u,v) = u$), which in this case yields the location part of the label. We also lift this notation to functions into pomsets, e.g., write buffer arrays, in the usual way: \[ B \fhash B' \eqdef \lambda i . B_i \fhash B'_i.\]
-
-% Note that the TSO union of pomsets falls between the additive union and concatenation of pomsets in the refinement order: \[ p \lapp p' \refines p \fhash p' \refines p \uplus p'.\]  
-
-% The operation on states $\sigma \fhash \sigma'$ is partial, and much of the essence of the operation is contained in its definedness conditions. We can state the definition of the operation without discussing all of its definedness conditions, however; for now, we just note the first. Let $\sigma = (s,h,B,l)$ and $\sigma' = (s',h',B',l')$. The first definedness condition is:  \begin{align}
-% 	s = s' \text{ and } l = l'
-% \end{align} Hence, we may restrict our definition of the partial operation $\sigma \fhash \sigma'$ to states $\sigma = (s,h,B,l)$ and $\sigma' = (s,h',b',l)$. The value, when defined, of $\sigma \fhash \sigma'$ is as follows: \[ (s,h,B,l) \fhash (s,h',B',l) \eqdef (s,h\fhash h',B\fhash B',l).\] 
+The proposed definition is as follows: 
+\[ (s,h_1,B_1,k_1) \fhash (s,h_2,B_2,k_2) \eqdef \bigcup_{B \in B_1 \override B_2} \set{(s,h_1 \override h_2, B,k_1 \uplus k_2)},\] where $B_1 \override B_2$ indicates list overriding lifted pointwise to functions: \[ B \in B_1 \override B_2 \iffdef \forall i \in \dom{B} \st B(i) \in B_1(i) \override B_2(i). \]
 
 Let us check to see whether this definition is consistent with the scenarios above: \begin{enumerate}
-	\item Buffered $\ell$-writes on buffer $i$ necessarily precede any $\ell$-writes already present on buffer $i$ by definition of the TSO union of buffers, $B_i \fhash B'_i$, consistent with the corresponding scenario above. 
+	\item Buffered $\ell$-writes on buffer $i$ necessarily precede any $\ell$-writes already present on buffer $i$ by definition of buffer overriding, $B_i \override B'_i$, consistent with the corresponding scenario above. 
 	
-	\item Buffered writes to other locations on buffer $i$ are unordered w.r.t.~existing writes by definition of the TSO union of buffers, $B_i \fhash B'_i$, consistent with the corresponding scenario above.
+	\item Buffered writes to other locations on buffer $i$ are unordered w.r.t.~existing writes by definition of buffer overriding, $B_i \override B'_i$, consistent with the corresponding scenario above.
 	
-	\item Committed $\ell$-writes necessarily precede any $\ell$-writes already present in the heap by definition of the TSO union of heaps, $h \fhash h'$, consistent with the corresponding scenario above. 
+	\item Committed $\ell$-writes necessarily precede any $\ell$-writes already present in the heap by definition of heap overriding, $h \override h'$, consistent with the corresponding scenario above. 
 	
-	\item Committed writes to other locations are unordered w.r.t.~writes already present in the heap by definition of the TSO union of heaps $h \fhash h'$, consistent with the corresponding scenario above. 
+	\item Committed writes to other locations are unordered w.r.t.~writes already present in the heap by definition of heap overriding $h \override h'$, consistent with the corresponding scenario above. 
 	
-	\item There are no ordering constraints among buffered writes on different write buffers by definition of the TSO union of write buffer arrays, $B \fhash B'$. So in case the additional writes are to locations different from the already present writes, the definition is consistent with the corresponding scenario above. 
+	\item There are no ordering constraints among buffered writes on different write buffers by definition of overriding write buffer arrays, $B \fhash B'$. So in case the additional writes are to locations different from the already present writes, the definition is consistent with the corresponding scenario above. 
 	
 	\item Unfortunately, in the case the additional buffered writes are to locations already present on in other buffers, the definition is \emph{not} consistent with the corresponding scenario above, because $\ell$ writes may added to buffer $j$ even when $\ell$ writes already exist in buffer $i$. 
+\end{enumerate}
+
+We begin by defining \emph{compatibility} between states, written $\sigma \compat \sigma'$. For $\sigma = (s,h,B,k)$ and $\sigma' (s',h',B',k')$, the following four conditions must be satisfied for compatibility: \begin{enumerate}
+	\item $s = s'$,
+	\item $k \cap k' = \nil$,
+	\item $\forall j \in \setprocessors \setminus (k \cup k') \st \dom{B_j} \cap \dom{h'} = \nil$, 
+	\item $\forall i,j \in \setprocessors \setminus (k \cup k') \st i \neq j \onlyif \dom{B_j} \cap \dom{B_i}$. 
 \end{enumerate}
 
 To recover consistency, we must rule out the case in which the additional buffered writes to location $\ell$ on processor $i$ are ruled out if when writes to $\ell$ are already present in the heap, or already present in a buffer other than $i$. But, if $i$ is not live, then we need not rule out such additional writes. And we need only concern ourselves with conflicts between additional writes on $i$ and already present writes on another processor $j$ if both $i$ and $j$ are live; i.e., if the lock is available. These two conditions---ruling out conflicts among additional buffered writes with \emph{1)} the existing heap, and \emph{2)} the existing buffered writes---can be described as follows: \begin{align*}
@@ -739,11 +750,11 @@ The axioms of the logic are given in Figure~\ref{fig:axioms}.
 		\infax[load-buf]{\spec{J}{(e \fwrite{i} e') \fsseq P}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq P)\conj x = e'}}
 		\vspace{1em}
 		
-		\infax[load-mem]{\spec{J}{(e \fwrote e') \fsseq P}{\cload{x}{e}_i}{((e \fwrote e') \fsseq P) \conj x = e'}}
+		\infax[load-mem]{\spec{J}{(e \fpointsto e') \fsseq P}{\cload{x}{e}_i}{((e \fpointsto e') \fsseq P) \conj x = e'}}
 		\vspace{1em}
 		
-		\infax[store]{\spec{J}{(e \fwrote e'') \fseq P}{\cstore{e}{e'}_i}{(e 
-		\fwrote e'') \fseq P \fseq (e \fwrite{i} e')}}
+		\infax[store]{\spec{J}{(e \fpointsto e'') \fseq P}{\cstore{e}{e'}_i}{(e 
+		\fpointsto e'') \fseq P \fseq (e \fwrite{i} e')}}
 		\vspace{1em}
 		
 		\infax[fence]{\spec{J}{P}{\cfence_i}{P \conj \fbar{i}}}
@@ -762,7 +773,7 @@ The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are a
 The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
 	\infax[store-buf]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwrite{i} e'}}
 
-	\infax[store-mem]{\spec{J}{(e \fwrote e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrote e'') \fsseq P) \fseq e \fwrite{i} e'}}
+	\infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fpointsto e'') \fsseq P) \fseq e \fwrite{i} e'}}
 These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
 
 The axioms for $\clock$ and $\cunlock$ may be strengthened as follows to reflect the fact those commands are associated with implicit fences: 
