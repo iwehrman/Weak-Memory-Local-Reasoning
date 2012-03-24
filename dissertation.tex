@@ -617,7 +617,12 @@ We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef 
 % 	By definition of the satisfaction relation, $\sigma \refines \sigma_1 \pjoin \sigma_2$ for some $\sigma_1,\sigma_2 \in \presat{P}$, and $\sigma' \refines \sigma'_1 \pjoin \sigma'_2$ for some $\sigma'_1,\sigma'_2 \in \presat{P'}$. By Lemma~\ref{foo}, $\sigma \bullet \sigma' \refines (\sigma_1 \bullet \sigma'_1) \pjoin (\sigma_2 \bullet \sigma'_2)$. 
 % \end{proof}
 
-\paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing, closed w.r.t.~refinement and closed w.r.t.~partial joins. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+\paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+
+\begin{lemma}[Flushing closure]
+	\label{lem:flushing-closure}
+	If $\sigma \sentails P$ and $\sigma' \taurefines \sigma$ then $\sigma' \sentails P$. 
+\end{lemma}
 
 Consider, as a significant example, the set of states that satisfy the atomic formula $e \fwrite{e'} e''$. These states may be classified as follows: \begin{enumerate}
 	\item states that describe a single buffered write, and 
@@ -865,6 +870,44 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 \subsection{Soundness}
 
 Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
+
+\begin{lemma}
+	\label{lem:skip-safe}
+	For all $n \in \setnaturals$, if $\sigma \sentails P$ then $\safe{n}{\cskip,\sigma,J,P}$. 
+\end{lemma}
+
+\begin{proof}
+	By induction on $n$. The base case is trivial. For the induction step, we show $\safe{n+1}{\cskip,\sigma,J,P}$ under the assumption that $\safe{n}{\cskip,\sigma,J,P}$. 
+	\begin{enumerate}
+		\item Because $c = \cskip$, we must show that $\sigma \sentails P$. But this is true by hypothesis. 
+
+		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \top$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
+
+		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \rightarrow c_1,\sigma_1$. We must show that $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
+
+		The only evaluation step possible from $\cskip,\sigma_0$ is by \textsc{c-tau}, hence $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau}, there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$, $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma'_J \sentails J$ if $\sigma_J \sentails J$. Similarly, $\sigma' \sentails P$ because $\sigma \sentails P$ and $\sigma' \taurefines \sigma$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,\sigma',J,P}$. 
+	\end{enumerate}
+\end{proof}
+
+\begin{lemma}
+	\label{lem:skip-sound}
+	$\truespec{J}{P}{\cskip}{P}$. 
+\end{lemma}
+
+\begin{proof}
+	Immediate from Lemma~\ref{lem:skip-safe}. 
+\end{proof}
+
+\begin{lemma}
+	\label{lem:load-safe}
+	If $\sigma \sentails (e \fwrite{e'} e'') \fsseq P$ and $x \notin \fv{e,e',e'',P}$ then, for all $n \in \setnaturals$, $\safe{n}{\sigma,\cload{x}{e}_{e'},J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
+\end{lemma}
+
+% \begin{proof}
+% 	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. \begin{enumerate}
+% 		\item 
+% 	\end{enumerate}
+% \end{proof}
 
 \begin{lemma}
 	\label{lem:weak-interleaving-safe}
