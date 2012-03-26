@@ -890,7 +890,7 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 \section{Unresolved Issues}
 
 \begin{enumerate}
-	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller.
+	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
 \end{enumerate}
 
 \section{Conclusion}
