@@ -128,6 +128,8 @@ Related but less relevant to the current problem, compared to the previous two p
 
 Graphical models \cite{DBLP:journals/ipl/WehrmanHO09} Concurrent Kleene Algebra \cite{DBLP:conf/RelMiCS/HoareMSW09,DBLP:conf/concur/HoareMSW09} Locality bimonoids \cite{DBLP:conf/concur/HoareHMOPS11} 
 
+The programming language is local w.r.t.\ all the separating conjunctions defined; locality w.r.t.\ sequential composition doesn't seem to be important in the work above.  
+
 \section{Basics}
 
 \subsection{Preliminaries and Notation}
@@ -440,11 +442,17 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 
 Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
 
-\subsection{Separating Conjunctions}
+\subsection{Separation and Locality}
 
 We now digress to define a series of functions on states, which will later be used to define the predicates for each of the four separating conjunctions. With these definitions in hand, the predicate definitions will be straightforward.
 
+An explicit goal is that each conjunction $\bullet$ be \emph{local} w.r.t.\ the programming language in that whenever $c,(\sigma_F \bullet \sigma) \rightarrow c',\sigma'$ for some ``frame'' state $\sigma_F$, then $c,\sigma \rightarrow c',\sigma_0$ such that $\sigma' \in (\sigma_F \bullet \sigma_0)$, or $c,\sigma \rightarrow \top$. This property allows for reasoning about the behavior of a command in a larger state to be reduced to to reasoning about the behavior of the command in a substate. 
+
 \subsubsection{Weak Interleaving Separation}
+
+We begin by defining a semantic function called \emph{weak interleaving separation}, so-called because it shall not require disjointness of the memory locations described by its arguments (otherwise it would be \emph{strong}), and because the buffered writes described by its arguments are, roughly speaking, interleaved (as opposed to, say, concatenated). 
+
+We write $\sigma \fhash \sigma'$ for the weak interleaving separation of $\sigma$ and $\sigma'$. The domain of the function is a set of states because interleaving write buffers results in a set of possible interleaved write buffers. This separation function is intended to be as weak as possible while still maintaining locality w.r.t.\ the programming language. This weakness reduces the expressive power of the function, but later on we will define stronger, more expressive functions by strengthening this function in a variety of ways. 
 
 We begin by lifting the the \emph{overriding} operation---as in the overriding of functions (Section~\ref{sec:functions}) and lists (Section~\ref{sec:lists})---to states. First, we lift list overriding to functions into lists: \[ B \in B_1 \override B_2 \iffdef \forall i \in \dom{B} \st B(i) \in B_1(i) \override B_2(i). \] Overriding $\sigma_1 = (s,h_1,B_1,k_1)$ by $\sigma = (s_2,h_2,B_2,k_2)$, is then given by $\sigma_1 \override \sigma_2$: \[ \sigma_1 \fhash \sigma_2 \eqdef \setof{(s,h_1 \override h_2, B,k_1 \uplus k_2)}{B \in B_1 \override B_2},\] The \emph{weak interleaving separation} of states is defined as the overriding of compatible states: \[ \sigma_1 \fhash \sigma_2 \eqdef \begin{cases}
 	\sigma_1 \override \sigma_2 & \text{if $\sigma_1 \compat \sigma_2$} \\ 
@@ -869,26 +877,33 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 
 \subsection{Soundness}
 
-Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
+A proof is a tree of specifications, in which the leaves are instances of axiom schemas, and the internal specification nodes are instances of the conclusion of some inference rule, with the children of that node as instances of the hypotheses of the inference rule. We write $\overline{\spec{J}{P}{c}{Q}}$ to indicate that there exists a proof tree with the root labeled by $\spec{J}{P}{c}{Q}$. The soundness property simply asserts that provable specifications are true: 
 
+\begin{theorem}[Soundness]
+	$\overline{\spec{J}{P}{c}{Q}}$ only if $\truespec{J}{P}{c}{Q}$. 
+\end{theorem}
 
+\begin{proof}
+	By induction on the structure of an arbitrary proof tree, using the soundness lemmas in Section~\ref{sec:soundness-proofs}. 
+\end{proof}
 
-\section{Outlook}
+\section{Unresolved Issues}
 
-It remains to show soundness of the proof theory of specifications, i.e., that \[ \spec{J}{P}{c}{Q} \text{ is provable only when } \truespec{J}{P}{c}{Q}\] Some aspects of this development concern me more than others in regard to this task. 
+\begin{enumerate}
+	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller.
+\end{enumerate}
 
-I am confident in the programming language semantics, and (as mentioned earlier), believe that ultimately only the extensional semantics will be needed. There are many questions to be answered about the relationship between the intensional semantics and the extensional one, but I believe this is less important than exploring soundness of specification logic. I am also fairly confident in the definitions of the separating conjunctions--- in spirit, at least, and w.r.t.~the given model of state---and believe the semantic implications and equivalences stated will be completely straightforward to show. 
-
-On the other hand, the $\flock{e,P}$ assertion and the rules for manipulating it have only recently been developed, and so problems there are likely. I am still exploring other options for defining $\flock{e,P}$, including a more ``multiplicative'' definition. And although I am not aware of any particular problems with the ``additive'' definition of $\fbar{e}$, that too has a comparatively fresh definition and could well cause problems. The treatment of the invariant and the lock in the definition of the \textsf{safe} predicate gives me pause; yet for the moment I see no other suitable definition. The axioms for load and store are, I believe, sound, but it is unclear whether a different assertion language would yield more general axioms. I would also not be surprised to find it necessary to abandon the small axioms for the $\clock$ and $\cunlock$ commands and the general invariant rule in favor of a more restricted rule in line with the derived rule for locked commands. 
-
-In any case, I expect that something will have changed by the time you have finished reading this document, and that that change is cascading through the rest of the development, yielding new insights and necessitating additional changes, and so on, and so forth.  
+\section{Conclusion}
 
 \bibliography{dissertation}
 \bibliographystyle{abbrv} 
 
 \appendix
 
-\section{Soundness of the Specification Logic}
+\section{Soundness Proofs}
+\label{sec:soundness-proofs}
+
+Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
 
 \begin{lemma}
 	\label{lem:skip-safe}
