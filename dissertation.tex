@@ -124,9 +124,9 @@ A second work of note is Cohen and Schirmer's \cite{DBLP:conf/itp/CohenS10} redu
 
 Related but less relevant to the current problem, compared to the previous two papers, is work by Ferreira, Feng and Shao which gives soundness proofs for concurrent separation logic in a variety relaxed-memory settings \cite{DBLP:conf/esop/FerreiraFS10}. As with the original soundness proof by Brooks \cite{DBLP:journals/tcs/Brookes07}, their theorem applies to well locked programs only, which are necessarily sequentially consistent. 
 
-\subsection{Concurrent Kleene Algebra}
+\subsection{Algebraic Models of Concurrency}
 
-TODO 
+Graphical models \cite{DBLP:journals/ipl/WehrmanHO09} Concurrent Kleene Algebra \cite{DBLP:conf/RelMiCS/HoareMSW09,DBLP:conf/concur/HoareMSW09} Locality bimonoids \cite{DBLP:conf/concur/HoareHMOPS11} 
 
 \section{Basics}
 
@@ -871,6 +871,25 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 
 Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
 
+
+
+\section{Outlook}
+
+It remains to show soundness of the proof theory of specifications, i.e., that \[ \spec{J}{P}{c}{Q} \text{ is provable only when } \truespec{J}{P}{c}{Q}\] Some aspects of this development concern me more than others in regard to this task. 
+
+I am confident in the programming language semantics, and (as mentioned earlier), believe that ultimately only the extensional semantics will be needed. There are many questions to be answered about the relationship between the intensional semantics and the extensional one, but I believe this is less important than exploring soundness of specification logic. I am also fairly confident in the definitions of the separating conjunctions--- in spirit, at least, and w.r.t.~the given model of state---and believe the semantic implications and equivalences stated will be completely straightforward to show. 
+
+On the other hand, the $\flock{e,P}$ assertion and the rules for manipulating it have only recently been developed, and so problems there are likely. I am still exploring other options for defining $\flock{e,P}$, including a more ``multiplicative'' definition. And although I am not aware of any particular problems with the ``additive'' definition of $\fbar{e}$, that too has a comparatively fresh definition and could well cause problems. The treatment of the invariant and the lock in the definition of the \textsf{safe} predicate gives me pause; yet for the moment I see no other suitable definition. The axioms for load and store are, I believe, sound, but it is unclear whether a different assertion language would yield more general axioms. I would also not be surprised to find it necessary to abandon the small axioms for the $\clock$ and $\cunlock$ commands and the general invariant rule in favor of a more restricted rule in line with the derived rule for locked commands. 
+
+In any case, I expect that something will have changed by the time you have finished reading this document, and that that change is cascading through the rest of the development, yielding new insights and necessitating additional changes, and so on, and so forth.  
+
+\bibliography{dissertation}
+\bibliographystyle{abbrv} 
+
+\appendix
+
+\section{Soundness of the Specification Logic}
+
 \begin{lemma}
 	\label{lem:skip-safe}
 	For all $n \in \setnaturals$, if $\sigma \sentails P$ then $\safe{n}{\cskip,\sigma,J,P}$. 
@@ -955,18 +974,5 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 \begin{proof}
 	Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
 \end{proof}
-
-\section{Outlook}
-
-It remains to show soundness of the proof theory of specifications, i.e., that \[ \spec{J}{P}{c}{Q} \text{ is provable only when } \truespec{J}{P}{c}{Q}\] Some aspects of this development concern me more than others in regard to this task. 
-
-I am confident in the programming language semantics, and (as mentioned earlier), believe that ultimately only the extensional semantics will be needed. There are many questions to be answered about the relationship between the intensional semantics and the extensional one, but I believe this is less important than exploring soundness of specification logic. I am also fairly confident in the definitions of the separating conjunctions--- in spirit, at least, and w.r.t.~the given model of state---and believe the semantic implications and equivalences stated will be completely straightforward to show. 
-
-On the other hand, the $\flock{e,P}$ assertion and the rules for manipulating it have only recently been developed, and so problems there are likely. I am still exploring other options for defining $\flock{e,P}$, including a more ``multiplicative'' definition. And although I am not aware of any particular problems with the ``additive'' definition of $\fbar{e}$, that too has a comparatively fresh definition and could well cause problems. The treatment of the invariant and the lock in the definition of the \textsf{safe} predicate gives me pause; yet for the moment I see no other suitable definition. The axioms for load and store are, I believe, sound, but it is unclear whether a different assertion language would yield more general axioms. I would also not be surprised to find it necessary to abandon the small axioms for the $\clock$ and $\cunlock$ commands and the general invariant rule in favor of a more restricted rule in line with the derived rule for locked commands. 
-
-In any case, I expect that something will have changed by the time you have finished reading this document, and that that change is cascading through the rest of the development, yielding new insights and necessitating additional changes, and so on, and so forth.  
-
-\bibliography{dissertation}
-\bibliographystyle{abbrv} 
 
 \end{document} 
