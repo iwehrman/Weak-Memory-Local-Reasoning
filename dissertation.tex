@@ -163,7 +163,7 @@ The axioms and inference rules are mostly directed by the program syntax, making
 %% that true program specifications are provable if validity of
 %% implications between assertions can be determined.
 
-\subsubsection{Separation Logic and Local Reasoning}
+\subsubsection{Separation Logic}
 
 A serious drawback of Hoare logic is its inability to soundly cope with pointer variables, thus severely complicating its application to low-level systems programs. After more than forty years of research, a major breakthrough finally came with Reynolds' invention of \emph{separation logic} \cite{DBLP:conf/lics/Reynolds02}. A Hoare-style program logic (insofar as the axioms and inference rules are similar), the crucial difference between it and Hoare logic is the assertion language. Instead of the first-order logic assertions used by Hoare logic specifications, separation logic makes use of a new logic\footnote{More precisely, a theory of the logic of bunched implications pioneered by O'Hearn, Pym and others \cite{DBLP:journals/bsl/OHearnP99,DBLP:journals/tcs/PymOY04}.}  for describing system states with a notion of a heap, into which pointers point, and disjointness of said states. The salient formulas that capture these notions are the \emph{points-to assertion}, $x \mapsto y$, and the \emph{separating conjunction}, $P * Q$. Models of the first formula are heaps with exactly one address allocated, given by the value of $x$, and with the value of $y$ stored at that address. Models of the second formula are heaps that can be partitioned by address into two subheaps, one of which models the formula $P$ and the other $Q$.
 
@@ -543,7 +543,13 @@ Suppose also that we can show that the desired property holds of the state that 
 
 This is the essence of \emph{local reasoning}: to reason about the behavior of a command in a complete state, we decompose the complete state into a local part and a frame part, reason only about the behavior of the command with respect to the local part, and finally draw conclusions about the behavior of the command in the complete state based on this local reasoning. A command that obeys the safety monotonicity and frame properties---with respect to particular notion of decomposition---is said to be \emph{local}.
 
-In the next section, we develop a notion of state decomposition---which we shall call \emph{separation}---for which the programming language described in Section~\ref{sec:programming-language} is local. 
+If the commands of a programming language are local, then the principle of local reasoning can be codified into a program logic by way of a \emph{frame rule}, which allows generalization from local to global program specifications. This will be considered in more detail in Section~\ref{sec:specifications}. 
+
+In the next few sections, we develop variety of notions of state decomposition---which we shall call \emph{separations}---for which the commands of the programming language described in Section~\ref{sec:programming-language} are local. 
+
+\subsubsection{Simplified Separation}
+
+
 
 \subsubsection{Weak Interleaving Separation}
 
@@ -1031,7 +1037,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \top$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \rightarrow c_1,\sigma_1$. We must show that $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
+		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \rightarrow c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
 
 		The only evaluation step possible from $\cskip,\sigma_0$ is by \textsc{c-tau}, hence $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau}, there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$, $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma'_J \sentails J$ if $\sigma_J \sentails J$. Similarly, $\sigma' \sentails P$ because $\sigma \sentails P$ and $\sigma' \taurefines \sigma$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,\sigma',J,P}$. 
 	\end{enumerate}
@@ -1048,14 +1054,25 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 \begin{lemma}
 	\label{lem:load-safe}
-	If $\sigma \sentails (e \fwrite{e'} e'') \fsseq P$ and $x \notin \fv{e,e',e'',P}$ then, for all $n \in \setnaturals$, $\safe{n}{\sigma,\cload{x}{e}_{e'},J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
+	For all $n \in \setnaturals$ and $\sigma$ such that $\sigma \sentails (e \fwrite{e'} e'') \fsseq P$, if $x \notin \fv{e,e',e'',P}$ then $\safe{n}{\cload{x}{e}_{e'},\sigma,J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
 \end{lemma}
 
-% \begin{proof}
-% 	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. \begin{enumerate}
-% 		\item 
-% 	\end{enumerate}
-% \end{proof}
+\begin{proof}
+	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
+
+	\begin{enumerate}
+		\item The command is not equal to $\cskip$, so this part holds vacuously. 
+
+		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $c,\sigma_0 \nrightarrow \top$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $\sigma \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\sigma_w$ such that $\sigma_w \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\sigma_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\sigma}{\ext{s}(e')}} \subseteq \dom{\restrict{\sigma_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\sigma_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
+
+		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \rightarrow c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and $\safe{n}{c_1,\sigma',J,((e \fwrite{e'} e'') \fsseq P)}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
+
+		In the case of \textsc{c-tau}, $c_1 = c$ and $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau} there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$ and $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma' \sentails (e \fwrite{e'} e'') \fsseq P$ and $\sigma'_J \sentails J$ if not $\locked{\sigma_1}$. It follows from the inductive hypothesis that $\safe{n}{c,\sigma',J,((e \fwrite{e'} e'') \fsseq P)}$. 
+
+		In the case of \textsc{c-prim} and \textsc{p-load}, $c_1 = \cskip$ and if $\sigma_0 = (s,h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$ then $\sigma_1 = (\funup{s}{\ptup{x}{v}},h_0,B_0,k_0)$. Let $\sigma'_J = \funup{\sigma_J}{\ptup{x}{v}}$, $\sigma'_F = \funup{\sigma_F}{\ptup{x}{v}}$ and $\sigma' = \funup{\sigma}{\ptup{x}{v}}$. Then $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$ by definition, $\sigma'_J \sentails J$ if not $\locked{\sigma_1}$ because $x \notin \fv{J}$
+	\end{enumerate}
+
+\end{proof}
 
 \begin{lemma}
 	\label{lem:weak-interleaving-safe}
