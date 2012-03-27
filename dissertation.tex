@@ -35,70 +35,15 @@
 
 \section{Introduction}
 
-Most concurrent software verification techniques rely on a
-surprisingly strong assumption: namely, that all processes agree on
-the value of shared memory at all times. This is, of course, not
-generally true, but it is often a \emph{safe} assumption because of
-implicit guarantees provided by the memory models of modern computer
-architectures, which guarantee that programs without races will not
-observe such inconsistencies. The soundness of most concurrent
-software verification techniques therefore relies on race-freedom of
-the program under study. This is not considered a major shortcoming
-though because races usually indicate a program error.
+There are, however, useful and interesting programs for which races do not indicate an error. For example, concurrent data structures, which optimize for speed and throughput by using locks and memory fence instructions sparingly, are often racey by design. Their correctness is demonstrated by relating the executions of the comparatively daring implementation to those of its simpler, abstract counterpart. Constructing such a relation therefore requires a technique that is tolerant of races. But that requirement comes with a serious consequence: any technique that tolerates races soundly must also admit that processes may observe the inconsistencies in the value of shared memory that result from the peculiarities of the architecture's memory model.
 
-There are, however, useful and interesting programs for which races do
-not indicate an error. For example, concurrent data structures, which
-optimize for speed and throughput by using locks and memory fence
-instructions sparingly, are often racey by design. Their correctness
-is demonstrated by relating the executions of the comparatively daring
-implementation to those of its simpler, abstract
-counterpart. Constructing such a relation therefore requires a
-technique that is tolerant of races. But that requirement comes with a
-serious consequence: any technique that tolerates races soundly must
-also admit that processes may observe the inconsistencies in the value
-of shared memory that result from the peculiarities of the
-architecture's memory model.
+The literature offers little insight into the problem of verifying concurrent data structures and other inherently racey programs. This is because a model of a contemporary memory adds serious complication to an already difficult problem, but also because until recently formal specifications of common architectures' memory models did not exist publicly.\footnote{Or, perhaps, privately.} Fortunately, the latter problem has been alleviated with recent safety specifications for the x86, Power and ARM memory models \cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for these architectures, the path toward a solution to the correctness problem of concurrent data structures and other important programs now lies essentially unimpeded.
 
-The literature offers little insight into the problem of verifying
-concurrent data structures and other inherently racey programs. This
-is because a model of a contemporary memory adds serious complication
-to an already difficult problem, but also because until recently
-formal specifications of common architectures' memory models did not
-exist publicly.\footnote{Or, perhaps, privately.} Fortunately, the
-latter problem has been alleviated with recent safety specifications
-for the x86, Power and ARM memory models
-\cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for
-these architectures, the path toward a solution to the correctness
-problem of concurrent data structures and other important programs now
-lies essentially unimpeded.
+In my dissertation project, I consider the concurrent verification problem for shared-memory programs with semantics based on the x86 multiprocessor memory model. My focus is on verification via proof with a new Hoare-style logic designed for C-like programs with load, store and fence instructions, pointers and pointer arithmetic, and dynamic memory management.
 
-In my dissertation project, I consider the concurrent verification
-problem for shared-memory programs with semantics based on the x86
-multiprocessor memory model. My focus is on verification via proof
-with a new Hoare-style logic designed for C-like programs with load,
-store and fence instructions, pointers and pointer arithmetic, and
-dynamic memory management.
+My main contribution is to explicate a \emph{local reasoning principle} for a weak memory model. Traditional correctness reasoning and specification is global: the entire system must be accounted for, which makes scaling to large programs difficult. Local reasoning dictates instead that reasoning and specification be restricted to just those resources---program variables, shared-memory addresses, locks, etc.---that are accessed or modified by the program during execution.
 
-My main contribution is to explicate a \emph{local reasoning
-principle} for a weak memory model. Traditional correctness reasoning
-and specification is global: the entire system must be accounted for,
-which makes scaling to large programs difficult. Local reasoning
-dictates instead that reasoning and specification be restricted to
-just those resources---program variables, shared-memory addresses,
-locks, etc.---that are accessed or modified by the program during
-execution. 
-
-For my dissertation, I explore local reasoning in the context of an
-x86-like memory model by developing a logic which embodies such a
-principle. The sequential fragment of this logic is based on
-separation logic, a recent Hoare-style logic which has spurred a
-revolution in high-level program reasoning due to the simplicity with
-which it handles pointers using a local reasoning principle. The
-concurrent extension of the logic will be based on the rely/guarantee
-calculus for fine-grained concurrency. Finally, I will use the logic
-to prove the specifications of a selection of concurrent programs,
-including some non-trivial concurrent data structures.
-
+For my dissertation, I explore local reasoning in the context of an x86-like memory model by developing a logic which embodies such a principle. The sequential fragment of this logic is based on separation logic, a recent Hoare-style logic which has spurred a revolution in high-level program reasoning due to the simplicity with which it handles pointers using a local reasoning principle. The concurrent extension of the logic will be based on the rely/guarantee calculus for fine-grained concurrency. Finally, I will use the logic to prove the specifications of a selection of concurrent programs, including some non-trivial concurrent data structures.
 
 
 \section{Motivation}
@@ -127,102 +72,25 @@ including some non-trivial concurrent data structures.
 \caption{\label{fig:dekker} Dekker's algorithm.}
 \end{figure}
 
-To motivate study of a local reasoning princple for weak memory
-models, we consider the problem of reasoning about programs executing
-on such models. Some of the issues involved can be illustrated by
-considering the small pseudocode program in
-Figure~\ref{fig:dekker}.\footnote{Throughout, I write $\left[ x
-\right]$ for the dereferencing of pointer variable $x$.}
+To motivate study of a local reasoning princple for weak memory models, we consider the problem of reasoning about programs executing on such models. Some of the issues involved can be illustrated by considering the small pseudocode program in Figure~\ref{fig:dekker}.\footnote{Throughout, I write $\left[ x \right]$ for the dereferencing of pointer variable $x$.}
 
-The initial condition states that the two pointer variables, $f_0$ and
-$f_1$ have distinct values, each of which are addresses into shared
-memory at which the value is 0. The program is a concurrent
-composition: process $P_i$, for $i \in \left\lbrace 0,1
-\right\rbrace$, sets its flag by storing the value 1 at address $f_i$,
-then optionally enters its critical section if the result of loading
-the address at other flag $f_{1-i}$ is 0. (I assume for now that load
-and store are atomic.)
+The initial condition states that the two pointer variables, $f_0$ and $f_1$ have distinct values, each of which are addresses into shared memory at which the value is 0. The program is a concurrent composition: process $P_i$, for $i \in \left\lbrace 0,1 \right\rbrace$, sets its flag by storing the value 1 at address $f_i$, then optionally enters its critical section if the result of loading the address at other flag $f_{1-i}$ is 0. (I assume for now that load and store are atomic.)
 
-This is a simplification of Dekker's algorithm for mutual exclusion;
-it should not be possible for both processes to enter their critical
-sections simultaneously. An informal correctness argument can be made
-that relies on a widely assumed property of the underlying memory
-model, \emph{sequential consistency}, defined by Lamport
-\cite{DBLP:journals/tc/Lamport79} to mean that,
-\begin{quotation}\noindent the result of any execution is the same as
-if the operations of all the processors were executed in some
-sequential order, and the operations of each individual processor
-appear in this sequence in the order specified by its program.
-\end{quotation}
+This is a simplification of Dekker's algorithm for mutual exclusion; it should not be possible for both processes to enter their critical sections simultaneously. An informal correctness argument can be made that relies on a widely assumed property of the underlying memory model, \emph{sequential consistency}, defined by Lamport \cite{DBLP:journals/tc/Lamport79} to mean that, \begin{quotation}\noindent the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program. \end{quotation}
 
-The informal correctness argument for the program in
-Figure~\ref{fig:dekker} is as follows. In any execution, either
-process $P_0$ sets flag $f_0$ before process $P_1$ sets flag $f_1$, or
-conversely, because we may assume all events are totally
-(sequentially) ordered. In the first case, $f_0$ is set before $f_1$,
-which happens before $P_1$ loads $f_0$ because the total order of
-events respects the program orders. So, if $P_0$ sets its flag first,
-the load of $f_0$ returns 1 and $P_1$ will not enter its critical
-section. A symmetric argument shows that if $P_1$ sets $f_1$ before
-$P_0$ sets $f_0$, then $P_0$ will not enter its critical section. In
-both cases, at most one of the two processes may enter its critical
-section.\footnote{This program does not, of course, preclude
-deadlock.}
+The informal correctness argument for the program in Figure~\ref{fig:dekker} is as follows. In any execution, either process $P_0$ sets flag $f_0$ before process $P_1$ sets flag $f_1$, or conversely, because we may assume all events are totally (sequentially) ordered. In the first case, $f_0$ is set before $f_1$, which happens before $P_1$ loads $f_0$ because the total order of events respects the program orders. So, if $P_0$ sets its flag first, the load of $f_0$ returns 1 and $P_1$ will not enter its critical section. A symmetric argument shows that if $P_1$ sets $f_1$ before $P_0$ sets $f_0$, then $P_0$ will not enter its critical section. In both cases, at most one of the two processes may enter its critical section.\footnote{This program does not, of course, preclude deadlock.}
 
-Sequential consistency is crucial to this argument. If the events are
-not totally ordered, the case split is not exhaustive. If the program
-orders are not included in the total order, we may not conclude that
-the first store precedes the other process' load, despite the fact
-that the first store precedes the second store (in the total order)
-and the second store precedes the load (in the program order). In
-either case, mutual exclusion may fail.
+Sequential consistency is crucial to this argument. If the events are not totally ordered, the case split is not exhaustive. If the program orders are not included in the total order, we may not conclude that the first store precedes the other process' load, despite the fact that the first store precedes the second store (in the total order) and the second store precedes the load (in the program order). In either case, mutual exclusion may fail.
 
-Unfortunately, common multiprocessor architectures do not generally
-guarantee sequential consistency, and so neither the informal argument
-above nor more rigorous arguments based on formalizations of
-sequential consistency are valid. And although the memory models of
-various architectures all seem to be strictly weaker than sequentially
-consistent models, they are not individually comparable. Roughly, the
-Power and ARM architectures guarantee the first part of sequential
-consistency (a total order on memory events), but not the second (that
-this order includes the program orders)
-\cite{DBLP:conf/popl/2009damp,DBLP:conf/asplos/ChongI08}. Such memory
-models are called \emph{weakly consistent}. Conversely, the x86
-architecture does not guarantee a total order on memory events, but
-does guarantee that the observed partial order is consistent with the
-program orders \cite{DBLP:conf/tphol/OwensSS09}. These memory models
-are said to have the \emph{total-store ordering} (TSO) property.
+Unfortunately, common multiprocessor architectures do not generally guarantee sequential consistency, and so neither the informal argument above nor more rigorous arguments based on formalizations of sequential consistency are valid. And although the memory models of various architectures all seem to be strictly weaker than sequentially consistent models, they are not individually comparable. Roughly, the Power and ARM architectures guarantee the first part of sequential consistency (a total order on memory events), but not the second (that this order includes the program orders) \cite{DBLP:conf/popl/2009damp,DBLP:conf/asplos/ChongI08}. Such memory models are called \emph{weakly consistent}. Conversely, the x86 architecture does not guarantee a total order on memory events, but does guarantee that the observed partial order is consistent with the program orders \cite{DBLP:conf/tphol/OwensSS09}. These memory models are said to have the \emph{total-store ordering} (TSO) property.
 
-There are, however, conditions under which these architectures
-guarantee a program's executions to be sequentially
-consistent---namely, in the absence of data races. These so-called
-``data-race free'' (DRF) guarantees provide sufficient conditions
-under which sequential consistency can be recovered and used for a
-correctness argument. By guarding the memory-accessing commands in the
-program in Figure~\ref{fig:dekker} with synchronization primitives
-like locks to eliminate races, the previous correctness argument again
-becomes valid. Such a program transformation might make sense for a
-conservative programmer concerned with correctness, but it does not
-constitute a helpful verification strategy because the transformation
-does not preserve the original program's semantics.
+There are, however, conditions under which these architectures guarantee a program's executions to be sequentially consistent---namely, in the absence of data races. These so-called ``data-race free'' (DRF) guarantees provide sufficient conditions under which sequential consistency can be recovered and used for a correctness argument. By guarding the memory-accessing commands in the program in Figure~\ref{fig:dekker} with synchronization primitives like locks to eliminate races, the previous correctness argument again becomes valid. Such a program transformation might make sense for a conservative programmer concerned with correctness, but it does not constitute a helpful verification strategy because the transformation does not preserve the original program's semantics.
 
 % an x86-like
 % memory model (in which the global memory order preserves program
 % order),
 
-A less drastic semantics-altering transformation would add fence
-instructions directly after the processes' store operations. I claim
-that this too results in an implementation of Dekker's algorithm that
-preserves mutual exclusion. The fences ensure that the processes do
-not attempt their loads until after their respective stores have
-completed. But proving that this modified program is correct requires
-an argument quite different from the one above: the loads in this
-program race with their opposite stores, and so DRF guarantees cannot
-be applied to recover sequential consistency. Hence, any correctness
-argument for this modified program must be cognizant of the
-peculiarities of the underlying memory model. Indeed, correctness
-arguments for an x86-like memory model are completely different for a
-correctness argument for an ARM-like memory model.
+A less drastic semantics-altering transformation would add fence instructions directly after the processes' store operations. I claim that this too results in an implementation of Dekker's algorithm that preserves mutual exclusion. The fences ensure that the processes do not attempt their loads until after their respective stores have completed. But proving that this modified program is correct requires an argument quite different from the one above: the loads in this program race with their opposite stores, and so DRF guarantees cannot be applied to recover sequential consistency. Hence, any correctness argument for this modified program must be cognizant of the peculiarities of the underlying memory model. Indeed, correctness arguments for an x86-like memory model are completely different for a correctness argument for an ARM-like memory model.
 
 \section{Project Overview}
 
@@ -268,73 +136,27 @@ In the best case, this work could someday provide a foundation for practically u
 \section{Program Logics}
 \label{sec:program-logics}
 
-Given that the motivating problem is to reason about concurrent
-programs executing on a particular memory model, how might one
-approach the correctness of the program in Figure~\ref{fig:dekker} and
-others like it such as concurrent data structures? One
-solution---perhaps, for now, the best---is to reason directly about
-the program semantics in the following way:
+Given that the motivating problem is to reason about concurrent programs executing on a particular memory model, how might one approach the correctness of the program in Figure~\ref{fig:dekker} and others like it such as concurrent data structures? One solution---perhaps, for now, the best---is to reason directly about the program semantics in the following way:
 \begin{enumerate}
-\item formalize the semantics of the programming language using a
-  general purpose logic (e.g., first-order logic, higher-order logic,
-  type theory);
+\item formalize the semantics of the programming language using a general purpose logic (e.g., first-order logic, higher-order logic, type theory);
 
-\item prove that the semantics agrees with the memory
-  model;
+\item prove that the semantics agrees with the memory model;
 
-\item characterize the intended program property using the general
-  logic; 
+\item characterize the intended program property using the general logic; 
 
-\item prove using the general logic that the semantic object which
-  represents the program at hand possesses this
-  property.
-\end{enumerate} This is a perfectly reasonable strategy and, by using
-a proof assistant for a selected general purpose logic (e.g., ACL2
-\cite{DBLP:journals/tse/KaufmannM97}, Isabelle/HOL
-\cite{DBLP:books/sp/NipkowPW02}, or Coq \cite{CoqBook}), is within the
-realm of feasibility for some programs and some experts. But, due to
-the generality of the logic and complexity of the semantics of
-programs under study, one expects such proofs to be exceptionally
-complex. And although experts would certainly develop methodologies
-and abstractions to tame this complexity, the desire to reason at a
-higher and more intuitive level is manifest. 
+\item prove using the general logic that the semantic object which represents the program at hand possesses this property.
+\end{enumerate} 
+This is a perfectly reasonable strategy and, by using a proof assistant for a selected general purpose logic (e.g., ACL2 \cite{DBLP:journals/tse/KaufmannM97}, Isabelle/HOL \cite{DBLP:books/sp/NipkowPW02}, or Coq \cite{CoqBook}), is within the realm of feasibility for some programs and some experts. But, due to the generality of the logic and complexity of the semantics of programs under study, one expects such proofs to be exceptionally complex. And although experts would certainly develop methodologies and abstractions to tame this complexity, the desire to reason at a higher and more intuitive level is manifest.
 
-This is just the purpose of a \emph{program logic}, which allows
-high-level formal reasoning that codifies the programmer's intuition
-about the behavior and correctness of the program under
-study. Ideally, the program logic incorporates those methodologies and
-abstractions that have been most useful to expert users reasoning
-directly about semantic objects in more general logics.
+This is just the purpose of a \emph{program logic}, which allows high-level formal reasoning that codifies the programmer's intuition about the behavior and correctness of the program under study. Ideally, the program logic incorporates those methodologies and abstractions that have been most useful to expert users reasoning directly about semantic objects in more general logics.
 
-The situation is analogous to the use of temporal logics for studying
-reactive systems. Though it is technically possible to reason about
-about such systems using a general-purpose logic, both human reasoning
-(e.g., Unity \cite{unity-book}) and automation (e.g., model checking
-\cite{model-checking}) were facilitated by specialized logics.
+The situation is analogous to the use of temporal logics for studying reactive systems. Though it is technically possible to reason about about such systems using a general-purpose logic, both human reasoning (e.g., Unity \cite{unity-book}) and automation (e.g., model checking \cite{model-checking}) were facilitated by specialized logics.
 
 \subsection{Hoare Logic}
 
-Hoare introduced the first program logic for an Algol-like language in
-his seminal 1969 paper \cite{DBLP:journals/cacm/Hoare69}. Programs are
-specified with a pair of assertions, written in first-order logic,
-that describe pre- and post-execution system states. The logic has two
-flavors of specification: partial correctness, $\left\lbrace P
-\right\rbrace c \left\lbrace Q \right\rbrace$, in which nonterminating
-executions satisfy any specification; and total correctness,
-$\left\langle P \right\rangle c \left\langle Q \right\rangle$, in
-which termination is required to satisfy any specification. 
+Hoare introduced the first program logic for an Algol-like language in his seminal 1969 paper \cite{DBLP:journals/cacm/Hoare69}. Programs are specified with a pair of assertions, written in first-order logic, that describe pre- and post-execution system states. The logic has two flavors of specification: partial correctness, $\left\lbrace P \right\rbrace c \left\lbrace Q \right\rbrace$, in which nonterminating executions satisfy any specification; and total correctness, $\left\langle P \right\rangle c \left\langle Q \right\rangle$, in which termination is required to satisfy any specification. 
 
-The axioms and inference rules are mostly directed by the program
-syntax, making proof construction partially mechanical. Notable
-exceptions include the inference rule for loops, which requires
-invention of a suitable loop invariant, and the rule of consequence:
-\infrule[consequence]{P' \Rightarrow P \,\,\,\,\,\, \left\lbrace P
-\right\rbrace c \left\lbrace Q\right\rbrace \,\,\,\,\,\, Q \Rightarrow
-Q' }{\left\lbrace P' \right\rbrace c \left\lbrace Q' \right\rbrace}
-For correct application of the rule, validity of the first-order logic
-implications must be proved. But first-order validity is, of course,
-undecidable in general, so while Hoare logic does ease some of the
-pain of proof construction, it is not a panacea.
+The axioms and inference rules are mostly directed by the program syntax, making proof construction partially mechanical. Notable exceptions include the inference rule for loops, which requires invention of a suitable loop invariant, and the rule of consequence: \infrule[consequence]{P' \Rightarrow P \,\,\,\,\,\, \left\lbrace P \right\rbrace c \left\lbrace Q\right\rbrace \,\,\,\,\,\, Q \Rightarrow Q' }{\left\lbrace P' \right\rbrace c \left\lbrace Q' \right\rbrace} For correct application of the rule, validity of the first-order logic implications must be proved. But first-order validity is, of course, undecidable in general, so while Hoare logic does ease some of the pain of proof construction, it is not a panacea.
 
 %% Hoare logic has been thoroughly studied since its
 %% introduction. Notably, it has been shown to be complete, in the sense
@@ -343,152 +165,27 @@ pain of proof construction, it is not a panacea.
 
 \subsubsection{Separation Logic and Local Reasoning}
 
-A serious drawback of Hoare logic is its inability to soundly cope
-with pointer variables, thus severely complicating its application to
-low-level systems programs. After more than forty years of research, a
-major breakthrough finally came with Reynolds' invention of
-\emph{separation logic} \cite{DBLP:conf/lics/Reynolds02}. A
-Hoare-style program logic (insofar as the axioms and inference rules
-are similar), the crucial difference between it and Hoare logic is the
-assertion language. Instead of the first-order logic assertions used
-by Hoare logic specifications, separation logic makes use of a new
-logic\footnote{More precisely, a theory of the logic of bunched
-  implications pioneered by O'Hearn, Pym and others
-  \cite{DBLP:journals/bsl/OHearnP99,DBLP:journals/tcs/PymOY04}.}  for
-describing system states with a notion of a heap, into which pointers
-point, and disjointness of said states. The salient formulas that
-capture these notions are the \emph{points-to assertion}, $x \mapsto
-y$, and the \emph{separating conjunction}, $P * Q$. Models of the
-first formula are heaps with exactly one address allocated, given by
-the value of $x$, and with the value of $y$ stored at that
-address. Models of the second formula are heaps that can be
-partitioned by address into two subheaps, one of which models the
-formula $P$ and the other $Q$.
+A serious drawback of Hoare logic is its inability to soundly cope with pointer variables, thus severely complicating its application to low-level systems programs. After more than forty years of research, a major breakthrough finally came with Reynolds' invention of \emph{separation logic} \cite{DBLP:conf/lics/Reynolds02}. A Hoare-style program logic (insofar as the axioms and inference rules are similar), the crucial difference between it and Hoare logic is the assertion language. Instead of the first-order logic assertions used by Hoare logic specifications, separation logic makes use of a new logic\footnote{More precisely, a theory of the logic of bunched implications pioneered by O'Hearn, Pym and others \cite{DBLP:journals/bsl/OHearnP99,DBLP:journals/tcs/PymOY04}.}  for describing system states with a notion of a heap, into which pointers point, and disjointness of said states. The salient formulas that capture these notions are the \emph{points-to assertion}, $x \mapsto y$, and the \emph{separating conjunction}, $P * Q$. Models of the first formula are heaps with exactly one address allocated, given by the value of $x$, and with the value of $y$ stored at that address. Models of the second formula are heaps that can be partitioned by address into two subheaps, one of which models the formula $P$ and the other $Q$.
 
-Besides soundness w.r.t.~a sequential C-like language with pointers
-and dynamic memory management, separation logic is important because
-it embodies the principle of \emph{local reasoning}. Unlike with Hoare
-logic, reasoning may be restricted to a program component's
-\emph{footprint}---i.e., just the part of the system state referenced
-by the program during its execution---from which one may generalize to
-complete system states. O'Hearn, Reynolds and Yang informally describe
-local reasoning in the context of sequential pointer programs as
-follows \cite{DBLP:conf/csl/OHearnRY01}:
-\begin{quotation}\noindent
-To understand how a program works, it should be possible for reasoning
-and specification to be confined to the [memory addresses] that the
-program actually accesses. The value of any other [addresses] will
-automatically remain unchanged.\end{quotation}
+Besides soundness w.r.t.~a sequential C-like language with pointers and dynamic memory management, separation logic is important because it embodies the principle of \emph{local reasoning}. Unlike with Hoare logic, reasoning may be restricted to a program component's \emph{footprint}---i.e., just the part of the system state referenced by the program during its execution---from which one may generalize to complete system states. O'Hearn, Reynolds and Yang informally describe local reasoning in the context of sequential pointer programs as follows \cite{DBLP:conf/csl/OHearnRY01}: \begin{quotation}\noindent To understand how a program works, it should be possible for reasoning and specification to be confined to the [memory addresses] that the program actually accesses. The value of any other [addresses] will automatically remain unchanged.\end{quotation}
 
+Separation logic embodies the principle of local reasoning with its \emph{small axioms} and its \emph{frame rule}. The small axioms describe the programming language's primitive commands, specifying only their respective footprints. For example, the small axiom\footnote{Actually, an axiom schema parametrized by the expressions $e$ and $e'$.} for the store command requires with its precondition only that the relevant location be allocated with some value,\footnote{$e \mapsto -$ is shorthand for $\exists v\,.\,e \mapsto v$.} and the resulting postcondition describes only the result of updating this location: \infax[store]{\left\lbrace e \mapsto -\right\rbrace \,\left[e\right] := e' \,\left\lbrace e \mapsto e'\right\rbrace} The local specification can then be generalized to a global specification using the \emph{frame rule}:\footnote{Some formulations of the frame rule additionally require the syntactic side condition that none of the variables modified by the command $c$ occur freely in $R$.}  \infrule[frame]{\left\lbrace P \right\rbrace c \left\lbrace Q \right\rbrace}{\left\lbrace P*R \right\rbrace c \left\lbrace Q*R \right\rbrace} No similar conjunctive frame rule is sound in Hoare logic, limiting its ability to scale to large programs.
 
-Separation logic embodies the principle of local reasoning with its
-\emph{small axioms} and its \emph{frame rule}. The small axioms
-describe the programming language's primitive commands, specifying
-only their respective footprints. For example, the small
-axiom\footnote{Actually, an axiom schema parametrized by the
-expressions $e$ and $e'$.} for the store command requires with its
-precondition only that the relevant location be allocated with some
-value,\footnote{$e \mapsto -$ is shorthand for $\exists v\,.\,e
-\mapsto v$.} and the resulting postcondition describes only the result
-of updating this location: \infax[store]{\left\lbrace e \mapsto
--\right\rbrace \,\left[e\right] := e' \,\left\lbrace e \mapsto e'
-\right\rbrace} The local specification can then be generalized to a
-global specification using the \emph{frame rule}:\footnote{Some
-formulations of the frame rule additionally require the syntactic side
-condition that none of the variables modified by the command $c$ occur
-freely in $R$.}  \infrule[frame]{\left\lbrace P \right\rbrace c
-\left\lbrace Q \right\rbrace}{\left\lbrace P*R \right\rbrace c
-\left\lbrace Q*R \right\rbrace} No similar conjunctive frame rule is
-sound in Hoare logic, limiting its ability to scale to large
-programs. 
-
-Besides having been used to give human-readable proofs to a variety of
-algorithms that manipulate complex pointer-based data structures
-(e.g., the Schorr-Waite graph-marking algorithm \cite{Yang-thesis}),
-useful fragments of separation logic have been automated as part of
-program verifiers and static analysis implementations, which have been
-successfully applied to multi-thousand line
-programs~\cite{DBLP:conf/fmco/BerdineCO05,DBLP:conf/cav/YangLBCCDO08}.
+Besides having been used to give human-readable proofs to a variety of algorithms that manipulate complex pointer-based data structures (e.g., the Schorr-Waite graph-marking algorithm \cite{Yang-thesis}), useful fragments of separation logic have been automated as part of program verifiers and static analysis implementations, which have been successfully applied to multi-thousand line programs~\cite{DBLP:conf/fmco/BerdineCO05,DBLP:conf/cav/YangLBCCDO08}.
 
 \subsubsection{Concurrent Logics}
 
-Research into logics for concurrent programs has progressed
-independently. Early attempts culminated in an extension of Hoare
-logic by Owicki and Gries \cite{DBLP:journals/cacm/OwickiG76}, which
-adds a rule for parallel composition of two program components with
-the cumbersome side condition that every assertion in one component's
-specification be invariant under the operation of each atomic
-command executed by the other component. While elegant in its
-simplicity, the side condition restricts the logic's
-usefulness. First, every application of the parallel composition rule
-requires a number of invariant proofs quadratic in the size of the
-components, making scalability difficult. Second, the side condition
-creates dependencies on the \emph{proofs} of the component
-specifications, not just on the specifications themselves. This
-effectively rules out independent proof construction for the
-individual components and yields a highly non-compositional logic.
+Research into logics for concurrent programs has progressed independently. Early attempts culminated in an extension of Hoare logic by Owicki and Gries \cite{DBLP:journals/cacm/OwickiG76}, which adds a rule for parallel composition of two program components with the cumbersome side condition that every assertion in one component's specification be invariant under the operation of each atomic command executed by the other component. While elegant in its simplicity, the side condition restricts the logic's usefulness. First, every application of the parallel composition rule requires a number of invariant proofs quadratic in the size of the components, making scalability difficult. Second, the side condition creates dependencies on the \emph{proofs} of the component specifications, not just on the specifications themselves. This effectively rules out independent proof construction for the individual components and yields a highly non-compositional logic.
 
-Some relief from these problems was provided by Jones in his
-rely/guarantee logic \cite{JonesRelyGuar}, in which Hoare-style
-specifications are augmented with two additional assertions: the
-\emph{rely} condition, which bounds the interference from the
-environment that a component can tolerate while still meeting its pre-
-and post-specifications; and the \emph{guarantee} condition, which
-bounds the interference the program itself may inflict upon the
-environment. Application of the rely/guarantee parallel composition
-rule requires proofs that each process' rely condition subsumes the
-others' guarantee conditions.
+Some relief from these problems was provided by Jones in his rely/guarantee logic \cite{JonesRelyGuar}, in which Hoare-style specifications are augmented with two additional assertions: the \emph{rely} condition, which bounds the interference from the environment that a component can tolerate while still meeting its pre- and post-specifications; and the \emph{guarantee} condition, which bounds the interference the program itself may inflict upon the environment. Application of the rely/guarantee parallel composition rule requires proofs that each process' rely condition subsumes the others' guarantee conditions.
 
-While a considerable improvement over the Owicki-Gries
-logic---subsumption proofs linear in the number of components versus
-quadratic in their size, and dependence only among components'
-specifications instead of their proofs---rely/guarantee still has
-shortcomings. The logic cannot be considered truly compositional
-because each component may be specified with a variety of interference
-conditions, and it is not clear which are appropriate until attempting
-the parallel composition. Furthermore, it can be laborious to specify
-sufficiently strong guarantee conditions. For example, the guarantee
-condition for a component with three variables ($x,y,z$) that updates
-only one ($x := x+1$) must describe not just the relevant variable
-change ($x' = x + 1$), but also that all others remain the same
-($\ldots \wedge y' = y \wedge z' = z$)---the latter condition being
-difficult because it suggests a sort of quantification over variable
-names not possible in first-order logic, instead requiring an explicit
-numeration of state variables.
+While a considerable improvement over the Owicki-Gries logic---subsumption proofs linear in the number of components versus quadratic in their size, and dependence only among components'specifications instead of their proofs---rely/guarantee still has shortcomings. The logic cannot be considered truly compositional because each component may be specified with a variety of interference conditions, and it is not clear which are appropriate until attempting the parallel composition. Furthermore, it can be laborious to specify sufficiently strong guarantee conditions. For example, the guarantee condition for a component with three variables ($x,y,z$) that updates only one ($x := x+1$) must describe not just the relevant variable change ($x' = x + 1$), but also that all others remain the same ($\ldots \wedge y' = y \wedge z' = z$)---the latter condition being difficult because it suggests a sort of quantification over variable names not possible in first-order logic, instead requiring an explicit numeration of state variables.
 
 \subsubsection{A Marriage of Techniques}
 
-A partial solution to this problem of specification has recently
-appeared via separation logic. A new concurrent program logic from
-Vafeiadis and Parkinson, dubbed RG-Sep
-\cite{DBLP:conf/concur/VafeiadisP07} (``a marriage of rely/guarantee
-and separation logic''), mates a generalization of separation logic's
-assertion language and frame rules with the rely/guarantee
-logic. Besides inheriting the local reasoning features of separation
-logic, RG-Sep eases the pain of specifying environmental interference
-by semantically partitioning the system state into private and shared
-parts. A new class of boxed assertions $\boxed{P}$ is used to
-describe shared state, and the logical operations are adjusted so
-that, e.g., a separated conjunction of boxed assertions $\boxed{P} *
-\boxed{Q}$ allows their footprints to overlap.\footnote{An interesting
-consequence is that $\boxed{P} * \boxed{Q}$ is logically equivalent to
-$\boxed{P \wedge Q}$.} The proof rules are then modified so that,
-e.g., parallel composition requires only that each component be
-tolerant of environmental interference to shared state, not private
-state. This could be used in the previous example to obviate the
-explicit enumeration needed to describe invariance of the irrelevant
-state variables.
+A partial solution to this problem of specification has recently appeared via separation logic. A new concurrent program logic from Vafeiadis and Parkinson, dubbed RG-Sep \cite{DBLP:conf/concur/VafeiadisP07} (``a marriage of rely/guarantee and separation logic''), mates a generalization of separation logic's assertion language and frame rules with the rely/guarantee logic. Besides inheriting the local reasoning features of separation logic, RG-Sep eases the pain of specifying environmental interference by semantically partitioning the system state into private and shared parts. A new class of boxed assertions $\boxed{P}$ is used to describe shared state, and the logical operations are adjusted so that, e.g., a separated conjunction of boxed assertions $\boxed{P} * \boxed{Q}$ allows their footprints to overlap.\footnote{An interesting consequence is that $\boxed{P} * \boxed{Q}$ is logically equivalent to $\boxed{P \wedge Q}$.} The proof rules are then modified so that, e.g., parallel composition requires only that each component be tolerant of environmental interference to shared state, not private state. This could be used in the previous example to obviate the explicit enumeration needed to describe invariance of the irrelevant state variables.
 
-RG-Sep embodies the most advanced ideas about high-level reasoning
-techniques for fine-grained concurrent shared-memory programs,
-including local reasoning. Vafeiadis' 2008 dissertation
-\cite{VafeiadisDissertation} includes correctness proofs for a variety
-of complex, racey concurrent data structures using the logic. RG-Sep
-is by no means simple, but does yield relatively concise, readable
-proofs about difficult algorithms. Indeed, the only significant
-criticism I provide here is that, as with all the other concurrent
-logics discussed, RG-Sep is not sound w.r.t.~weak memory models for
-racey programs.
+RG-Sep embodies the most advanced ideas about high-level reasoning techniques for fine-grained concurrent shared-memory programs, including local reasoning. Vafeiadis' 2008 dissertation \cite{VafeiadisDissertation} includes correctness proofs for a variety of complex, racey concurrent data structures using the logic. RG-Sep is by no means simple, but does yield relatively concise, readable proofs about difficult algorithms. Indeed, the only significant criticism I provide here is that, as with all the other concurrent logics discussed, RG-Sep is not sound w.r.t.~weak memory models for racey programs.
 
 \section{Memory Consistency Models}
 
