@@ -194,7 +194,7 @@ TODO
 This section contains a brief, informal review of the x86-TSO memory model as defined by Owens, Sarkar and Sewell \cite{DBLP:conf/tphol/OwensSS09}. The model is given as a collection of legal traces of memory events. Legal traces are defined axiomatically and operationally, the latter via a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
 	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ is a register file for each processor;
 	\item $m : \setlocations \pfun \setvalues$ is a shared memory; 
-	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is a write buffer for each processor; 
+	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is a write buffer for each processor; 
 	\item $l : \setprocessors^\bot$ is a global lock. 
 \end{itemize}
 
@@ -232,9 +232,9 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
 \subsubsection{Lists}
 \label{sec:lists}
 
-The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for object $o$ and lists $l,l'$. 
+The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for object $o$ and lists $l,l'$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
 
-For a list $l$ of elements drawn from a set $A \times B$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
+For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
 	b &\text{ if $l = l' \lapp \lsingle{(x,b)}$}\\
 	\funof{l'}(x) &\text{ if $l = l' \lapp \lsingle{(y,b)}$ with $x \neq y$}\\
 	\bot & \text{otherwise.}
@@ -296,6 +296,7 @@ Boolean expressions are terms that denote truth values. Their language is given 
 \end{align*}
 
 \subsection{Commands and States}
+\label{sec:commands-and-states}
 
 In this setting, programs are identified with \emph{commands}, which consist of compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{I have no particular to reason to think that they will add significant complication though, and were also considered in earlier iterations of this project \cite{wmsldetails,lola11}.}
 
@@ -323,7 +324,7 @@ To defined these relations formally, we must first define the notion of a machin
 A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
 	\item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
-	\item $B : \setprocessors \tfun (\setlocations \times \setvalues)~\mathsf{list}$ is an array of write buffers; and
+	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; and
 	\item $k : \powerset{\setprocessors}$ is a set of blocked processors. 
 \end{itemize}
 \end{definition} 
@@ -522,9 +523,11 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 
 Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
 
-\subsection{Separation and Locality}
+\subsection{Separation}
 
 We now digress to define a series of functions on states, which will later be used to define the predicates for each of the four separating conjunctions. With these definitions in hand, the predicate definitions will be straightforward.
+
+\subsubsection{Locality}
 
 An explicit goal is that each conjunction $\bullet$ be \emph{local} w.r.t.\ the programming language in the following way. Suppose we wish to show that, when a command $c$ is evaluated in a complete state $\Sigma_0$, that it does not abort, and that the resulting state $\Sigma_1$ has some some property $P$. That is, we wish to show that $c,\Sigma_0 \rightarrow^\ast \cskip,\Sigma'$ and $P(\Sigma_1)$ holds. 
 
@@ -532,7 +535,7 @@ In some scenarios, we may attack the problem as follows. Suppose the property $P
 
 Consider again our task of showing that, for some $\Sigma_1$, $c,\Sigma_0 \rightarrow^\ast \cskip,\Sigma_1$ and $P(\Sigma_1)$. If we know that that the property depends just on a particular substate, we may try to reason about the behavior of the command with respect to just the substate that is relevant to the property. We proceed then by decomposing the initial state $\Sigma_0$ into a relevant substate $\sigma_0$ and a frame state $\sigma_F$, with $\Sigma_0 = \sigma_F \bullet \sigma_0$, and consider the behavior of the command $c$ in the substate $\sigma_0$. 
 
-Perhaps we are able to show that $c$ does not abort in this substate, and evaluates to some state $\sigma_1$: $c,\sigma_0 \rightarrow^\ast \cskip,\sigma_1$. Can we conclude that the $c$ also does not abort in the complete state $\Sigma$? If the command obeys what is known as the \emph{safety monotonicity} property, then we may indeed conclude this. That is, safety monotonicity asserts that if a command executes successfully in some state, then it also execute successfully in a superstate.  
+Perhaps we are able to show that $c$ does not abort in this substate, and evaluates to some state $\sigma_1$: $c,\sigma_0 \rightarrow^\ast \cskip,\sigma_1$. Can we conclude that the $c$ also does not abort in the complete state $\Sigma$? If the command obeys what is known as the \emph{safety monotonicity property}, then we may indeed conclude this. That is, safety monotonicity asserts that if a command executes successfully in a state $\sigma_0$, then it also executes successfully in a superstate $\Sigma_0$.  
 
 Suppose also that we can show that the desired property holds of the state that results from the evaluation of the command in the substate $\sigma_0$; i.e., that $P(\sigma_1)$ holds. Because we know that the frame substate is irrelevant to the property $P$, it is also the case that $P(\sigma_F \bullet \sigma_1)$ holds. But what is the relationship between $\Sigma_1$ and the composite state $\sigma_F \bullet \sigma_1$? If the command obeys what is known as the \emph{frame property}, then in fact $\Sigma_1 = \sigma_F \bullet \sigma_1$. That is, the frame property asserts that whenever $\Sigma_0 = \sigma_F \bullet \sigma_0$ and $c,\Sigma_0 \rightarrow^\ast \Sigma_1$, and if $c$ does not abort on the substate $\sigma_1$, then there exists some $\sigma_1$ such that $\Sigma_1 = \sigma_F \bullet \sigma_1$. Hence, $P(\Sigma_1)$ holds. 
 
@@ -542,8 +545,17 @@ If the commands of a programming language are local, then the principle of local
 
 In the next few sections, we develop variety of notions of state decomposition---which we shall call \emph{separations}---for which the commands of the programming language described in Section~\ref{sec:programming-language} are local. 
 
-\subsubsection{Simplified Separation}
+\subsubsection{The Uniprocessor Case}
+\label{sec:uniprocessor-separation}
 
+Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
+
+Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition $\bullet$. Safety monotonicity requires that if $\cload{x}{y},(s,\mu_L) \rightarrow \top$ then also $\cload{x}{y},(s,\mu_G) \rightarrow \top$. The frame property requires additionally that if $\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)$ then also $\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L)$. In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
+
+What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative definition for a temporal separation function would be to \emph{add} heaps of the respective memory systems when their domains are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
+    (h_F \cup h_L, b_F \lapp b_L) & \text{if $b_F = \lnil \disj h_L = \nil$} \\ 
+    \bot & \text{otherwise.}
+\end{cases}\] Because the separation is only defined when the heap domains are disjoint, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined. Furthermore, the safety monotonicity holds easily, because $\dom{h_L\override b_L} \subseteq \dom{(h_F \cup h_L) \override (b_F \lapp b_L)}$. 
 
 
 \subsubsection{Weak Interleaving Separation}
@@ -656,7 +668,7 @@ The next three subsections describe separating conjunctions that embrace one or 
 
 The strong interleaving separation of states, written $\sigma \fsep \sigma'$, is like the weak interleaving separation, but in which the domains of memory addresses are required to be completely disjoint. Later, this separation will be useful for describing the relationship between local and shared state, which we will require to be disjoint regardless of the status of the lock, and for describing concurrent composition of commands.
 
- The definedness condition for $\sigma \fsep \sigma$ (besides agreement on stacks and locks) is as follows: \[ \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) = \nil, \] and the value of $\sigma \fsep \sigma'$ is as follows: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\fhash h',B\fhash B',l).\] 
+ The definedness condition for $\sigma \fsep \sigma'$ (besides agreement on stacks and locks) is as follows: \[ \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) = \nil, \] and the value of $\sigma \fsep \sigma'$ is as follows: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\fhash h',B\fhash B',l).\] 
 
 Because the domains the heaps and buffers are disjoint, this is equivalent to the following definition that makes use of the simpler additive union in place of the TSO union: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\uplus h',B\uplus B',l).\] 
 
@@ -1070,13 +1082,30 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 		\item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \top$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
 
-		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e)}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
+		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
-		In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fsseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e)}$. 
+		In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fsseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. 
 
-		In the case of \textsc{c-prim} and \textsc{p-load}, $c' = \cskip$, $s' = \funup{s}{\ptup{x}{v}}$ and $\mu_1 = \mu_0$, assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_j$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $(s',\mu'_J) \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$. Finally, $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e)}$ follows from Lemma~\ref{lem:skip-safe} because $(s',\mu') = (\funup{s}{\ptup{x}{v}},\mu) \sentails ((e \fwrite{e'} e'') \fsseq P \conj x = e)$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fsseq P)$ with $x \notin \fv{e,e',e'',P}$. 
+		In the case of \textsc{c-prim} and \textsc{p-load}, $c' = \cskip$, $s' = \funup{s}{\ptup{x}{v}}$ and $\mu_1 = \mu_0$, assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_j$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $(s',\mu'_J) \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$. Finally, $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$ follows from Lemma~\ref{lem:skip-safe} because $(s',\mu') = (\funup{s}{\ptup{x}{v}},\mu) \sentails ((e \fwrite{e'} e'') \fsseq P \conj x = e'')$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fsseq P)$ with $x \notin \fv{e,e',e'',P}$. 
 	\end{enumerate}
+\end{proof}
 
+\begin{lemma}
+    \label{lem:load-sound}
+    $\truespec{J}{x \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{x \fwrite{e'} e'' \fsseq P \conj x = e''}$ if $x \notin \fv{e,e',e'',P}$. 
+\end{lemma} 
+
+\begin{proof}
+    Immediate from Lemma~\ref{lem:load-safe}. 
+\end{proof}
+
+\begin{lemma}
+    \label{lem:store-safe}
+    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, if $x \notin \fv{e,e',e'',f,P}$ then $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. 
+\end{lemma}
+
+\begin{proof}
+... 
 \end{proof}
 
 \begin{lemma}
