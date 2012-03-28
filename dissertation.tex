@@ -35,6 +35,17 @@
 
 \section{Introduction}
 
+Most concurrent software verification techniques rely on a
+surprisingly strong assumption: namely, that all processes agree on
+the value of shared memory at all times. This is, of course, not
+generally true, but it is often a \emph{safe} assumption because of
+implicit guarantees provided by the memory models of modern computer
+architectures, which guarantee that programs without races will not
+observe such inconsistencies. The soundness of most concurrent
+software verification techniques therefore relies on race-freedom of
+the program under study. This is not considered a major shortcoming
+though because races usually indicate a program error.
+
 There are, however, useful and interesting programs for which races do not indicate an error. For example, concurrent data structures, which optimize for speed and throughput by using locks and memory fence instructions sparingly, are often racey by design. Their correctness is demonstrated by relating the executions of the comparatively daring implementation to those of its simpler, abstract counterpart. Constructing such a relation therefore requires a technique that is tolerant of races. But that requirement comes with a serious consequence: any technique that tolerates races soundly must also admit that processes may observe the inconsistencies in the value of shared memory that result from the peculiarities of the architecture's memory model.
 
 The literature offers little insight into the problem of verifying concurrent data structures and other inherently racey programs. This is because a model of a contemporary memory adds serious complication to an already difficult problem, but also because until recently formal specifications of common architectures' memory models did not exist publicly.\footnote{Or, perhaps, privately.} Fortunately, the latter problem has been alleviated with recent safety specifications for the x86, Power and ARM memory models \cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for these architectures, the path toward a solution to the correctness problem of concurrent data structures and other important programs now lies essentially unimpeded.
@@ -332,7 +343,7 @@ A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
 	\item $k : \powerset{\setprocessors}$ is a set of blocked processors. 
 \end{itemize}
 \end{definition} 
-The collection of states is written $\setstates$. 
+The collection of states is written $\setstates$. We sometimes refer to the three-tuple of components $(h,B,k)$ as a \emph{memory system} $\mu$, and refer to a state as a pair $(s,\mu)$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
 
 Note that the notion of machine state given here differs from that used to define the memory model. First, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
 
@@ -399,7 +410,7 @@ The language of commands is defined by the following grammar: \[ \comms~c \bnfde
 
 The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \top. \] We refer collectively to command-state pairs and the erroneous state $\top$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
 
-The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation between states $\stackrel{\tau}{\rightarrow}$ defined as follows: \begin{align*} (s,h,B,k) \stackrel{\tau}{\rightarrow} (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\stackrel{\tau}{\rightarrow}$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \stackrel{\tau}{\rightarrow} (s,\mu')$ iff $\mu \stackrel{\tau}{\rightarrow} \mu'$.} defined as follows: \begin{align*} (h,B,k) \stackrel{\tau}{\rightarrow} (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
 \end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\stackrel{\tau}{\rightarrow}$. 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below.
@@ -724,15 +735,11 @@ We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef 
 	P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
-% \begin{proof}
-% 	By definition of the satisfaction relation, $\sigma \refines \sigma_1 \pjoin \sigma_2$ for some $\sigma_1,\sigma_2 \in \presat{P}$, and $\sigma' \refines \sigma'_1 \pjoin \sigma'_2$ for some $\sigma'_1,\sigma'_2 \in \presat{P'}$. By Lemma~\ref{foo}, $\sigma \bullet \sigma' \refines (\sigma_1 \bullet \sigma'_1) \pjoin (\sigma_2 \bullet \sigma'_2)$. 
-% \end{proof}
-
 \paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
 
 \begin{lemma}[Flushing closure]
 	\label{lem:flushing-closure}
-	If $\sigma \sentails P$ and $\sigma' \taurefines \sigma$ then $\sigma' \sentails P$. 
+	If $s,\mu \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu' \sentails P$. 
 \end{lemma}
 
 Consider, as a significant example, the set of states that satisfy the atomic formula $e \fwrite{e'} e''$. These states may be classified as follows: \begin{enumerate}
@@ -814,29 +821,29 @@ The language of specifications is given by the following schema: \[ \spec{J}{P}{
 
 A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
 
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,\sigma,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $\sigma$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall \sigma \sentails P \st \forall n \in \setnaturals \st \safe{n}{c,\sigma,J,Q}.\]
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall \sigma \sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,J,Q}.\]
 
-In the sequel, let $\locked{\sigma}$ indicate that some processor holds the lock state $\sigma$: \[ \locked{s,h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
+In the sequel, let $\locked{\mu}$ indicate that some processor holds the lock in memory system $\mu$: \[ \locked{h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
 
-We now give a formal definition of $\safe{n}{c,\sigma,J,Q}$ by natural number induction on $n$. $\safe{0}{c,\sigma,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,\sigma,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
-	\item If $c = \cskip$ then $\sigma \in Q$.
+We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
+	\item If $c = \cskip$ then $(s,\mu) \sentails Q$.
 
-	\item For all $\sigma_0,\sigma_J,\sigma_F$ such that \begin{enumerate}[(i)]
-		\item $\sigma_0 \in (\sigma_J \fsep (\sigma_F \fhash \sigma)$,
-		\item $\complete{\sigma_0}$, and
-		\item either $\sigma_J \sentails J$ or $\locked{\sigma_1}$,
-	\end{enumerate} $c,\sigma_1 \nrightarrow \top$.
+	\item For all $\mu_0,\mu_J,\mu_F$ such that \begin{enumerate}[(i)]
+		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu)$,
+		\item $\complete{\mu_0}$, and
+		\item either $s,\mu_J \sentails J$ or $\locked{\mu_1}$,
+	\end{enumerate} $c,(s,\mu_1) \nrightarrow \top$.
 
-	\item For all $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that \begin{enumerate}[(i)]
-		\item $\sigma_0 \in (\sigma_J \fsep (\sigma_F \fhash \sigma))$,
-		\item $\complete{\sigma_0}$,
-		\item either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and 
-		\item $c,\sigma_0 \rightarrow c',\sigma_1$,
-	\end{enumerate} there exists $\sigma'_J,\sigma'_F,\sigma'$ such that \begin{enumerate}
-		\item $\sigma_1 \in (\sigma'_J \fsep (\sigma'_F \fhash \sigma'))$,
-		\item $\sigma'_F \taurefines \sigma_F$,
-		\item either $\sigma'_J \sentails J$ or $\locked{\sigma_1}$, and
-		\item $\safe{n}{c',\sigma',J,Q}$.
+	\item For all $\mu_0,\mu_J,\mu_F,s',\mu_1,c'$ such that \begin{enumerate}[(i)]
+		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
+		\item $\complete{\mu_0}$,
+		\item either $s,\mu_J \sentails J$ or $\locked{\mu_0}$, and 
+		\item $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$,
+	\end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
+		\item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
+		\item $\mu'_F \taurefines \mu_F$,
+		\item either $s',\mu'_J \sentails J$ or $\locked{\mu_1}$, and
+		\item $\safe{n}{c',s',\mu',J,Q}$.
 	\end{enumerate}
 
 \end{enumerate}
@@ -1102,13 +1109,13 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 			\item $\safe{n}{c',\sigma',J,Q}$.
 		\end{enumerate}	
 
-		By Lemma~\ref{lem:separation-refinement} and $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$, there exists $\sigma'_F,\sigma'_R$ such that $\sigma'_F \taurefines \sigma_F$, $\sigma'_R \taurefines \sigma_R$ and $\sigma'_{FR} \refines \sigma'_F \fhash \sigma'_R$. 
+		By Lemma~\ref{lem:separation-refinement} and $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$, there exists $\sigma'_F,\sigma'_R$ such that $\sigma'_F \taurefines \sigma_F$, $\sigma'_R \taurefines \sigma_R$ and $\sigma'_{FR} \in \sigma'_F \fhash \sigma'_R$. 
 
 		From $\sigma'_R \taurefines \sigma_R$ and $\sigma_R \sentails R$, it follows that $\sigma'_R \sentails R$. 
 
 		Next, we wish to apply the inductive hypothesis to $\safe{n}{c',\sigma',J,Q}$ to show that $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$) and $\defined{\sigma'_R \fhash \sigma'}$. 
 
-		Returning to our original task, we exhibit $\sigma'_J$, $\sigma'_F$ and $\sigma'_R \fhash \sigma'$. By associativity and monotonicity it follows that \[ \sigma_1 \refines \sigma'_J \fsep (\sigma'_F \fhash (\sigma'_R \fhash \sigma')).\] We already showed that $\sigma'_F \taurefines \sigma_F$. Either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$ by assumption. Finally $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$ by the inductive hypothesis above. 
+		Returning to our original task, we exhibit $\sigma'_J$, $\sigma'_F$ and $\sigma'_R \fhash \sigma'$. By associativity and monotonicity it follows that \[ \sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash (\sigma'_R \fhash \sigma')).\] We already showed that $\sigma'_F \taurefines \sigma_F$. Either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$ by assumption. Finally $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$ by the inductive hypothesis above. 
 
 	\end{enumerate}
 \end{proof}
