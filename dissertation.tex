@@ -818,7 +818,7 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
 		\item either $s,\mu_J \sentails J$ or $\locked{\mu_1}$,
 	\end{enumerate} $c,(s,\mu_1) \nrightarrow \top$.
 
-	\item For all $\mu_0,\mu_J,\mu_F,s',\mu_1,c'$ such that \begin{enumerate}[(i)]
+	\item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
 		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
 		\item $\complete{\mu_0}$,
 		\item either $s,\mu_J \sentails J$ or $\locked{\mu_0}$, and 
@@ -1006,8 +1006,7 @@ The programming language is local w.r.t.\ all the separating conjunctions define
 
 
 \section{Conclusion}
-
-Why bother building a program logic? The original motivation was as follows. Although program logics are reasonable systems in which to construct hand proofs of arbitrary program properties, they have more recently been shown to be amenable to automation of relatively shallow properties, e.g., memory safety or shape properties. Unfortunately, existing logics can not be soundly applied to certain fine-grained concurrent programs like concurrent data structures. This is because these programs are typically not well locked and contain races, and so cannot rely on the underlying computer architecture to ensure that their interaction with memory is sequentially consistent. But sequential consistency is a deep assumption in most existing program logics, hence their inapplicability. 
+ Why bother building a program logic? The original motivation was as follows. Although program logics are reasonable systems in which to construct hand proofs of arbitrary program properties, they have more recently been shown to be amenable to automation of relatively shallow properties, e.g., memory safety or shape properties. Unfortunately, existing logics can not be soundly applied to certain fine-grained concurrent programs like concurrent data structures. This is because these programs are typically not well locked and contain races, and so cannot rely on the underlying computer architecture to ensure that their interaction with memory is sequentially consistent. But sequential consistency is a deep assumption in most existing program logics, hence their inapplicability.
 
 As further motivation, concurrent data structures are inarguably important to computer science given the decline of single-threaded processor performance improvements and concomitant proliferation of parallelism. At the same time, correctness arguments for concurrent data structures are subtle enough to make informal reasoning extremely difficult. Additionally, these programs are of only modest size, which (perhaps) gives cause for optimism about their amenability to automated or semi-automated verification. Altogether, this appears to be an excellent opportunity for the application of formal methods. 
 
@@ -1060,7 +1059,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 \begin{lemma}
 	\label{lem:load-safe}
-	For all $n \in \setnaturals$ and $\sigma$ such that $\sigma \sentails (e \fwrite{e'} e'') \fsseq P$, if $x \notin \fv{e,e',e'',P}$ then $\safe{n}{\cload{x}{e}_{e'},\sigma,J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
+	For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, if $x \notin \fv{e,e',e'',P}$ then $\safe{n}{\cload{x}{e}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
 \end{lemma}
 
 \begin{proof}
@@ -1069,13 +1068,13 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\begin{enumerate}
 		\item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $c,\sigma_0 \nrightarrow \top$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $\sigma \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\sigma_w$ such that $\sigma_w \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\sigma_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\sigma}{\ext{s}(e')}} \subseteq \dom{\restrict{\sigma_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\sigma_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
+		\item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \top$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \rightarrow c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and $\safe{n}{c_1,\sigma',J,((e \fwrite{e'} e'') \fsseq P)}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
+		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P)}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
-		In the case of \textsc{c-tau}, $c_1 = c$ and $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau} there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$ and $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma' \sentails (e \fwrite{e'} e'') \fsseq P$ and $\sigma'_J \sentails J$ if not $\locked{\sigma_1}$. It follows from the inductive hypothesis that $\safe{n}{c,\sigma',J,((e \fwrite{e'} e'') \fsseq P)}$. 
+		In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fsseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fsseq P)}$. 
 
-		In the case of \textsc{c-prim} and \textsc{p-load}, $c_1 = \cskip$ and if $\sigma_0 = (s,h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$ then $\sigma_1 = (\funup{s}{\ptup{x}{v}},h_0,B_0,k_0)$. Let $\sigma'_J = \funup{\sigma_J}{\ptup{x}{v}}$, $\sigma'_F = \funup{\sigma_F}{\ptup{x}{v}}$ and $\sigma' = \funup{\sigma}{\ptup{x}{v}}$. Then $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$ by definition, $\sigma'_J \sentails J$ if not $\locked{\sigma_1}$ because $x \notin \fv{J}$
+		In the case of \textsc{c-prim} and \textsc{p-load}, $c' = \cskip$, $s' = \funup{s}{\ptup{x}{v}}$ and $\mu_1 = \mu_0$, assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_j$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $(s',\mu'_J) \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$, and $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P)}$ by Lemma~\ref{lem:skip-safe} because ... 
 	\end{enumerate}
 
 \end{proof}
