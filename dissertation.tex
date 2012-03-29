@@ -247,7 +247,7 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 	a \lcons m' \merge b \lcons n' & = a \lcons (m' \merge (b\lcons n')) \uplus b \lcons ((a \lcons m') \merge n').
 \end{align*}
 
-We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$.
+We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$. 
 
 \subsection{Universes}
 
@@ -552,10 +552,61 @@ Before defining notions of separation for multiprocessor memory systems as defin
 
 Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition $\bullet$. Safety monotonicity requires that if $\cload{x}{y},(s,\mu_L) \rightarrow \top$ then also $\cload{x}{y},(s,\mu_G) \rightarrow \top$. The frame property requires additionally that if $\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)$ then also $\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L)$. In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
 
-What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative definition for a temporal separation function would be to \emph{add} heaps of the respective memory systems when their domains are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
-    (h_F \cup h_L, b_F \lapp b_L) & \text{if $b_F = \lnil \disj h_L = \nil$} \\ 
+What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when their domains are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
+    (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
     \bot & \text{otherwise.}
-\end{cases}\] Because the separation is only defined when the heap domains are disjoint, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined. Furthermore, the safety monotonicity holds easily, because $\dom{h_L\override b_L} \subseteq \dom{(h_F \cup h_L) \override (b_F \lapp b_L)}$. 
+\end{cases}\] Because the separation is only defined when the heap domains are disjoint, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
+\Calc{
+
+    $\dom{h_G \override \funof{b_G}}$
+
+    \conn{=}{$(h_G,b_G) = (h_F,b_F) \bullet (h_L,b_L)$}
+
+    $\dom{(h_F \cup h_L) \override \funof{(b_F \lapp b_L)}}$
+
+    \conn{=}{$\funof{m \lapp n} = \funof{m} \override \funof{n}$}
+
+    $\dom{(h_F \cup h_L) \override (\funof{b_F} \override \funof{b_L})}$
+
+    \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+
+    $\dom{h_F} \cup \dom{h_L} \cup \dom{\funof{b_F}} \cup \dom{\funof{b_L}}$
+
+    \conn{\supseteq}{set theory}
+
+    $\dom{h_L} \cup \dom{\funof{b_L}}$
+
+     \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+
+    $\dom{h_L \override \funof{b_L}}$
+    
+}
+The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
+\Calc{
+  
+    $(h_L \override \funof{b_L})(\ell)$
+
+    \conn{=}{$h_F \cap h_L = \nil$}
+
+    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
+
+    \conn{=}{$b_F = \lnil$}
+
+    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
+} Second, assuming $h_L = \nil$: 
+\Calc{
+  
+    $(h_L \override \funof{b_L})(\ell)$
+
+    \conn{=}{$\ell \in\dom{g}$ and $f \subseteq f'$ implies $(f\override g)(\ell) = (f'\override g)(\ell)$}
+
+    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
+
+    \conn{=}{$\funof{n}(\ell) = v$ implies $\funup{m \lapp n}(\ell) = v$}
+
+    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
+
+}
 
 
 \subsubsection{Weak Interleaving Separation}
