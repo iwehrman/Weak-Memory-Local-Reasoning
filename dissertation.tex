@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+\documentclass[11pt]{report}
 
 \usepackage[bookmarks=true,bookmarksopen=true]{hyperref}
 \usepackage{url}
@@ -6,6 +6,7 @@
 \usepackage{proof}
 \usepackage{enumerate}
 \usepackage{graphicx}
+\usepackage[backgroundcolor=white,linecolor=black]{todonotes}
 
 \synctex=1
 
@@ -33,7 +34,7 @@
 
 % With those caveats in mind, I do feel ``close'' to having the definitions needed for an program logic that I can prove sound. This logic may be weaker than I had hoped, but I have yet to carefully explore its capabilities and limitations. (It is hard to do this, after all, when the syntax, semantics and proof theory of the logic itself is in flux, as it essentially has been since inception.) Whether or not that is the case, I hope you will agree after reading this document that significant progress has been made toward that milestone, and that the contributions I have made are indicative of satisfactory training.
 
-\section{Introduction}
+\chapter{Introduction}
 
 Most concurrent software verification techniques rely on a
 surprisingly strong assumption: namely, that all processes agree on
@@ -128,6 +129,8 @@ Ideally there would also be a proof theory of assertions and a corresponding sou
 
 The specification language encompasses the programming and assertions languages, and its semantics is given in terms of the semantics of programs and assertions. The proof theory of specifications relies on the existence of a suitable proof theory of assertions for determining entailments. The soundness of the specification logic relies on the the soundness of the proof theory of assertions as well as the semantics of programs and assertions. Specifications are described in Section~\ref{sec:specifications}.
 
+\chapter{Background}
+
 \section{Program Logics}
 \label{sec:program-logics}
 
@@ -210,9 +213,7 @@ Transitions (labeled by memory events) between states indicate the possibility a
 This specification bounds the sort of memory events that can occur in program executions, but it does not give meaning to the programs of a particular language. The semantics of the programming language used in this project is however guided by the memory model, and it ought be possible to prove that it respects the bounds of the model. But this is not the focus of this project; and, even without such a correspondence proof, it will still be clear that the semantics of the programming language is manifestly weak. 
 
 
-\section{Basics}
-
-\subsection{Preliminaries and Notation}
+\section{Mathematical Preliminaries and Notation}
 
 For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$. 
 
@@ -249,7 +250,7 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 
 We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$. 
 
-\subsection{Universes}
+\section{Universes}
 
 The various universal sets are declared and in some cases defined in Figure~\ref{fig:universes}. Note that, in the case of memory locations (i.e., addresses) and processor identifiers, 0 is excluded. 
 
@@ -265,6 +266,16 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 	\caption{\label{fig:universes}Universal Sets}
 \end{figure}
 
+
+\chapter{The Uniprocessor Case}
+
+\section{Programms}
+
+\section{Assertions}
+
+\section{Specifications}
+
+\chapter{The Multiprocessor Case}
 
 \section{The Programming Language}
 \label{sec:programming-language}
@@ -550,12 +561,12 @@ In the next few sections, we develop variety of notions of state decomposition--
 
 Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
 
-Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition $\bullet$. Safety monotonicity requires that if $\cload{x}{y},(s,\mu_L) \rightarrow \top$ then also $\cload{x}{y},(s,\mu_G) \rightarrow \top$. The frame property requires additionally that if $\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)$ then also $\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L)$. In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
+Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \rightarrow \top\] then also \[\cload{x}{y},(s,\mu_G) \rightarrow \top.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
 
-What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when their domains are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
+What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
     (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
     \bot & \text{otherwise.}
-\end{cases}\] Because the separation is only defined when the heap domains are disjoint, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
+\end{cases}\] Because the separation is only defined for heaps with disjoint domains, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
 \Calc{
 
     $\dom{h_G \override \funof{b_G}}$
@@ -580,13 +591,13 @@ What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might sear
 
     $\dom{h_L \override \funof{b_L}}$
     
-}
+} 
 The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
 \Calc{
   
     $(h_L \override \funof{b_L})(\ell)$
 
-    \conn{=}{$h_F \cap h_L = \nil$}
+    \conn{=}{$\dom{h_F} \cap \dom{h_L} = \nil$}
 
     $((h_F \cup h_L) \override \funof{b_L})(\ell)$
 
@@ -605,8 +616,9 @@ The frame property, however, does not hold for this definition. Consider, e.g., 
     \conn{=}{$\funof{n}(\ell) = v$ implies $\funup{m \lapp n}(\ell) = v$}
 
     $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
-
 }
+
+An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
 
 
 \subsubsection{Weak Interleaving Separation}
@@ -1051,9 +1063,13 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 \end{enumerate}
 
 
-\section{Related Work}
+\chapter{Related Work}
+
+\section{Inspiration}
 
 Technical inspiration for this project comes primarily from work on separation logic \cite{DBLP:conf/lics/Reynolds02,DBLP:conf/csl/OHearnRY01,DBLP:journals/bsl/OHearnP99} and abstract separation logic \cite{DBLP:conf/lics/CalcagnoOY07}, as well as concurrent separation logic  \cite{DBLP:journals/tcs/OHearn07,DBLP:journals/tcs/Brookes07}, which this program logic resembles insofar as it strives to enable local (instead of global) reasoning about shared-state invariants (instead of two-place state relations). Although perhaps not obviously so, the semantics of the programming language was influenced by work on graphical models \cite{DBLP:journals/ipl/WehrmanHO09,DBLP:conf/RelMiCS/HoareMSW09,DBLP:journals/jlp/HoareMSW11} and the pomset model of true concurrency from Pratt \cite{DBLP:conf/popl/Pratt82,DBLP:conf/concur/Pratt84}. The style of semantics of specifications, and the associated soundness proof, is taken almost directly from Vafeiadis' recent soundness proof of concurrent separation logic \cite{V11}. Vafeiadis' excellent dissertation has also been an invaluable guide \cite{VafeiadisDissertation}. 
+
+\section{Program Logics for Non-Local Reasoning}
 
 Also of note are two works that present solutions to the same weak-memory reasoning problem, both developed much more fully than the work I shall describe. First is Ridge's rely-guarantee program logic for the x86-TSO memory model \cite{DBLP:conf/vstte/Ridge10}. Ridge's logic is formalized in HOL and has been demonstrated with proofs of a number of interesting algorithms, including Simpsons's 4-slot non-blocking buffer. In contrast to my project, Ridge's is a logic for the x86 assembly language, whereas I target a higher level, structured language. Additionally, Ridge's logic is not inherently local, and offers nothing like the frame rule of separation logic. 
 
@@ -1061,7 +1077,7 @@ A second work of note is Cohen and Schirmer's \cite{DBLP:conf/itp/CohenS10} redu
 
 Related but less relevant to the current problem, compared to the previous two papers, is work by Ferreira, Feng and Shao which gives soundness proofs for concurrent separation logic in a variety relaxed-memory settings \cite{DBLP:conf/esop/FerreiraFS10}. As with the original soundness proof by Brooks \cite{DBLP:journals/tcs/Brookes07}, their theorem applies to well locked programs only, which are necessarily sequentially consistent. 
 
-\subsection{Algebraic Models of Concurrency}
+\section{Algebraic Models of Concurrency}
 
 Graphical models \cite{DBLP:journals/ipl/WehrmanHO09} Concurrent Kleene Algebra \cite{DBLP:conf/RelMiCS/HoareMSW09,DBLP:conf/concur/HoareMSW09} Locality bimonoids \cite{DBLP:conf/concur/HoareHMOPS11} 
 
