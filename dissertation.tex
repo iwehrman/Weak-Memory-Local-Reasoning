@@ -217,7 +217,7 @@ This specification bounds the sort of memory events that can occur in program ex
 
 For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$. 
 
-\subsubsection{Functions}
+\subsection{Functions}
 \label{sec:functions}
 
 For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \lambda x . \begin{cases}
@@ -230,7 +230,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
 	f(x) & \text{otherwise.}
 \end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Note also that if $f$ and $g$ have disjoint domains then $f \override g = f \uplus g$. 
 
-\subsubsection{Lists}
+\subsection{Lists}
 \label{sec:lists}
 
 The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for object $o$ and lists $l,l'$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
@@ -268,6 +268,8 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 
 
 \chapter{The Uniprocessor Case}
+
+A complete and detailed description of a single-processor logic \cite{wmsldetails}. 
 
 \section{Programms}
 
