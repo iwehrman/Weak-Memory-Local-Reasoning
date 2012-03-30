@@ -91,6 +91,8 @@
 \newcommand{\conn}[2]{\\*$#1 $\> \{#2\}\\\> \>}
 \newcommand{\Conn}[1]{\conn{=}{#1}}
 
+\newcommand{\ident}[1]{\ensuremath{\mathit{Id}_{#1}}}
+\DeclareMathOperator{\rcomp}{\circ}
 \newcommand{\relexp}[2]{\ensuremath{\stackrel{#2}{#1}}}
 \newcommand{\tcl}[1]{\stackrel{+}{#1}}
 \newcommand{\rtcl}[1]{\stackrel{\ast}{#1}}
@@ -105,9 +107,10 @@
 \newcommand{\override}{\ensuremath{\backslash\!\!\backslash}}
 
 \newcommand{\sentails}{\ensuremath{\,\models\,}}
+\newcommand{\satisfies}{\ensuremath{\,\models\,}}
 \newcommand{\sequiv}{\ensuremath{\,\equiv\,}}
 
-\newcommand{\fixme}[1]{\footnote{FIXME: #1}}
+\newcommand{\fixme}[1]{\todo{FIXME: #1}}
 
 \DeclareMathOperator{\eqdef}{\;=_{\mathit{df}}\;}
 \DeclareMathOperator{\iffdef}{\;\equiv_{\mathit{df}}\;}
