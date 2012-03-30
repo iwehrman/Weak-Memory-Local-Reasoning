@@ -1274,7 +1274,7 @@ The programming language is local w.r.t.\ all the separating conjunctions define
 
 \section{Linear Logic}
 
-E.g., \cite{Girard95logic}. Also non-commutative linear logic? 
+E.g., \cite{Girard95logic}. Also non-commutative linear logic, e.g., \cite{DBLP:conf/tlca/RetoreL97}
 
 \chapter{Conclusion}
  Why bother building a program logic? The original motivation was as follows. Although program logics are reasonable systems in which to construct hand proofs of arbitrary program properties, they have more recently been shown to be amenable to automation of relatively shallow properties, e.g., memory safety or shape properties. Unfortunately, existing logics can not be soundly applied to certain fine-grained concurrent programs like concurrent data structures. This is because these programs are typically not well locked and contain races, and so cannot rely on the underlying computer architecture to ensure that their interaction with memory is sequentially consistent. But sequential consistency is a deep assumption in most existing program logics, hence their inapplicability.
