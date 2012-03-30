@@ -24,6 +24,8 @@
 	\date{\today, \currenttime}
 	\maketitle
 
+% \tableofcontents
+
 % \section*{Preface}
 
 % This goal of this document is to bring you, the reader, up-to-date on the status of my dissertation project. I am interested in doing so because I wish to convince you that this project, while far from complete, constitutes sufficient evidence of my doctoral training. 
@@ -217,6 +219,15 @@ This specification bounds the sort of memory events that can occur in program ex
 
 For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$. 
 
+\subsection{Relations}
+\label{sec:relations}
+
+For any set $A$, we write $\ident{A}$ for the identity relation on $A$. For a binary relation $R$ on $A$ and $n \in \setnaturals$, we write $\relexp{R}{n}$ for the $n$-fold iteration of $A$, defined by induction on $n$ as follows: \begin{align*} \relexp{R}{0} \eqdef &\ident{A} \\ 
+\relexp{R}{n+1} \eqdef & \relexp{R}{n} \rcomp R.\end{align*} We write $R$ we write $\tcl{R}$ for the transitive closure of $R$, and $\rtcl{R}$ for its reflexive-transitive closure: \begin{align*}
+    \tcl{R} \eqdef \bigcup_{n \in \setpositives} \relexp{R}{n} \text{~~~and~~~}
+    \rtcl{R} \eqdef \bigcup_{n \in \setnaturals} \relexp{R}{n} 
+\end{align*}
+
 \subsection{Functions}
 \label{sec:functions}
 
@@ -268,21 +279,14 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 
 
 \chapter{The Uniprocessor Case}
+\label{ch:uniprocessor}
 
-A complete and detailed description of a single-processor logic \cite{wmsldetails}. 
+In this chapter I describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer. This is considerably simpler than the development of a program logic for a weak-memory multi-processor programming model, but many of the most difficult issues in that task can be explained more simply in a single-processor setting. 
 
-\section{Programms}
+A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously in \cite{wmsldetails}. 
 
-\section{Assertions}
-
-\section{Specifications}
-
-\chapter{The Multiprocessor Case}
-
-\section{The Programming Language}
-\label{sec:programming-language}
-
-In this section I describe a simplified C-like structured programming language. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
+\section{Sequential Programs}
+\label{sec:sequential-programs}
 
 \subsection{Expressions and Stacks}
 \label{sec:expressions}
@@ -292,21 +296,195 @@ Expressions are terms that denote values, which in this development are just int
 The language of expressions, written $\exprs$, is given by the following grammar: \[ \exprs~e \bnfdef v \bnfbar x \bnfbar (e + e') \bnfbar (e - e') \bnfbar \ldots, \] where $v \in \setvalues$ and $x \in \setidentifiers$. (The possibility of additional operations is left open; the complete set of expression is not important.)
 
 The semantics of expressions is given w.r.t.~\emph{stacks}, which are total functions from $\setidentifiers$ to $\setvalues$. The collection of functions $\setidentifiers \tfun \setvalues$ is abbreviated $\setstacks$. The interpretation of an expression w.r.t.~a stack $s$ is given by the \emph{extension} of a stack, written $\ext{s}$, which is a total function from $\exprs$ to $\setvalues$ defined as follows: \begin{align*}
-	\ext{s}(v) \eqdef & v \\
-	\ext{s}(x) \eqdef & s(x) \\
-	\ext{s}(e + e') \eqdef & \ext{s}(e) + \ext{s}(e') \\
-	\ext{s}(e - e') \eqdef & \ext{s}(e) - \ext{s}(e')
+    \ext{s}(v) \eqdef & v \\
+    \ext{s}(x) \eqdef & s(x) \\
+    \ext{s}(e + e') \eqdef & \ext{s}(e) + \ext{s}(e') \\
+    \ext{s}(e - e') \eqdef & \ext{s}(e) - \ext{s}(e')
 \end{align*}  
 
 Boolean expressions are terms that denote truth values. Their language is given by the following grammar: \[ \bexprs~b \bnfdef \bexpf \bnfbar \bexpt \bnfbar (!b) \bnfbar (e = e') \bnfbar \ldots, \] where $e,e' \in \exprs$. For convenience, we represent truth values by the set $\set{0,1}$ so the extension of a stack can also be used to interpret boolean expressions: \begin{align*}
-	\ext{s}(\bexpf) \eqdef & 0 \\
-	\ext{s}(\bexpt) \eqdef & 1 \\
-	\ext{s}(!b) \eqdef & 1 - \ext{s}(b) \\
-	\ext{s}(e = e') \eqdef & \begin{cases}
-		1 &\text{ if } \ext{s}(e) = \ext{s}(e')\\
-		0 &\text{ otherwise.}
-	\end{cases}
+    \ext{s}(\bexpf) \eqdef & 0 \\
+    \ext{s}(\bexpt) \eqdef & 1 \\
+    \ext{s}(!b) \eqdef & 1 - \ext{s}(b) \\
+    \ext{s}(e = e') \eqdef & \begin{cases}
+        1 &\text{ if } \ext{s}(e) = \ext{s}(e')\\
+        0 &\text{ otherwise.}
+    \end{cases}
 \end{align*}
+
+\subsection{Sequential Commands and Single-Processor States}
+\label{sec:sequential-commands}
+
+In this setting, programs are identified with \emph{commands}, which consist of compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{I have no particular to reason to think that they will add significant complication though, and were also considered in earlier iterations of this project \cite{wmsldetails,lola11}.}
+
+The syntax of primitive commands is given by the following grammar: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
+    & \cstore{e}{e'} \bnfbar \cfence
+\end{align*}
+
+The informal meaning of the primitive commands is as follows. \begin{itemize}
+    \item $\cskip$ takes no evaluations steps;
+    \item $\cassume{b}$ evaluates to $\cskip$ if $b$ holds and becomes stuck otherwise; 
+    \item $\cassert{b}$ evaluates to $\cskip$ if $b$ holds and aborts otherwise;
+    \item $\cassign{x}{e}$ assigns $e$ to identifier $x$; 
+    \item $\cload{x}{e}$ assigns the value at memory address $e$ to identifier $x$; 
+    \item $\cstore{e}{e'}$ stores the value $e'$ to memory address $e'$; and
+    \item $\cfence$ commits any buffered writes to memory 
+\end{itemize}
+
+The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ \[ p : \sigma \step \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p : \sigma \step \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
+
+To defined these relations formally, we must first define the notion of a machine state. 
+
+\begin{definition}
+A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
+    \item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
+    \item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; and 
+    \item $B : \listof{(\setlocations \times \setvalues)}$ is a write buffer;
+\end{itemize}
+\end{definition} 
+The collection of states is written $\setstates$. We sometimes refer to the pair of components $(h,B)$ as a \emph{memory system} $\mu$, and refer to a state as a pair $(s,\mu)$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
+
+Note that the notion of machine state given here differs from that used to define the memory model. First, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
+
+Second, the global lock value from the memory model is omitted because there is only one processor, and hence only one write buffer. 
+
+The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics} below. 
+
+\begin{figure}[p]
+    \centering
+
+    \begin{minipage}{\columnwidth}
+
+        \infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} : (s,h,b) \step (s,h,b)}
+
+        \vspace{1em}
+
+        \infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} : (s,h,b) \step (s,h,b)}
+
+        \vspace{1em}
+
+        \infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} :(s,h,b) \step \abort}
+
+        \vspace{1em}
+
+        \infrule[p-assign]{}{\cassign{x}{e} :(s,h,b) \step (\funup{s}{\ptup{x}{\ext{s}(e)}},h,b)}
+
+        \vspace{1em}
+
+        \infrule[p-load]{\text{if $(h \override \funof{b})(\ext{s}(e)) = v$ and $i \notin k$}}{\cload{x}{e} :(s,h,b) \step (\funup{s}{\ptup{x}{v}},h,b)}
+
+        \vspace{1em}
+
+
+        \infrule[p-load-a]{\text{if $(h \override \funof{b})(\ext{s}(e)) = \bot$ and $i \notin k$}}{\cload{x}{e} :(s,h,b) \step \abort}
+        
+        \vspace{1em}
+
+        \infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{b}}$}}{\cstore{e}{e'} :(s,h,b) \step (s,h,b \lapp \lsingle{\ext{s}(e),\ext{s}(e')})}
+        
+        \vspace{1em}
+
+        \infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{b}}$}}{\cstore{e}{e'} :(s,h,b) \step \abort}
+        
+        \vspace{1em}
+
+        \infrule[p-fence]{\text{if $b = \lnil$}}{\cfence :(s,h,b) \step (s,h,b)}
+
+    \end{minipage}
+    \caption{\label{fig:sequential-primitive-semantics} Semantics of sequential primitive commands}
+\end{figure}
+
+Structured commands consist of either a primitive command; a sequential composition of commands; a nondeterministic choice between commands; or an iteration of a command. We assume that, as commands, primitive commands are annotated with the name of the processor on which they are to be executed. Presumably, the components of a sequential command will all be scheduled to execute on the same processor, but this is not required and the semantics handles all cases uniformly. This generality is not likely to be practically useful for sequential composition, but is crucial to the semantics of concurrent composition, as will be discussed shortly. 
+
+The language of commands is defined by the following grammar: \[ \comms~c \bnfdef p_e \bnfbar (\cseq{c}{c'}) \bnfbar (\cchoice{c}{c'}) \bnfbar \cloop{c},\] where $p$ is a primitive command and $e$ is an expression which (hopefully) denotes a processor identifier.  
+
+The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration.
+
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,b \lapp \lsingle{(\ell,v)}) \taustep (\funup{h}{\ptup{\ell}{v}},b) 
+\end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\taustep$. 
+
+The complete relation that defines the semantics of commands is given in Figure~\ref{fig:sequential-command-semantics} below.
+
+\begin{figure}[ht]
+    \centering
+
+    \vspace{1em}
+
+    \infrule[c-prim]{\text{ if $p : \sigma \step \sigma'$ and $\sigma' \in \setstates$}}{p,\sigma \step \cskip,\sigma'}
+
+    \vspace{1em}
+
+    \infrule[c-prim-a]{\text{ if $p : \sigma \step \abort$}}{p,\sigma \step \abort}
+
+    \vspace{1em}
+
+    \infrule[c-tau]{\text{if $\sigma \stackrel{\tau}{\step} \sigma'$}}{c,\sigma \step c,\sigma'}
+
+    \vspace{1em}
+
+    \infrule[c-seq]{c,\sigma \step c_0,\sigma'}{(\cseq{c}{c'}),\sigma \step (\cseq{c_0}{c'}),\sigma'}
+
+    \vspace{1em}
+
+    \infrule[c-seq-a]{c,\sigma \step \abort}{(\cseq{c}{c'}),\sigma \step \abort}
+
+    \vspace{1em}
+
+    \infrule[c-seq-s]{}{(\cseq{\cskip}{c'}),\sigma \step c',\sigma}
+
+    \vspace{1em}
+
+    \infrule[c-ch-1]{}{(\cchoice{c}{c'}),\sigma \step c,\sigma}
+
+    \vspace{1em}
+
+    \infrule[c-ch-2]{}{(\cchoice{c}{c'}),\sigma \step c',\sigma}
+
+    \vspace{1em}
+
+    \infrule[c-loop]{}{\cloop{c},\sigma \step (\cchoice{\cskip}{(\cseq{c}{\cloop{c}})}),\sigma}
+
+    \caption{\label{fig:sequential-command-semantics} Semantics of sequential commands}
+\end{figure} 
+
+The reflexive-transitive closure of command evaluation semantics, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. 
+ 
+\paragraph{Sequential Command Abbreviations} A few standard command abbreviations are shown in Figure~\ref{fig:sequential-command-abbreviations}. Some would benefit greatly from local variable declarations, which I have not yet added to the language. 
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+    \begin{align*}
+        \cifthenelse{b}{c}{c'} \eqdef & \cchoice{(\cseq{\cassume{b}}{c})}{(\cseq{\cassume{!b}}{c'})} \\
+        \cifthen{b}{c} \eqdef & \cchoice{(\cseq{\cassume{b}}{c})}{(\cseq{\cassume{!b}}{\cskip})} \\
+        \cwhile{b}{c} \eqdef & \cseq{\cloop{(\cseq{\cassume{b}}{c})}}{\cassume{!b}}
+    \end{align*}
+\end{minipage}}
+    \caption{\label{fig:sequential-command-abbreviations} Command abbreviations}
+\end{figure}
+
+\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
+
+\section{Assertions}
+\label{sec:sequential-assertions}
+
+\section{Specifications}
+\label{sec:sequential-specification}
+
+\chapter{The Multiprocessor Case}
+\label{ch:multiprocessor}
+
+This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 
+
+\section{The Programming Language}
+\label{sec:programming-language}
+
+In this section I describe a simplified C-like structured programming language. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
+
+\subsection{Expressions and Stacks}
+
+Expressions and stacks are exactly the same for the parallel, multiprocessor programming language as for the sequential, single-processor language, as described in Section~\ref{sec:expressions}. 
 
 \subsection{Commands and States}
 \label{sec:commands-and-states}
@@ -329,7 +507,7 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 	\item $\cunlock$ releases the global lock and fences.
 \end{itemize}
 
-The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p \vdash \sigma \stackrel{i}{\rightarrow} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p \vdash \sigma \stackrel{i}{\rightarrow} \top. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
+The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p \vdash \sigma \stackrel{i}{\rightarrow} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p \vdash \sigma \stackrel{i}{\rightarrow} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
 To defined these relations formally, we must first define the notion of a machine state. 
 
@@ -356,48 +534,48 @@ The definition of the semantic relation for primitive commands is given in Figur
 
 	\begin{minipage}{\columnwidth}
 
-		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} \vdash (s,h,B,k) \stackrel{i}{\rightarrow} (s,h,B,k)}
+		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} \vdash (s,h,B,k) \pstep{i} (s,h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} \vdash (s,h,B,k) \stackrel{i}{\rightarrow} (s,h,B,k)}
+		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} \vdash (s,h,B,k) \pstep{i} (s,h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} \top}
+		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} \vdash(s,h,B,k) \pstep{i} \abort}
 
 		\vspace{1em}
 
-		\infrule[p-assign]{}{\cassign{x}{e} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,k)}
+		\infrule[p-assign]{}{\cassign{x}{e} \vdash(s,h,B,k) \pstep{i} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (\funup{s}{\ptup{x}{v}},h,B,k)}
+		\infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,k)}
 
 		\vspace{1em}
 
 
-		\infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} \top}
+		\infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \pstep{i} \abort}
 		
 		\vspace{1em}
 
-		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},k)}
+		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},k)}
 		
 		\vspace{1em}
 
-		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \stackrel{i}{\rightarrow} \top}
+		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \pstep{i} \abort}
 		
 		\vspace{1em}
 
-		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence \vdash(s,h,B,k) \stackrel{i}{\rightarrow} (s,h,B,k)}
+		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence \vdash(s,h,B,k) \pstep{i} (s,h,B,k)}
 		
 		\vspace{1em}
 
-		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock \vdash(s,h,B,\nil) \stackrel{i}{\rightarrow} (s,h,B,\set{i})}
+		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock \vdash(s,h,B,\nil) \pstep{i} (s,h,B,\set{i})}
 		
 		\vspace{1em}
 
-		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock \vdash(s,h,B,\set{i}) \stackrel{i}{\rightarrow} (s,h,B,\nil)}
+		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock \vdash(s,h,B,\set{i}) \pstep{i} (s,h,B,\nil)}
 	\end{minipage}
 	\caption{\label{fig:primitive-semantics} Semantics of primitive commands}
 \end{figure}
@@ -406,7 +584,7 @@ Structured commands consist of either a primitive command; a sequential or concu
 
 The language of commands is defined by the following grammar: \[ \comms~c \bnfdef p_e \bnfbar (\cseq{c}{c'}) \bnfbar (\cchoice{c}{c'}) \bnfbar \cloop{c} \bnfbar (\cpar{c}{c'}),\] where $p$ is a primitive command and $e$ is an expression which (hopefully) denotes a processor identifier.  
 
-The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \top. \] We refer collectively to command-state pairs and the erroneous state $\top$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
+The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
 
 The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\stackrel{\tau}{\rightarrow}$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \stackrel{\tau}{\rightarrow} (s,\mu')$ iff $\mu \stackrel{\tau}{\rightarrow} \mu'$.} defined as follows: \begin{align*} (h,B,k) \stackrel{\tau}{\rightarrow} (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
 \end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\stackrel{\tau}{\rightarrow}$. 
@@ -423,7 +601,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 	\begin{tabular}{ll}
 	\begin{minipage}{.43\columnwidth}
 
-		\infrule[c-prim-a]{\text{ if $p \vdash \sigma \stackrel{\ext{s}(e)}{\rightarrow} \top$}}{\vdash p_e,\sigma \rightarrow \top}
+		\infrule[c-prim-a]{\text{ if $p \vdash \sigma \stackrel{\ext{s}(e)}{\rightarrow} \abort$}}{\vdash p_e,\sigma \rightarrow \abort}
 
 		\vspace{1em}
 
@@ -435,7 +613,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 
 		\vspace{1em}
 
-		\infrule[c-seq-a]{\vdash c,\sigma \rightarrow \top}{\vdash (\cseq{c}{c'}),\sigma \rightarrow \top}
+		\infrule[c-seq-a]{\vdash c,\sigma \rightarrow \abort}{\vdash (\cseq{c}{c'}),\sigma \rightarrow \abort}
 
 		\vspace{1em}
 
@@ -456,7 +634,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 
 		\vspace{1em}
 
-		\infrule[c-par-1a]{\vdash c,\sigma \rightarrow \top}{\vdash (\cpar{c}{c'}),\sigma \rightarrow \top}
+		\infrule[c-par-1a]{\vdash c,\sigma \rightarrow \abort}{\vdash (\cpar{c}{c'}),\sigma \rightarrow \abort}
 
 		\vspace{1em}
 
@@ -468,7 +646,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 
 		\vspace{1em}
 
-		\infrule[c-par-2a]{\vdash c',\sigma \rightarrow \top}{\vdash (\cpar{c}{c'}),\sigma \rightarrow \top}
+		\infrule[c-par-2a]{\vdash c',\sigma \rightarrow \abort}{\vdash (\cpar{c}{c'}),\sigma \rightarrow \abort}
 
 		\vspace{1em}
 
@@ -563,7 +741,7 @@ In the next few sections, we develop variety of notions of state decomposition--
 
 Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
 
-Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \rightarrow \top\] then also \[\cload{x}{y},(s,\mu_G) \rightarrow \top.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
+Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \rightarrow \abort\] then also \[\cload{x}{y},(s,\mu_G) \rightarrow \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
 
 What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
     (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
@@ -827,7 +1005,7 @@ Consider as another example the states that satisfy the compound assertion $1 \f
 
 The requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe empty buffers, $\fbar{e}$, as well as empty heaps and empty buffers, $\femp$. An alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
 
-Also note that it is important to define the presat relation so that it preserves the flushing closure of atomic formulas, as opposed to closing the entire relation at once as with the refinement and partial-join closures.\footnote{Those closures could also be built into the presat relation, I think, but it seemed more concise to factor them out.} E.g., if $\presat{e \fwrite{i} e'}$ is not closed w.r.t.~flushing, then $\presat{\fbar{i} \conj e \fwrite{i} e'}$ is empty, and hence so too would be its flushing closure.  
+Also note that it is important to define the satisfaction relation so that it preserves the flushing closure of atomic formulas, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwrite{i} e'}$ is not closed w.r.t.~flushing, then $\pred{\fbar{i} \conj e \fwrite{i} e'}$ is empty, and hence so too would be its flushing closure.  
 
 \subsection{Algebra}
 \label{sec:algebra}
@@ -893,7 +1071,7 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
 		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu)$,
 		\item $\complete{\mu_0}$, and
 		\item either $s,\mu_J \sentails J$ or $\locked{\mu_1}$,
-	\end{enumerate} $c,(s,\mu_1) \nrightarrow \top$.
+	\end{enumerate} $c,(s,\mu_1) \nrightarrow \abort$.
 
 	\item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
 		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
@@ -1062,6 +1240,10 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 
 \begin{enumerate}
 	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
+
+    \item Memory management commands  \cite{wmsldetails,lola11}
+
+    \item Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}
 \end{enumerate}
 
 
@@ -1123,7 +1305,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\begin{enumerate}
 		\item Because $c = \cskip$, we must show that $\sigma \sentails P$. But this is true by hypothesis. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \top$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
+		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \abort$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
 
 		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \rightarrow c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
 
@@ -1151,7 +1333,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\begin{enumerate}
 		\item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-		\item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \top$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
+		\item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
 
 		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
@@ -1191,7 +1373,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\begin{enumerate}
 		\item Suppose $c = \cskip$. By assumption, $\sigma_R \sentails R$, $\defined{\sigma_R \fhash \sigma}$, and if $c = \cskip$ then $\sigma \sentails Q$, and so $\sigma \sentails Q$. Hence $\sigma_R \fhash \sigma \sentails R \fhash Q$. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \top$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
+		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \abort$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
 
 		\item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \rightarrow c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
 			\item $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
