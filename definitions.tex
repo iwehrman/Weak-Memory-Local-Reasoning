@@ -13,21 +13,8 @@
 \newcommand{\setbooleans}{\ensuremath{\mathbb{B}}}
 \newcommand{\setprocessors}{\ensuremath{\mathbb{P}}}
 
-\newcommand{\setevents}{\ensuremath{\mathbb{E}}}
-\newcommand{\proc}[1]{\ensuremath{\mathit{proc}(#1)}}
-\newcommand{\eqproc}{\ensuremath{\approx}}
-\newcommand{\tp}[1]{\ensuremath{\mathit{type}(#1)}}
-\newcommand{\tpflush}{\ensuremath{\mathtt{flush}}}
-\newcommand{\tpwrite}[1]{\ensuremath{\mathtt{write}(#1)}}
-\newcommand{\tpalloc}[1]{\ensuremath{\mathtt{alloc}(#1)}}
-\newcommand{\writesto}[1]{\ensuremath{\mathit{Wr}_{#1}}}
-\newcommand{\allocs}[1]{\ensuremath{\mathit{Al}_{#1}}}
-\newcommand{\writes}{\ensuremath{\mathit{Wr}}}
-\newcommand{\flushes}{\ensuremath{\mathit{Fl}}}
-
-
 %% abbreviations
-\newcommand{\setstores}{\ensuremath{\mathbf{Store}}}
+
 \newcommand{\setstacks}{\ensuremath{\mathbf{Stack}}}
 \newcommand{\setheaps}{\ensuremath{\mathbf{Heap}}}
 \newcommand{\setbuffers}{\ensuremath{\mathbf{Buf}}}
@@ -73,7 +60,6 @@
 \DeclareMathOperator{\opwhen}{\mathsf{\,when\,}}
 \DeclareMathOperator{\nil}{\emptyset}
 \DeclareMathOperator{\compat}{\smile}
-
 
 
 %% primitive commands
@@ -131,23 +117,11 @@
 \newcommand{\owned}[1]{\ensuremath{\mathit{owned}(#1)}}
 \newcommand{\full}[1]{\ensuremath{\mathit{full}(#1)}}
 
-\newcommand{\pcstep}[1]{\,\stackrel[#1]{}{\,\hookrightarrow}\,}
-\DeclareMathOperator{\step}{\hookrightarrow}
-\DeclareMathOperator{\estep}{\rightarrow}
-\DeclareMathOperator{\pstep}{\twoheadrightarrow}
-\DeclareMathOperator{\noestep}{\nrightarrow}
+\newcommand{\step}{\ensuremath{\rightarrow}}
+\newcommand{\nostep}{\ensuremath{\nrightarrow}}
+\newcommand{\pstep}[1]{\ensuremath{\stackrel{#1}{\rightarrow}}}
+\newcommand{\taustep}{\pstep{\tau}}
 
-\newcommand{\taustep}{\ensuremath{\stackrel[\tau]{}{\step}}}
-\newcommand{\rttaustep}{\ensuremath{\stackrel[\tau]{\ast}{\step}}}
-\newcommand{\exptaustep}[1]{\ensuremath{\stackrel[\tau]{#1}{\step}}}
-
-\newcommand{\poflushat}[1]{\ensuremath{\leq_{#1}}}
-\newcommand{\poflush}{\ensuremath{\leq}}
-
-\DeclareMathOperator{\shagree}{\sim}
-\DeclareMathOperator{\mpagree}{\propto}
-\DeclareMathOperator{\mpcons}{\#}
-\DeclareMathOperator{\stcong}{\,\equiv\,}
 \newcommand{\fv}[1]{\ensuremath{\mathrm{fv}(#1)}}
 \renewcommand{\mod}[1]{\ensuremath{\mathrm{mod}(#1)}}
 
@@ -160,16 +134,6 @@
 \newcommand{\expand}[1]{\ensuremath{\expop(#1)}}
 \newcommand{\sexpand}[1]{\ensuremath{\mathit{expand}(#1)}}
 
-\newcommand{\concst}[1]{\ensuremath{\left\lfloor#1\right\rfloor}}
-\newcommand{\abst}[1]{\ensuremath{\left\lceil#1\right\rceil}}
-\newcommand{\fullst}[1]{\ensuremath{\mathsf{full}(#1)}}
-\newcommand{\writeto}[2]{\ensuremath{\stackrel[#1]{#2}{\leadsto}}}
-
-\newcommand{\kernel}{\ensuremath{\mathcal{K}}}
-\DeclareMathOperator{\trim}{\mathit{trim}}
-\DeclareMathOperator{\shadd}{\oplus}
-\DeclareMathOperator{\shmult}{\odot}
-
 \newcommand{\bexpt}{\ensuremath{\mathbf{true}}}
 \newcommand{\bexpf}{\ensuremath{\mathbf{false}}}
 
@@ -181,12 +145,8 @@
 
 \newcommand{\defined}[1]{\ensuremath{\mathsf{def}(#1)}}
 
-\renewcommand{\stcong}[1]{\ensuremath{\sim_{#1}}}
 \newcommand{\abort}{\ensuremath{\zorch}}
 
-\newcommand{\downpstates}{\ensuremath{\down \powerset{\setpstates}}}
-\newcommand{\pjoin}{\ensuremath{\sqcup}}
-\newcommand{\pmeet}{\ensuremath{\sqcap}}
 \newcommand{\live}[1]{\ensuremath{\mathit{live}(#1)}}
 
 \newcommand{\femp}{\ensuremath{\mathbf{emp}}}
@@ -201,11 +161,8 @@
 \DeclareMathOperator{\fseq}{;}
 \DeclareMathOperator{\fsseq}{,}
 
-\newcommand{\presat}[1]{\ensuremath{\kernel(#1)}}
 \newcommand{\pred}[1]{\ensuremath{[\![#1]\!]}}
 \newcommand{\locked}[1]{\ensuremath{\mathit{locked}(#1)}}
-
 \newcommand{\taurefines}{\ensuremath{\preceq}}
-
 \newcommand{\complete}[1]{\ensuremath{\mathit{complete}(#1)}}
 \newcommand{\stable}[1]{\ensuremath{\mathit{stable}(#1)}}
