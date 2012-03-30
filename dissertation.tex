@@ -1236,7 +1236,7 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 	By induction on the structure of an arbitrary proof tree, using the soundness lemmas in Section~\ref{sec:soundness-proofs}. 
 \end{proof}
 
-\section{Unresolved Issues}
+\chapter{Loose Ends}
 
 \begin{enumerate}
 	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
@@ -1244,6 +1244,10 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
     \item Memory management commands  \cite{wmsldetails,lola11}
 
     \item Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}
+
+    \item Negation and implication, or lack thereof. Maybe also discuss the connection to the Alexandrov topology, etc. The negation of a closed set is not a closed set. Phase semantics of Linear Logic? 
+
+    \item Why not just embed the memory model into the program? (E.g., \cite{DBLP:conf/tphol/Ridge07}) Hint: the frame rule is not very useful because it violates flushing closure. Also possibly requires reasoning extra complicated reasoning about flushing.  (Maybe can use old example?)
 \end{enumerate}
 
 
@@ -1268,7 +1272,11 @@ Graphical models \cite{DBLP:journals/ipl/WehrmanHO09} Concurrent Kleene Algebra 
 The programming language is local w.r.t.\ all the separating conjunctions defined; locality w.r.t.\ sequential composition doesn't seem to be important in the work above.  
 
 
-\section{Conclusion}
+\section{Linear Logic}
+
+E.g., \cite{Girard95logic}. Also non-commutative linear logic? 
+
+\chapter{Conclusion}
  Why bother building a program logic? The original motivation was as follows. Although program logics are reasonable systems in which to construct hand proofs of arbitrary program properties, they have more recently been shown to be amenable to automation of relatively shallow properties, e.g., memory safety or shape properties. Unfortunately, existing logics can not be soundly applied to certain fine-grained concurrent programs like concurrent data structures. This is because these programs are typically not well locked and contain races, and so cannot rely on the underlying computer architecture to ensure that their interaction with memory is sequentially consistent. But sequential consistency is a deep assumption in most existing program logics, hence their inapplicability.
 
 As further motivation, concurrent data structures are inarguably important to computer science given the decline of single-threaded processor performance improvements and concomitant proliferation of parallelism. At the same time, correctness arguments for concurrent data structures are subtle enough to make informal reasoning extremely difficult. Additionally, these programs are of only modest size, which (perhaps) gives cause for optimism about their amenability to automated or semi-automated verification. Altogether, this appears to be an excellent opportunity for the application of formal methods. 
