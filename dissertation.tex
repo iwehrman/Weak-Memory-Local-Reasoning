@@ -401,7 +401,7 @@ The language of commands is defined by the following grammar: \[ \comms~c \bnfde
 The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration.
 
 The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,b \lapp \lsingle{(\ell,v)}) \taustep (\funup{h}{\ptup{\ell}{v}},b) 
-\end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\taustep$. 
+\end{align*} We write $\taurefines$ as shorthand for the reflexive-transitive closure $\taustep$. 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:sequential-command-semantics} below.
 
@@ -418,7 +418,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 
     \vspace{1em}
 
-    \infrule[c-tau]{\text{if $\sigma \stackrel{\tau}{\step} \sigma'$}}{c,\sigma \step c,\sigma'}
+    \infrule[c-tau]{\text{if $\sigma \taustep \sigma'$}}{c,\sigma \step c,\sigma'}
 
     \vspace{1em}
 
@@ -507,7 +507,7 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 	\item $\cunlock$ releases the global lock and fences.
 \end{itemize}
 
-The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p \vdash \sigma \stackrel{i}{\rightarrow} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p \vdash \sigma \stackrel{i}{\rightarrow} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
+The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p : \sigma \pstep{i} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p : \sigma \pstep{i} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
 To defined these relations formally, we must first define the notion of a machine state. 
 
@@ -534,48 +534,48 @@ The definition of the semantic relation for primitive commands is given in Figur
 
 	\begin{minipage}{\columnwidth}
 
-		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} \vdash (s,h,B,k) \pstep{i} (s,h,B,k)}
+		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} : (s,h,B,k) \pstep{i} (s,h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} \vdash (s,h,B,k) \pstep{i} (s,h,B,k)}
+		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} : (s,h,B,k) \pstep{i} (s,h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} \vdash(s,h,B,k) \pstep{i} \abort}
+		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} :(s,h,B,k) \pstep{i} \abort}
 
 		\vspace{1em}
 
-		\infrule[p-assign]{}{\cassign{x}{e} \vdash(s,h,B,k) \pstep{i} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,k)}
+		\infrule[p-assign]{}{\cassign{x}{e} :(s,h,B,k) \pstep{i} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,k)}
 
 		\vspace{1em}
 
-		\infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,k)}
+		\infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin k$}}{\cload{x}{e} :(s,h,B,k) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,k)}
 
 		\vspace{1em}
 
 
-		\infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin k$}}{\cload{x}{e} \vdash(s,h,B,k) \pstep{i} \abort}
+		\infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin k$}}{\cload{x}{e} :(s,h,B,k) \pstep{i} \abort}
 		
 		\vspace{1em}
 
-		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},k)}
+		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,k) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},k)}
 		
 		\vspace{1em}
 
-		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} \vdash(s,h,B,k) \pstep{i} \abort}
+		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,k) \pstep{i} \abort}
 		
 		\vspace{1em}
 
-		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence \vdash(s,h,B,k) \pstep{i} (s,h,B,k)}
+		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence :(s,h,B,k) \pstep{i} (s,h,B,k)}
 		
 		\vspace{1em}
 
-		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock \vdash(s,h,B,\nil) \pstep{i} (s,h,B,\set{i})}
+		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\set{i})}
 		
 		\vspace{1em}
 
-		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock \vdash(s,h,B,\set{i}) \pstep{i} (s,h,B,\nil)}
+		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock :(s,h,B,\set{i}) \pstep{i} (s,h,B,\nil)}
 	\end{minipage}
 	\caption{\label{fig:primitive-semantics} Semantics of primitive commands}
 \end{figure}
@@ -584,88 +584,88 @@ Structured commands consist of either a primitive command; a sequential or concu
 
 The language of commands is defined by the following grammar: \[ \comms~c \bnfdef p_e \bnfbar (\cseq{c}{c'}) \bnfbar (\cchoice{c}{c'}) \bnfbar \cloop{c} \bnfbar (\cpar{c}{c'}),\] where $p$ is a primitive command and $e$ is an expression which (hopefully) denotes a processor identifier.  
 
-The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ \vdash c,\sigma \rightarrow c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ \vdash c,\sigma \rightarrow \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
+The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
 
-The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\stackrel{\tau}{\rightarrow}$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \stackrel{\tau}{\rightarrow} (s,\mu')$ iff $\mu \stackrel{\tau}{\rightarrow} \mu'$.} defined as follows: \begin{align*} (h,B,k) \stackrel{\tau}{\rightarrow} (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
-\end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\stackrel{\tau}{\rightarrow}$. 
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,B,k) \taustep (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
+\end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\taustep$. 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below.
 
 \begin{figure}[ht]
 	\centering
 
-	\infrule[c-prim]{\text{ if $p \vdash \sigma \stackrel{\ext{s}(e)}{\rightarrow} \sigma'$ and $\sigma' \in \setstates$}}{\vdash p_e,\sigma \rightarrow \cskip,\sigma'}
+	\infrule[c-prim]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \sigma'$ and $\sigma' \in \setstates$}}{p_e,\sigma \step \cskip,\sigma'}
 
 	\vspace{1em}
 
 	\begin{tabular}{ll}
 	\begin{minipage}{.43\columnwidth}
 
-		\infrule[c-prim-a]{\text{ if $p \vdash \sigma \stackrel{\ext{s}(e)}{\rightarrow} \abort$}}{\vdash p_e,\sigma \rightarrow \abort}
+		\infrule[c-prim-a]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \abort$}}{p_e,\sigma \step \abort}
 
 		\vspace{1em}
 
-		\infrule[c-tau]{\text{if $\sigma \stackrel{\tau}{\rightarrow} \sigma'$}}{\vdash c,\sigma \rightarrow c,\sigma'}
+		\infrule[c-tau]{\text{if $\sigma \taustep \sigma'$}}{c,\sigma \step c,\sigma'}
 
 		\vspace{1em}
 
-		\infrule[c-seq]{\vdash c,\sigma \rightarrow c_0,\sigma'}{\vdash (\cseq{c}{c'}),\sigma \rightarrow (\cseq{c_0}{c'}),\sigma'}
+		\infrule[c-seq]{c,\sigma \step c_0,\sigma'}{(\cseq{c}{c'}),\sigma \step (\cseq{c_0}{c'}),\sigma'}
 
 		\vspace{1em}
 
-		\infrule[c-seq-a]{\vdash c,\sigma \rightarrow \abort}{\vdash (\cseq{c}{c'}),\sigma \rightarrow \abort}
+		\infrule[c-seq-a]{c,\sigma \step \abort}{(\cseq{c}{c'}),\sigma \step \abort}
 
 		\vspace{1em}
 
-		\infrule[c-seq-s]{}{\vdash (\cseq{\cskip}{c'}),\sigma \rightarrow c',\sigma}
+		\infrule[c-seq-s]{}{(\cseq{\cskip}{c'}),\sigma \step c',\sigma}
 
 		\vspace{1em}
 
-		\infrule[c-ch-1]{}{\vdash (\cchoice{c}{c'}),\sigma \rightarrow c,\sigma}
+		\infrule[c-ch-1]{}{(\cchoice{c}{c'}),\sigma \step c,\sigma}
 
 		\vspace{1em}
 
-		\infrule[c-ch-2]{}{\vdash (\cchoice{c}{c'}),\sigma \rightarrow c',\sigma}
+		\infrule[c-ch-2]{}{(\cchoice{c}{c'}),\sigma \step c',\sigma}
 
 \end{minipage} & 
 \begin{minipage}{.52\columnwidth}
 
-		\infrule[c-par-1]{\vdash c,\sigma \rightarrow c_0,\sigma'}{\vdash (\cpar{c}{c'}),\sigma \rightarrow (\cpar{c_0}{c'}),\sigma'}
+		\infrule[c-par-1]{c,\sigma \step c_0,\sigma'}{(\cpar{c}{c'}),\sigma \step (\cpar{c_0}{c'}),\sigma'}
 
 		\vspace{1em}
 
-		\infrule[c-par-1a]{\vdash c,\sigma \rightarrow \abort}{\vdash (\cpar{c}{c'}),\sigma \rightarrow \abort}
+		\infrule[c-par-1a]{c,\sigma \step \abort}{(\cpar{c}{c'}),\sigma \step \abort}
 
 		\vspace{1em}
 
-		\infrule[c-par-1s]{}{\vdash (\cpar{\cskip}{c'}),\sigma \rightarrow c',\sigma}
+		\infrule[c-par-1s]{}{(\cpar{\cskip}{c'}),\sigma \step c',\sigma}
 
 		\vspace{1em}
 
-		\infrule[c-par-2]{\vdash c',\sigma \rightarrow c_0,\sigma'}{\vdash (\cpar{c}{c'}),\sigma \rightarrow (\cpar{c}{c_0}),\sigma'}
+		\infrule[c-par-2]{c',\sigma \step c_0,\sigma'}{(\cpar{c}{c'}),\sigma \step (\cpar{c}{c_0}),\sigma'}
 
 		\vspace{1em}
 
-		\infrule[c-par-2a]{\vdash c',\sigma \rightarrow \abort}{\vdash (\cpar{c}{c'}),\sigma \rightarrow \abort}
+		\infrule[c-par-2a]{c',\sigma \step \abort}{(\cpar{c}{c'}),\sigma \step \abort}
 
 		\vspace{1em}
 
-		\infrule[c-par-2s]{}{\vdash (\cpar{c}{\cskip}),\sigma \rightarrow c,\sigma}
+		\infrule[c-par-2s]{}{(\cpar{c}{\cskip}),\sigma \step c,\sigma}
 
 		\vspace{1em}
 
-		\infrule[c-loop]{}{\vdash \cloop{c},\sigma \rightarrow (\cchoice{\cskip}{(\cseq{c}{\cloop{c}})}),\sigma}
+		\infrule[c-loop]{}{\cloop{c},\sigma \step (\cchoice{\cskip}{(\cseq{c}{\cloop{c}})}),\sigma}
 
 \end{minipage}
 \end{tabular}
 	\caption{\label{fig:command-semantics} Semantics of commands}
 \end{figure} 
 
-The reflexive-transitive closure of command evaluation semantics, written $\vdash c,\sigma \rightarrow^\ast \mathcal{C}$, is defined as usual. 
+The reflexive-transitive closure of command evaluation semantics, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. 
 
-\paragraph{Stability} Consider a state $\sigma_0 = (s,h,B,\nil)$ in which $h = \ell \mapsto 0$, $B(j) = \lsingle{(\ell,1)}$ and $B(x) = \lnil$ for all $x \neq j$. From this state, a load on processor $i$ may evaluate as follows: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] Because $j$ is not blocked, it is also possible for a flushing operation to take place: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil),\] and afterward for the load to evaluate as follows: \[ \vdash \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil) \rightarrow \cskip(\funup{s}{\ptup{y}{1}},\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil).\] Note that in the first evaluation the load resolves $\ell$ to $0$, and in the second evaluation it resolves $\ell$ to $1$, with the distinguishing characteristic of the latter being the preceding nondeterministic flushing operation. 
+\paragraph{Stability} Consider a state $\sigma_0 = (s,h,B,\nil)$ in which $h = \ell \mapsto 0$, $B(j) = \lsingle{(\ell,1)}$ and $B(x) = \lnil$ for all $x \neq j$. From this state, a load on processor $i$ may evaluate as follows: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] Because $j$ is not blocked, it is also possible for a flushing operation to take place: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil),\] and afterward for the load to evaluate as follows: \[ \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil) \step \cskip(\funup{s}{\ptup{y}{1}},\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil).\] Note that in the first evaluation the load resolves $\ell$ to $0$, and in the second evaluation it resolves $\ell$ to $1$, with the distinguishing characteristic of the latter being the preceding nondeterministic flushing operation. 
 
-By contrast, from the state $\sigma_1 = (s,h,B,\set{j})$, where $h$ and $B$ are defined as in $\sigma_0$, the \emph{only} reduction of $\cload{y}{\ell}_i$ is: \[ \vdash \cload{y}{\ell}_i,(s,h,B,\nil) \rightarrow \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] This is because processor $j$ is blocked, and so its buffered write may not commit to memory. As a consequence, it is not possible for the load on processor $i$ to observe the write buffered on processor $j$. 
+By contrast, from the state $\sigma_1 = (s,h,B,\set{j})$, where $h$ and $B$ are defined as in $\sigma_0$, the \emph{only} reduction of $\cload{y}{\ell}_i$ is: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] This is because processor $j$ is blocked, and so its buffered write may not commit to memory. As a consequence, it is not possible for the load on processor $i$ to observe the write buffered on processor $j$. 
 
 We say that location $\ell$ is \emph{unstable} in state $\sigma_0$ for processor $i$ because the result of loading $\ell$ is determined by the relative ordering of the flushing operations. On the other hand, $\ell$ is \emph{stable} in $\sigma_1$ for $i$ because the load of $\ell$ is oblivious to the flushing operations. 
 
@@ -712,7 +712,7 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 \subsection{Predicates}
 \label{sec:predicates}
 
-Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
+Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
 
 \subsection{Separation}
 
@@ -720,15 +720,15 @@ We now digress to define a series of functions on states, which will later be us
 
 \subsubsection{Locality}
 
-An explicit goal is that each conjunction $\bullet$ be \emph{local} w.r.t.\ the programming language in the following way. Suppose we wish to show that, when a command $c$ is evaluated in a complete state $\Sigma_0$, that it does not abort, and that the resulting state $\Sigma_1$ has some some property $P$. That is, we wish to show that $c,\Sigma_0 \rightarrow^\ast \cskip,\Sigma'$ and $P(\Sigma_1)$ holds. 
+An explicit goal is that each conjunction $\bullet$ be \emph{local} w.r.t.\ the programming language in the following way. Suppose we wish to show that, when a command $c$ is evaluated in a complete state $\Sigma_0$, that it does not abort, and that the resulting state $\Sigma_1$ has some some property $P$. That is, we wish to show that $c,\Sigma_0 \rtcl{\step} \cskip,\Sigma'$ and $P(\Sigma_1)$ holds. 
 
 In some scenarios, we may attack the problem as follows. Suppose the property $P$ only depends on some particular substate of a complete state $\Sigma$, with the remaining portion---the \emph{frame}---irrelevant to the property at hand. For example, the property may relate the values of only a few particular memory locations and is independent of the others. Let us write $\Sigma = \sigma_F \bullet \sigma$ to denote the decomposition of a complete state $\Sigma$ into substates $\sigma_F$ and $\sigma$. For example, perhaps $\sigma$ describes the relevant memory locations, and $\sigma_F$ the irrelevant locations. Then it is the case that $P(\sigma)$ implies $P(\Sigma)$. 
 
-Consider again our task of showing that, for some $\Sigma_1$, $c,\Sigma_0 \rightarrow^\ast \cskip,\Sigma_1$ and $P(\Sigma_1)$. If we know that that the property depends just on a particular substate, we may try to reason about the behavior of the command with respect to just the substate that is relevant to the property. We proceed then by decomposing the initial state $\Sigma_0$ into a relevant substate $\sigma_0$ and a frame state $\sigma_F$, with $\Sigma_0 = \sigma_F \bullet \sigma_0$, and consider the behavior of the command $c$ in the substate $\sigma_0$. 
+Consider again our task of showing that, for some $\Sigma_1$, $c,\Sigma_0 \rtcl{\step} \cskip,\Sigma_1$ and $P(\Sigma_1)$. If we know that that the property depends just on a particular substate, we may try to reason about the behavior of the command with respect to just the substate that is relevant to the property. We proceed then by decomposing the initial state $\Sigma_0$ into a relevant substate $\sigma_0$ and a frame state $\sigma_F$, with $\Sigma_0 = \sigma_F \bullet \sigma_0$, and consider the behavior of the command $c$ in the substate $\sigma_0$. 
 
-Perhaps we are able to show that $c$ does not abort in this substate, and evaluates to some state $\sigma_1$: $c,\sigma_0 \rightarrow^\ast \cskip,\sigma_1$. Can we conclude that the $c$ also does not abort in the complete state $\Sigma$? If the command obeys what is known as the \emph{safety monotonicity property}, then we may indeed conclude this. That is, safety monotonicity asserts that if a command executes successfully in a state $\sigma_0$, then it also executes successfully in a superstate $\Sigma_0$.  
+Perhaps we are able to show that $c$ does not abort in this substate, and evaluates to some state $\sigma_1$: $c,\sigma_0 \rtcl{\step} \cskip,\sigma_1$. Can we conclude that the $c$ also does not abort in the complete state $\Sigma$? If the command obeys what is known as the \emph{safety monotonicity property}, then we may indeed conclude this. That is, safety monotonicity asserts that if a command executes successfully in a state $\sigma_0$, then it also executes successfully in a superstate $\Sigma_0$.  
 
-Suppose also that we can show that the desired property holds of the state that results from the evaluation of the command in the substate $\sigma_0$; i.e., that $P(\sigma_1)$ holds. Because we know that the frame substate is irrelevant to the property $P$, it is also the case that $P(\sigma_F \bullet \sigma_1)$ holds. But what is the relationship between $\Sigma_1$ and the composite state $\sigma_F \bullet \sigma_1$? If the command obeys what is known as the \emph{frame property}, then in fact $\Sigma_1 = \sigma_F \bullet \sigma_1$. That is, the frame property asserts that whenever $\Sigma_0 = \sigma_F \bullet \sigma_0$ and $c,\Sigma_0 \rightarrow^\ast \Sigma_1$, and if $c$ does not abort on the substate $\sigma_1$, then there exists some $\sigma_1$ such that $\Sigma_1 = \sigma_F \bullet \sigma_1$. Hence, $P(\Sigma_1)$ holds. 
+Suppose also that we can show that the desired property holds of the state that results from the evaluation of the command in the substate $\sigma_0$; i.e., that $P(\sigma_1)$ holds. Because we know that the frame substate is irrelevant to the property $P$, it is also the case that $P(\sigma_F \bullet \sigma_1)$ holds. But what is the relationship between $\Sigma_1$ and the composite state $\sigma_F \bullet \sigma_1$? If the command obeys what is known as the \emph{frame property}, then in fact $\Sigma_1 = \sigma_F \bullet \sigma_1$. That is, the frame property asserts that whenever $\Sigma_0 = \sigma_F \bullet \sigma_0$ and $c,\Sigma_0 \rtcl{\step} \Sigma_1$, and if $c$ does not abort on the substate $\sigma_1$, then there exists some $\sigma_1$ such that $\Sigma_1 = \sigma_F \bullet \sigma_1$. Hence, $P(\Sigma_1)$ holds. 
 
 This is the essence of \emph{local reasoning}: to reason about the behavior of a command in a complete state, we decompose the complete state into a local part and a frame part, reason only about the behavior of the command with respect to the local part, and finally draw conclusions about the behavior of the command in the complete state based on this local reasoning. A command that obeys the safety monotonicity and frame properties---with respect to particular notion of decomposition---is said to be \emph{local}.
 
@@ -741,7 +741,7 @@ In the next few sections, we develop variety of notions of state decomposition--
 
 Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
 
-Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \rightarrow \abort\] then also \[\cload{x}{y},(s,\mu_G) \rightarrow \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \rightarrow \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
+Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \step \abort\] then also \[\cload{x}{y},(s,\mu_G) \step \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
 
 What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
     (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
@@ -878,15 +878,15 @@ We refer to this as \emph{weak interleaving separation}, because only minimal or
 
 \begin{lemma}
 	\label{lem:separation-tau}
-	If $\sigma \in \sigma_1 \fhash \sigma_2$ and $\sigma \stackrel{\tau}{\rightarrow} \sigma'$, then either there exists $\sigma'_1$ such that $\sigma' \in \sigma'_1 \fhash \sigma_2$, or there exists $\sigma'_2$ such that $\sigma' \in \sigma_1 \fhash \sigma'_2$.
+	If $\sigma \in \sigma_1 \fhash \sigma_2$ and $\sigma \taustep \sigma'$, then either there exists $\sigma'_1$ such that $\sigma' \in \sigma'_1 \fhash \sigma_2$, or there exists $\sigma'_2$ such that $\sigma' \in \sigma_1 \fhash \sigma'_2$.
 \end{lemma}
 
 \begin{proof}
 	Without loss of generality, assume $\sigma = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\sigma' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\sigma_1 = (s,h_1,B_1,k_1)$ and $\sigma_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-	In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\sigma'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\sigma_1 \stackrel{\tau}{\rightarrow} \sigma'_1$. By definedness of $\sigma_1 \fhash \sigma_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\sigma' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \sigma'_1 \fhash \sigma_2$. 
+	In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\sigma'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\sigma_1 \taustep \sigma'_1$. By definedness of $\sigma_1 \fhash \sigma_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\sigma' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \sigma'_1 \fhash \sigma_2$. 
 
-	In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\sigma'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\sigma_2 \stackrel{\tau}{\rightarrow} \sigma'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\sigma' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \sigma_1 \fhash \sigma_2$. 
+	In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\sigma'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\sigma_2 \taustep \sigma'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\sigma' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \sigma_1 \fhash \sigma_2$. 
 \end{proof}
 
 \begin{lemma}
@@ -895,7 +895,7 @@ We refer to this as \emph{weak interleaving separation}, because only minimal or
 \end{lemma}
 
 \begin{proof}
-	By induction on the number of $\tau$ steps from $\sigma$ to $\sigma'$. The base case is trivial. Otherwise, assume that $\sigma'' \taurefines \sigma$ and $\sigma'' \stackrel{\tau}{\rightarrow} \sigma'$, and by the induction hypothesis that there exists $\sigma''_1,\sigma''_2$ such that $\sigma''_1 \taurefines \sigma_1$, $\sigma''_2 \taurefines \sigma_2$ and $\sigma'' \in \sigma''_1 \fhash \sigma''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
+	By induction on the number of $\tau$ steps from $\sigma$ to $\sigma'$. The base case is trivial. Otherwise, assume that $\sigma'' \taurefines \sigma$ and $\sigma'' \taustep \sigma'$, and by the induction hypothesis that there exists $\sigma''_1,\sigma''_2$ such that $\sigma''_1 \taurefines \sigma_1$, $\sigma''_2 \taurefines \sigma_2$ and $\sigma'' \in \sigma''_1 \fhash \sigma''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
 \end{proof}
 
 
@@ -1077,7 +1077,7 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
 		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
 		\item $\complete{\mu_0}$,
 		\item either $s,\mu_J \sentails J$ or $\locked{\mu_0}$, and 
-		\item $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$,
+		\item $c,(s,\mu_0) \step c',(s',\mu_1)$,
 	\end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
 		\item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
 		\item $\mu'_F \taurefines \mu_F$,
@@ -1307,7 +1307,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \abort$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \rightarrow c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
+		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\complete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \step c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
 
 		The only evaluation step possible from $\cskip,\sigma_0$ is by \textsc{c-tau}, hence $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau}, there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$, $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma'_J \sentails J$ if $\sigma_J \sentails J$. Similarly, $\sigma' \sentails P$ because $\sigma \sentails P$ and $\sigma' \taurefines \sigma$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,\sigma',J,P}$. 
 	\end{enumerate}
@@ -1335,7 +1335,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 		\item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}e')}}$. Hence, the command cannot abort. 
 
-		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \rightarrow c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
+		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
 		In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fsseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. 
 
@@ -1375,7 +1375,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \abort$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \rightarrow c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
+		\item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \step c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
 			\item $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
 			\item $\sigma'_F \taurefines \sigma_F$, 
 			\item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
