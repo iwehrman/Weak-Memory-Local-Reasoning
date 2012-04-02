@@ -563,12 +563,44 @@ The frame property, however, does not hold for this definition. Consider, e.g., 
 
 An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
 
+\subsection{Uniprocessor Satisfaction}
+\label{sec:uniprocessor-satisfaction}
+
+The meaning of uniprocessor assertions is given by a satisfaction relation $\sigma \satisfies P$, relating states $\sigma$ to uniprocessor assertions $P$. The set of states that satisfies an assertion will be a uniprocessor predicate, as described in Section~\ref{sec:uniprocessor-predicates}. 
+
+The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:uniprocessor-satisfaction-relation}. 
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+    \[
+    \begin{array}{lllll}
+        (s,h,b) & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
+        (s,h,b) & \sentails & {P \disj Q} & \iffdef & (s,h,b) \sentails{P} \disj (s,h,b) \sentails{Q} \\
+        (s,h,b) & \sentails & {P \conj Q} & \iffdef & (s,h,b) \sentails{P} \conj (s,h,b) \sentails{Q} \\
+        (s,h,b) & \sentails & {\exists x \st P} & \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,b) \sentails{P} \\
+        (s,h,b) & \sentails & {\forall x \st P} & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,b) \sentails{P} \\
+        (s,h,b) & \sentails & {\femp} & \iffdef & h = \nil \conj b = \lnil \\
+        (s,h,b) & \sentails & \fbaru & \iffdef & b = \lnil \\ 
+        (s,h,b) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \lsingle{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+        & & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil)) \\
+        (s,h,b) & \sentails & {P \fhash P'} & \iffdef & \exists \mu,\mu' \st \mu \fhash \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
+        (s,h,b) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
+        (s,h,b) & \sentails & {P \fseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
+        (s,h,b) & \sentails & {P \fsseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fsseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'}
+    \end{array}
+    \]
+\end{minipage}}
+    \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
+\end{figure}
+
 \section{Sequential Specifications}
 \label{sec:sequential-specifications}
 
 The language of specifications is given by the following schema: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. 
 
-\subsection{Semantics}
+\subsection{Uniprocessor Semantics}
 \label{sec:sequential-specification-semantics}
 
 A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $P$, then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
@@ -1074,7 +1106,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 	\resizebox{\columnwidth}{!}{
 	\begin{minipage}{\columnwidth}
 	\[
-	\begin{array}{llllll}
+	\begin{array}{lllll}
 		(s,h,B,k) & \sentails & {b} & \iffdef & \ext{s}(b) = 1 \\
 		(s,h,B,k) & \sentails & {P \disj Q} & \iffdef & (s,h,B,k) \sentails{P} \disj (s,h,B,k) \sentails{Q} \\
 		(s,h,B,k) & \sentails & {P \conj Q} & \iffdef & (s,h,B,k) \sentails{P} \conj (s,h,B,k) \sentails{Q} \\
@@ -1088,8 +1120,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 		(s,h,B,k) & \sentails & {P \fhash P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fhash \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
 		(s,h,B,k) & \sentails & {P \fsep P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsep \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
 		(s,h,B,k) & \sentails & {P \fseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
-		(s,h,B,k) & \sentails & {P \fsseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
-		%(s,h,B,k) & \sentails & {\fiter{P}} & \iffdef & (s,h,B,k) \sentails{\femp} \disj (\exists \sigma,\sigma \st \\ & & & & \sigma \sentails P \conj \sigma' \sentails \fiter{P} \conj \sigma \fseq \sigma' = (s,h,B,k))
+		(s,h,B,k) & \sentails & {P \fsseq P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsseq \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'}
 	\end{array}
 	\]
 \end{minipage}}
@@ -1195,9 +1226,9 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
 	\item If $c = \cskip$ then $(s,\mu) \sentails Q$.
 
 	\item For all $\mu_0,\mu_J,\mu_F$ such that \begin{enumerate}[(i)]
-		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu)$,
+		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
 		\item $\complete{\mu_0}$, and
-		\item either $s,\mu_J \sentails J$ or $\locked{\mu_1}$,
+		\item either $(s,\mu_J) \sentails J$ or $\locked{\mu_1}$,
 	\end{enumerate} $c,(s,\mu_1) \nrightarrow \abort$.
 
 	\item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
