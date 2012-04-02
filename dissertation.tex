@@ -278,7 +278,7 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 \end{figure}
 
 
-\chapter{The Uniprocessor Case}
+\chapter{A Sequential, Uniprocessor Program Logic}
 \label{ch:uniprocessor}
 
 In this chapter I describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer. This is considerably simpler than the development of a program logic for a weak-memory multi-processor programming model, but many of the most difficult issues in that task can be explained more simply in a single-processor setting. 
@@ -312,7 +312,7 @@ Boolean expressions are terms that denote truth values. Their language is given 
     \end{cases}
 \end{align*}
 
-\subsection{Sequential Commands and Single-Processor States}
+\subsection{Sequential Commands and Uniprocessor States}
 \label{sec:sequential-commands}
 
 In this setting, programs are identified with \emph{commands}, which consist of compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{I have no particular to reason to think that they will add significant complication though, and were also considered in earlier iterations of this project \cite{wmsldetails,lola11}.}
@@ -333,16 +333,16 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 
 The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ \[ p : \sigma \step \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p : \sigma \step \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
-To defined these relations formally, we must first define the notion of a machine state. 
+To defined these relations formally, we must first define the notion of a uniprocessor machine state. 
 
 \begin{definition}
-A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
+A \emph{uniprocessor machine state} is a three-tuple $(s,h,B)$, where: \begin{itemize}
     \item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
     \item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; and 
     \item $B : \listof{(\setlocations \times \setvalues)}$ is a write buffer;
 \end{itemize}
 \end{definition} 
-The collection of states is written $\setstates$. We sometimes refer to the pair of components $(h,B)$ as a \emph{memory system} $\mu$, and refer to a state as a pair $(s,\mu)$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
+The collection of states is written $\setstates$. We sometimes call the components $(h,B)$ a \emph{memory system}, $\mu$, and refer to a state as a pair $(s,\mu)$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
 
 Note that the notion of machine state given here differs from that used to define the memory model. First, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
 
@@ -466,13 +466,114 @@ The reflexive-transitive closure of command evaluation semantics, written $c,\si
 
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
 
-\section{Assertions}
-\label{sec:sequential-assertions}
+\section{Uniprocessor Assertions}
+\label{sec:uniprocessor-assertions}
+
+Uniprocessor assertions denote sets of uniprocessor machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
+    \asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
+    & \femp \bnfbar \fbaru \bnfbar e \fwriteu e' \bnfbar  \\ 
+    & (P \fhash P') \bnfbar (P \fsep P') \bnfbar (P \fseq P') \bnfbar (P \fsseq P')
+\end{align*} 
+
+The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and empty write buffer. $\fbaru$ describes any state in which the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+
+The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
+
+\paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \begin{align*}
+    e \fpointsto e' \eqdef & e \fwrite e' \conj \fbaru\\
+\end{align*} 
+
+\subsection{Uniprocessor Predicates}
+\label{sec:uniprocessor-predicates}
+
+Assertions denote particular sets of uniprocessor machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
+
+\subsection{Locality}
+
+An explicit goal is that each conjunction $\bullet$ be \emph{local} w.r.t.\ the programming language in the following way. Suppose we wish to show that, when a command $c$ is evaluated in a complete state $\Sigma_0$, that it does not abort, and that the resulting state $\Sigma_1$ has some some property $P$. That is, we wish to show that $c,\Sigma_0 \rtcl{\step} \cskip,\Sigma'$ and $P(\Sigma_1)$ holds. 
+
+In some scenarios, we may attack the problem as follows. Suppose the property $P$ only depends on some particular substate of a complete state $\Sigma$, with the remaining portion---the \emph{frame}---irrelevant to the property at hand. For example, the property may relate the values of only a few particular memory locations and is independent of the others. Let us write $\Sigma = \sigma_F \bullet \sigma$ to denote the decomposition of a complete state $\Sigma$ into substates $\sigma_F$ and $\sigma$. For example, perhaps $\sigma$ describes the relevant memory locations, and $\sigma_F$ the irrelevant locations. Then it is the case that $P(\sigma)$ implies $P(\Sigma)$. 
+
+Consider again our task of showing that, for some $\Sigma_1$, $c,\Sigma_0 \rtcl{\step} \cskip,\Sigma_1$ and $P(\Sigma_1)$. If we know that that the property depends just on a particular substate, we may try to reason about the behavior of the command with respect to just the substate that is relevant to the property. We proceed then by decomposing the initial state $\Sigma_0$ into a relevant substate $\sigma_0$ and a frame state $\sigma_F$, with $\Sigma_0 = \sigma_F \bullet \sigma_0$, and consider the behavior of the command $c$ in the substate $\sigma_0$. 
+
+Perhaps we are able to show that $c$ does not abort in this substate, and evaluates to some state $\sigma_1$: $c,\sigma_0 \rtcl{\step} \cskip,\sigma_1$. Can we conclude that the $c$ also does not abort in the complete state $\Sigma$? If the command obeys what is known as the \emph{safety monotonicity property}, then we may indeed conclude this. That is, safety monotonicity asserts that if a command executes successfully in a state $\sigma_0$, then it also executes successfully in a superstate $\Sigma_0$.  
+
+Suppose also that we can show that the desired property holds of the state that results from the evaluation of the command in the substate $\sigma_0$; i.e., that $P(\sigma_1)$ holds. Because we know that the frame substate is irrelevant to the property $P$, it is also the case that $P(\sigma_F \bullet \sigma_1)$ holds. But what is the relationship between $\Sigma_1$ and the composite state $\sigma_F \bullet \sigma_1$? If the command obeys what is known as the \emph{frame property}, then in fact $\Sigma_1 = \sigma_F \bullet \sigma_1$. That is, the frame property asserts that whenever $\Sigma_0 = \sigma_F \bullet \sigma_0$ and $c,\Sigma_0 \rtcl{\step} \Sigma_1$, and if $c$ does not abort on the substate $\sigma_1$, then there exists some $\sigma_1$ such that $\Sigma_1 = \sigma_F \bullet \sigma_1$. Hence, $P(\Sigma_1)$ holds. 
+
+This is the essence of \emph{local reasoning}: to reason about the behavior of a command in a complete state, we decompose the complete state into a local part and a frame part, reason only about the behavior of the command with respect to the local part, and finally draw conclusions about the behavior of the command in the complete state based on this local reasoning. A command that obeys the safety monotonicity and frame properties---with respect to particular notion of decomposition---is said to be \emph{local}.
+
+If the commands of a programming language are local, then the principle of local reasoning can be codified into a program logic by way of a \emph{frame rule}, which allows generalization from local to global program specifications. This will be considered in more detail in Section~\ref{sec:specifications}. 
+
+In the next few sections, we develop variety of notions of state decomposition---which we shall call \emph{separations}---for which the commands of the programming language described in Section~\ref{sec:programming-language} are local. 
+
+\subsection{Uniprocessor Separation}
+\label{sec:uniprocessor-separation}
+
+Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
+
+Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \step \abort\] then also \[\cload{x}{y},(s,\mu_G) \step \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
+
+What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
+    (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
+    \bot & \text{otherwise.}
+\end{cases}\] Because the separation is only defined for heaps with disjoint domains, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
+\Calc{
+
+    $\dom{h_G \override \funof{b_G}}$
+
+    \conn{=}{$(h_G,b_G) = (h_F,b_F) \bullet (h_L,b_L)$}
+
+    $\dom{(h_F \cup h_L) \override \funof{(b_F \lapp b_L)}}$
+
+    \conn{=}{$\funof{m \lapp n} = \funof{m} \override \funof{n}$}
+
+    $\dom{(h_F \cup h_L) \override (\funof{b_F} \override \funof{b_L})}$
+
+    \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+
+    $\dom{h_F} \cup \dom{h_L} \cup \dom{\funof{b_F}} \cup \dom{\funof{b_L}}$
+
+    \conn{\supseteq}{set theory}
+
+    $\dom{h_L} \cup \dom{\funof{b_L}}$
+
+     \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+
+    $\dom{h_L \override \funof{b_L}}$
+    
+} 
+The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
+\Calc{
+  
+    $(h_L \override \funof{b_L})(\ell)$
+
+    \conn{=}{$\dom{h_F} \cap \dom{h_L} = \nil$}
+
+    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
+
+    \conn{=}{$b_F = \lnil$}
+
+    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
+} Second, assuming $h_L = \nil$: 
+\Calc{
+  
+    $(h_L \override \funof{b_L})(\ell)$
+
+    \conn{=}{$\ell \in\dom{g}$ and $f \subseteq f'$ implies $(f\override g)(\ell) = (f'\override g)(\ell)$}
+
+    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
+
+    \conn{=}{$\funof{n}(\ell) = v$ implies $\funup{m \lapp n}(\ell) = v$}
+
+    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
+}
+
+An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
 
 \section{Specifications}
 \label{sec:sequential-specification}
 
-\chapter{The Multiprocessor Case}
+\chapter{A Concurrent, Multiprocessor Program Logic}
 \label{ch:multiprocessor}
 
 This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 
@@ -701,7 +802,7 @@ Assertions denote sets of machine states, and are used to write the pre- and pos
 	& (P \fhash P') \bnfbar (P \fsep P') \bnfbar (P \fseq P') \bnfbar (P \fsseq P')
 \end{align*} 
 
-The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffer on processor $e$ or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
 
 The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
 
@@ -712,93 +813,13 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 \subsection{Predicates}
 \label{sec:predicates}
 
-Assertions denote particular sets of intensional machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
+Assertions denote particular sets of machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
 
 \subsection{Separation}
 
 We now digress to define a series of functions on states, which will later be used to define the predicates for each of the four separating conjunctions. With these definitions in hand, the predicate definitions will be straightforward.
 
-\subsubsection{Locality}
 
-An explicit goal is that each conjunction $\bullet$ be \emph{local} w.r.t.\ the programming language in the following way. Suppose we wish to show that, when a command $c$ is evaluated in a complete state $\Sigma_0$, that it does not abort, and that the resulting state $\Sigma_1$ has some some property $P$. That is, we wish to show that $c,\Sigma_0 \rtcl{\step} \cskip,\Sigma'$ and $P(\Sigma_1)$ holds. 
-
-In some scenarios, we may attack the problem as follows. Suppose the property $P$ only depends on some particular substate of a complete state $\Sigma$, with the remaining portion---the \emph{frame}---irrelevant to the property at hand. For example, the property may relate the values of only a few particular memory locations and is independent of the others. Let us write $\Sigma = \sigma_F \bullet \sigma$ to denote the decomposition of a complete state $\Sigma$ into substates $\sigma_F$ and $\sigma$. For example, perhaps $\sigma$ describes the relevant memory locations, and $\sigma_F$ the irrelevant locations. Then it is the case that $P(\sigma)$ implies $P(\Sigma)$. 
-
-Consider again our task of showing that, for some $\Sigma_1$, $c,\Sigma_0 \rtcl{\step} \cskip,\Sigma_1$ and $P(\Sigma_1)$. If we know that that the property depends just on a particular substate, we may try to reason about the behavior of the command with respect to just the substate that is relevant to the property. We proceed then by decomposing the initial state $\Sigma_0$ into a relevant substate $\sigma_0$ and a frame state $\sigma_F$, with $\Sigma_0 = \sigma_F \bullet \sigma_0$, and consider the behavior of the command $c$ in the substate $\sigma_0$. 
-
-Perhaps we are able to show that $c$ does not abort in this substate, and evaluates to some state $\sigma_1$: $c,\sigma_0 \rtcl{\step} \cskip,\sigma_1$. Can we conclude that the $c$ also does not abort in the complete state $\Sigma$? If the command obeys what is known as the \emph{safety monotonicity property}, then we may indeed conclude this. That is, safety monotonicity asserts that if a command executes successfully in a state $\sigma_0$, then it also executes successfully in a superstate $\Sigma_0$.  
-
-Suppose also that we can show that the desired property holds of the state that results from the evaluation of the command in the substate $\sigma_0$; i.e., that $P(\sigma_1)$ holds. Because we know that the frame substate is irrelevant to the property $P$, it is also the case that $P(\sigma_F \bullet \sigma_1)$ holds. But what is the relationship between $\Sigma_1$ and the composite state $\sigma_F \bullet \sigma_1$? If the command obeys what is known as the \emph{frame property}, then in fact $\Sigma_1 = \sigma_F \bullet \sigma_1$. That is, the frame property asserts that whenever $\Sigma_0 = \sigma_F \bullet \sigma_0$ and $c,\Sigma_0 \rtcl{\step} \Sigma_1$, and if $c$ does not abort on the substate $\sigma_1$, then there exists some $\sigma_1$ such that $\Sigma_1 = \sigma_F \bullet \sigma_1$. Hence, $P(\Sigma_1)$ holds. 
-
-This is the essence of \emph{local reasoning}: to reason about the behavior of a command in a complete state, we decompose the complete state into a local part and a frame part, reason only about the behavior of the command with respect to the local part, and finally draw conclusions about the behavior of the command in the complete state based on this local reasoning. A command that obeys the safety monotonicity and frame properties---with respect to particular notion of decomposition---is said to be \emph{local}.
-
-If the commands of a programming language are local, then the principle of local reasoning can be codified into a program logic by way of a \emph{frame rule}, which allows generalization from local to global program specifications. This will be considered in more detail in Section~\ref{sec:specifications}. 
-
-In the next few sections, we develop variety of notions of state decomposition---which we shall call \emph{separations}---for which the commands of the programming language described in Section~\ref{sec:programming-language} are local. 
-
-\subsubsection{The Uniprocessor Case}
-\label{sec:uniprocessor-separation}
-
-Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
-
-Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \step \abort\] then also \[\cload{x}{y},(s,\mu_G) \step \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
-
-What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
-    (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
-    \bot & \text{otherwise.}
-\end{cases}\] Because the separation is only defined for heaps with disjoint domains, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
-\Calc{
-
-    $\dom{h_G \override \funof{b_G}}$
-
-    \conn{=}{$(h_G,b_G) = (h_F,b_F) \bullet (h_L,b_L)$}
-
-    $\dom{(h_F \cup h_L) \override \funof{(b_F \lapp b_L)}}$
-
-    \conn{=}{$\funof{m \lapp n} = \funof{m} \override \funof{n}$}
-
-    $\dom{(h_F \cup h_L) \override (\funof{b_F} \override \funof{b_L})}$
-
-    \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
-
-    $\dom{h_F} \cup \dom{h_L} \cup \dom{\funof{b_F}} \cup \dom{\funof{b_L}}$
-
-    \conn{\supseteq}{set theory}
-
-    $\dom{h_L} \cup \dom{\funof{b_L}}$
-
-     \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
-
-    $\dom{h_L \override \funof{b_L}}$
-    
-} 
-The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
-\Calc{
-  
-    $(h_L \override \funof{b_L})(\ell)$
-
-    \conn{=}{$\dom{h_F} \cap \dom{h_L} = \nil$}
-
-    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
-
-    \conn{=}{$b_F = \lnil$}
-
-    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
-} Second, assuming $h_L = \nil$: 
-\Calc{
-  
-    $(h_L \override \funof{b_L})(\ell)$
-
-    \conn{=}{$\ell \in\dom{g}$ and $f \subseteq f'$ implies $(f\override g)(\ell) = (f'\override g)(\ell)$}
-
-    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
-
-    \conn{=}{$\funof{n}(\ell) = v$ implies $\funup{m \lapp n}(\ell) = v$}
-
-    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
-}
-
-An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
 
 
 \subsubsection{Weak Interleaving Separation}
