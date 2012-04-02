@@ -306,7 +306,7 @@ Boolean expressions are terms that denote truth values. Their language is given 
 \end{align*}
 
 
-\chapter{A Sequential, Uniprocessor Program Logic}
+\chapter{A Sequential Program Logic}
 \label{ch:uniprocessor}
 
 In this chapter I describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer. This is considerably simpler than the development of a program logic for a weak-memory multi-processor programming model, but many of the most difficult issues in that task can be explained more simply in a single-processor setting. 
@@ -574,10 +574,123 @@ The frame property, however, does not hold for this definition. Consider, e.g., 
 
 An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
 
-\section{Specifications}
-\label{sec:sequential-specification}
+\section{Sequential Specifications}
+\label{sec:sequential-specifications}
 
-\chapter{A Concurrent, Multiprocessor Program Logic}
+The language of specifications is given by the following schema: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. 
+
+\subsection{Semantics}
+\label{sec:sequential-specification-semantics}
+
+A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $P$, then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
+
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall \sigma \sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,Q}.\]
+
+We now give a formal definition of $\safe{n}{c,s,\mu,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
+    \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
+
+    \item For all $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu)$, $c,(s,\mu_1) \nostep \abort$.
+
+    \item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
+        \item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
+        \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
+    \end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
+        \item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
+        \item $\mu'_F \taurefines \mu_F$, and
+        \item $\safe{n}{c',s',\mu',Q}$.
+    \end{enumerate}
+
+\end{enumerate}
+
+The definition of the predicate above differs significantly from Vafeiadis' in that the frame state $\mu_F$ is allowed to change from one step to another, but only by making silent transitions. 
+
+\subsection{Proof Theory}
+
+The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+        \infax[skip]{\triple{P}{\cskip}{P}}
+        \vspace{1em}
+        
+        \infax[assume]{\triple{!b \disj P}{\cassume{b}}{P}}
+        \vspace{1em}
+        
+        \infax[assert]{\triple{b \conj P}{\cassert{b}}{P}}
+        \vspace{1em}
+        
+        \infax[assign]{\triple{P\subst{e}{x}}{\cassign{x}{e}}{P}}
+        \vspace{1em}
+        
+        \infax[load-buf]{\triple{(e \fwriteu e') \fsseq P}{\cload{x}{e}}{((e \fwriteu e') \fsseq P)\conj x = e'}}
+        \vspace{1em}
+        
+        \infax[load-mem]{\triple{(e \fpointsto e') \fsseq P}{\cload{x}{e}}{((e \fpointsto e') \fsseq P) \conj x = e'}}
+        \vspace{1em}
+        
+        \infax[store]{\triple{(e \fpointsto e'') \fseq P}{\cstore{e}{e'}}{(e 
+        \fpointsto e'') \fseq P \fseq (e \fwriteu e')}}
+        \vspace{1em}
+        
+        \infax[fence]{\triple{P}{\cfence}{P \conj \fbaru}}
+        \vspace{1em}
+
+    \end{minipage}}
+    \caption{\label{fig:sequential-axioms}Axioms}
+\end{figure}
+
+The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as usual. The two axioms for $\cload{x}{e}$ reflect the fact that the write to be loaded may reside either in the buffer or in the heap. The schematic variable $P$ may be used to describe buffered writes to locations other than $e$ that are more recent than the write to $e$ being loaded, but not more recent writes to $e$. 
+
+The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
+    \infax[store-buf]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwrite{i} e'}}
+
+    \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fpointsto e'') \fsseq P) \fseq e \fwrite{i} e'}}
+These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
+
+\begin{figure}[p]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+
+        \infrule[disj]{\triple{P}{c}{Q} \text{~~~} \triple{P'}{c}{Q}}{\triple{P \disj P'}{c}{Q}}
+        \vspace{1em}
+
+        \infrule[ex]{\triple{P}{c}{Q} \text{~~~} x \notin \fv{c,P}}{\triple{\exists x \st P}{c}{Q}}
+        \vspace{1em}
+
+        \infrule[frame-wi]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fhash P}{c}{R \fhash Q}}
+        \vspace{1em}
+
+        \infrule[frame-si]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fsep P}{c}{R \fsep Q}}
+        \vspace{1em}
+
+        \infrule[frame-ws]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fseq P}{c}{R \fseq Q}}
+        \vspace{1em}
+
+        \infrule[frame-ss]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fsseq P}{c}{R \fsseq Q}}
+        \vspace{1em}
+
+        \infrule[cons]{P \sentails P' \text{~~~}\triple{P'}{c}{Q'} \text{~~~} Q' \sentails Q}{\triple{P}{c}{Q}}
+        \vspace{1em}
+
+        \infrule[seq]{\triple{P}{c}{R} \text{~~~} \triple{R}{c'}{Q}}{\triple{P}{\cseq{c}{c'}}{Q}}
+        \vspace{1em}
+
+        \infrule[choice]{\triple{P}{c}{Q} \text{~~~} \triple{P}{c'}{Q}}{\triple{P}{\cchoice{c}{c'}}{Q}}
+        \vspace{1em}
+
+        \infrule[loop]{\triple{P}{c}{P}}{\triple{P}{\cloop{c}}{P}}
+        \vspace{1em}
+
+    \end{minipage}}
+    \caption{\label{fig:sequential-inference-rules}Sequential inference rules}
+\end{figure}
+
+The inference rules of the sequential logic are given in Figure~\ref{fig:sequential-inference-rules}. The logical rules require little explanation. Observe that there is a single left-side frame rule for each of the four separating conjunctions. The strong interleaving conjunction is commutative, and so with the rule of consequence effectively provides a right-side frame rule as well. The structural rules are as in Hoare Logic. There has been no attempt to provide a conjunction rule because there has been no attempt as yet to identify a suitable notion of precision~\cite{DBLP:journals/entcs/GotsmanBC11}. 
+
+\chapter{A Concurrent Program Logic}
 \label{ch:multiprocessor}
 
 This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 

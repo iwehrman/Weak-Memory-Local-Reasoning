@@ -138,9 +138,12 @@
 \newcommand{\bexpt}{\ensuremath{\mathbf{true}}}
 \newcommand{\bexpf}{\ensuremath{\mathbf{false}}}
 
+
 \newcommand{\spec}[4]{\ensuremath{#1\;\vdash\;\set{#2}\;#3\;\set{#4}}}
 \newcommand{\truespec}[4]{\ensuremath{#1\;\models\;\set{#2}\;#3\;\set{#4}}}
 \newcommand{\andif}{\ensuremath{\text{\;\;\;and\;\;\;}}}
+\newcommand{\triple}[3]{\spec{}{#1}{#2}{#3}}
+\newcommand{\truetriple}[3]{\truespec{}{#1}{#2}{#3}}
 
 \newcommand{\safe}[2]{\ensuremath{\mathsf{safe}_{#1}(#2)}}
 
