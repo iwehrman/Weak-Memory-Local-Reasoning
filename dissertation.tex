@@ -7,6 +7,8 @@
 \usepackage{enumerate}
 \usepackage{graphicx}
 \usepackage[backgroundcolor=white,linecolor=black]{todonotes}
+\usepackage{tocbibind}
+
 
 \synctex=1
 
@@ -214,6 +216,8 @@ Transitions (labeled by memory events) between states indicate the possibility a
 
 This specification bounds the sort of memory events that can occur in program executions, but it does not give meaning to the programs of a particular language. The semantics of the programming language used in this project is however guided by the memory model, and it ought be possible to prove that it respects the bounds of the model. But this is not the focus of this project; and, even without such a correspondence proof, it will still be clear that the semantics of the programming language is manifestly weak. 
 
+\chapter{Basics}
+\label{ch:basics}
 
 \section{Mathematical Preliminaries and Notation}
 
@@ -277,18 +281,7 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 	\caption{\label{fig:universes}Universal Sets}
 \end{figure}
 
-
-\chapter{A Sequential, Uniprocessor Program Logic}
-\label{ch:uniprocessor}
-
-In this chapter I describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer. This is considerably simpler than the development of a program logic for a weak-memory multi-processor programming model, but many of the most difficult issues in that task can be explained more simply in a single-processor setting. 
-
-A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously in \cite{wmsldetails}. 
-
-\section{Sequential Programs}
-\label{sec:sequential-programs}
-
-\subsection{Expressions and Stacks}
+\section{Expressions and Stacks}
 \label{sec:expressions}
 
 Expressions are terms that denote values, which in this development are just integers. Hence, they are also used later on to denote memory locations and processor identifiers. 
@@ -311,6 +304,17 @@ Boolean expressions are terms that denote truth values. Their language is given 
         0 &\text{ otherwise.}
     \end{cases}
 \end{align*}
+
+
+\chapter{A Sequential, Uniprocessor Program Logic}
+\label{ch:uniprocessor}
+
+In this chapter I describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer. This is considerably simpler than the development of a program logic for a weak-memory multi-processor programming model, but many of the most difficult issues in that task can be explained more simply in a single-processor setting. 
+
+A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously in \cite{wmsldetails}. 
+
+\section{Sequential Programs}
+\label{sec:sequential-programs}
 
 \subsection{Sequential Commands and Uniprocessor States}
 \label{sec:sequential-commands}
@@ -1436,5 +1440,29 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 \begin{proof}
 	Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
 \end{proof}
+
+\section{Summary of Notation}
+
+\begin{figure}
+\centering
+\begin{tabular}{l|l}
+Object & Symbols \\  
+\hline 
+Identifiers (aka variables) & $x,y,z,t,u,v$ \\
+Processor identifiers & $i,j,k$ \\ 
+Memory addresses (aka locations) & $\ell$ \\ 
+Lists (generally) & $l,m,n$ \\ 
+Lists (as write buffers) & $b$ \\ 
+Stacks & $s$ \\ 
+Memory systems & $\mu$ \\ 
+States & $\sigma$ \\ 
+Expressions & $e,f$ \\ 
+Primitive commands & $p$ \\
+Commands & $c$ \\ 
+Assertions (generally) & $P,Q,R$ \\
+Assertions (as invariants) & $I,J$ \\
+\end{tabular}
+\caption{Symbols and the objects they denote\label{fig:objects-and-symbols}}
+\end{figure}
 
 \end{document} 
