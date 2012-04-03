@@ -1406,9 +1406,9 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 \begin{enumerate}
 	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
 
-    \item Memory management commands  \cite{wmsldetails,lola11}
+    \item Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}. In particular, counting permissions can unify the the weak and strong sequential conjunctions, and fractional permissions may be able to unify the weak and strong parallel conjunctions. Fractions are also needed for the message passing example. 
 
-    \item Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}
+    \item Memory management commands \cite{wmsldetails,lola11}. Counting permissions are useful for these commands. 
 
     \item Negation and implication, or lack thereof. Maybe also discuss the connection to the Alexandrov topology, etc. The negation of a closed set is not a closed set. Phase semantics of Linear Logic? 
 
