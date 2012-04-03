@@ -789,7 +789,7 @@ Note that the notion of machine state given here differs from that used to defin
 
 Second, the global lock value from the memory model replaced in the machine model by a set of ``blocked'' processors, which are not allowed to access main memory. In the memory model an available lock indicates that no processors are blocked, while all lock held by processor $i$ indicates that all processors but $i$ are blocked. The machine model is more general, allowing an arbitrary subset of processors to be blocked. 
 
-A partial state is called \emph{complete} if its set of blocked processors is a valid representation of a global lock, insofar as no processors are blocked when the lock is free, and all processors but $i$ are blocked when $i$ holds the lock: \[ \complete{s,h,B,k} \iffdef k = \nil \disj \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}.\]
+A partial memory system is called \emph{complete} if its set of blocked processors is a valid representation of a global lock, insofar as no processors are blocked when the lock is free, and all processors but $i$ are blocked when $i$ holds the lock: \[ \complete{h,B,k} \iffdef k = \nil \disj \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}.\]
 
 The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics} below. 
 
