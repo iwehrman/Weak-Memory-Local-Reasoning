@@ -248,7 +248,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
 \subsection{Lists}
 \label{sec:lists}
 
-The empty list is denoted by $\lnil$, the singleton list by $\lsingle{o}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for object $o$ and lists $l,l'$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
+The empty list is denoted by $\lnil$, the literal list by $\lsingle{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
 
 For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
 	b &\text{ if $l = l' \lapp \lsingle{(x,b)}$}\\
@@ -595,6 +595,34 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
     \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
 \end{figure}
 
+We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef \setof{\sigma}{\sigma \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
+    P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
+    P \sequiv P' \iffdef \pred{P} = \pred{P'}.
+\end{align*} 
+
+\paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+
+Consider, as a significant example, the set of states that satisfy the atomic formula $e \fwriteu e'$. These states may be classified as follows: \begin{enumerate}
+    \item states that describe a single buffered write, and 
+    \item states in which that write has been committed to memory. 
+\end{enumerate} Consider, as a less trivial example, the states that satisfy the compound assertion $1 \fwriteu 3 \fseq 1 \fwriteu 4$. The intuitive ``initial'' state is one with two successive buffered writes to location $1$. The states of the earlier left-side write assertion include ones in which the buffered write has and has not committed, and similarly for the later right-side write assertion. When these two classes of states are combined with the sequential separation function, three classes of states result: those in which neither write has flushed, those in which only the earlier write has flushed, and those in which both have flushed. Crucially, the definition of weak sequential separation rules out the case in which the later write has flushed the later but not the earlier write. This is summarized in Figure~\ref{fig:leads-to-seq-example}. This results in a set of states that is closed w.r.t.~the flushing relation. 
+ 
+\begin{figure}[ht]
+    \centering
+    \begin{tabular}{c|c|c}
+        $1 \fwriteu 3$ &  $1 \fwriteu 4$ & $1 \fwriteu 3 \fseq 1 \fwriteu 4$\\ \hline
+        $(\nil,\lsingle{(1,3)})$ & $(\nil,\lsingle{(1,4)})$ & $(\nil,\lsingle{(1,3),(1,4)})$\\ 
+        $(1 \mapsto 3,\lnil)$ & $(\nil,\lsingle{(1,4)})$ & $(1 \mapsto 3,\lsingle{(1,4)})$\\ 
+        $(\nil,\lsingle{(1,3)})$ & $(1 \mapsto 4,\lnil)$ & $\bot$ \\
+        $(1 \mapsto 3,\lnil)$ & $(1 \mapsto 4,\lnil)$ & $(1 \mapsto 4,\lnil)$\\ 
+    \end{tabular}
+    \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
+\end{figure}
+
+The requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe empty buffers, $\fbaru$, as well as empty heaps and empty buffers, $\femp$. An alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
+
+Also note that it is important to define the satisfaction relation so that it preserves the flushing closure of atomic formulas, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ is not closed w.r.t.~flushing, then \[\pred{\fbaru \conj e \fwriteu e'} = \pred{\fbaru} \cap \pred{e \fwriteu e'} = \nil,\] and hence so too would be its flushing closure.  
+
 \section{Sequential Specifications}
 \label{sec:sequential-specifications}
 
@@ -605,7 +633,7 @@ The language of specifications is given by the following schema: \[ \triple{P}{c
 
 A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $P$, then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
 
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall \sigma \sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,Q}.\]
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st \sigma \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
 
 We now give a formal definition of $\safe{n}{c,s,\mu,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
     \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
@@ -665,9 +693,9 @@ The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.
 The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as usual. The two axioms for $\cload{x}{e}$ reflect the fact that the write to be loaded may reside either in the buffer or in the heap. The schematic variable $P$ may be used to describe buffered writes to locations other than $e$ that are more recent than the write to $e$ being loaded, but not more recent writes to $e$. 
 
 The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
-    \infax[store-buf]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwrite{i} e'}}
+    \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwriteu e'}}
 
-    \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fpointsto e'') \fsseq P) \fseq e \fwrite{i} e'}}
+    \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}}{((e \fpointsto e'') \fsseq P) \fseq e \fwriteu e'}}
 These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
 
 \begin{figure}[p]
@@ -1132,38 +1160,12 @@ We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef 
 	P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
-\paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
 
 \begin{lemma}[Flushing closure]
 	\label{lem:flushing-closure}
 	If $s,\mu \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu' \sentails P$. 
 \end{lemma}
-
-Consider, as a significant example, the set of states that satisfy the atomic formula $e \fwrite{e'} e''$. These states may be classified as follows: \begin{enumerate}
-	\item states that describe a single buffered write, and 
-	\item states in which that write has been committed to memory. 
-\end{enumerate} Note that the lock value is unrestricted for the former states, but in the latter the lock is restricted to those processor values for which the buffer is considered live---because a write buffered on a live processor may commit nondeterministically, but a write buffered on a non-live processor may not. 
-
-Consider as another example the states that satisfy the compound assertion $1 \fwrite{2} 3 \fseq 1 \fwrite{2} 4$. The intuitive ``initial'' state is one with two successive writes to location $1$ buffered on processor $2$. Restricting our attention to just those states in which the lock value is $\bot$, the states of the earlier left-side write assertion include ones in which the buffered write has and has not committed, and similarly for the later right-side write assertion. When these two classes states are combined with the sequential separation, three classes of states remain: those in which neither write has flushed, those in which only the earlier write has flushed, and those in which both have flushed. Crucially, the definition of weak sequential separation rules out the case in which the later write has flushed but not the earlier write. This is summarized in Figure~\ref{fig:leads-to-seq-example}. Note that this results in a set of states that is closed w.r.t.~the flushing relation. 
- 
-\begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-	\begin{tabular}{c|c|c}
-		$1 \fwrite{2} 3$ &  $1 \fwrite{2} 4$ & $(1 \fwrite{2} 3) \fseq (1 \fwrite{2} 4)$\\ \hline
-		$(s,\lnil,2 \mapsto \lsingle{(1,3)},\bot)$ & $(s,\lnil,2 \mapsto \lsingle{(1,4)},\bot)$ & $(s,\lnil,2 \mapsto \lsingle{(1,3)} \lapp \lsingle{(1,4)},\bot)$\\ 
-		$(s,\lsingle{(1,3)},\nil,\bot)$ & $(s,\lnil,2 \mapsto \lsingle{(1,4)},\bot)$ & $(s,\lsingle{(1,3)},2 \mapsto \lsingle{(1,4)},\bot)$\\ 
-		$(s,\lnil,2 \mapsto \lsingle{(1,3)},\bot)$ & $(s,\lsingle{(1,4)},\nil,\bot)$ & -- \\
-		$(s,\lsingle{(1,3)},\nil,\bot)$ & $(s,\lsingle{(1,4)},\nil,\bot)$ & $(s,\lsingle{(1,3)} \lapp \lsingle{(1,4)},\nil,\bot)$\\ 
-	\end{tabular}
-	\end{minipage}}
-	\caption{\label{fig:leads-to-seq-example}Assertion semantics example}
-\end{figure}
-
-The requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe empty buffers, $\fbar{e}$, as well as empty heaps and empty buffers, $\femp$. An alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
-
-Also note that it is important to define the satisfaction relation so that it preserves the flushing closure of atomic formulas, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwrite{i} e'}$ is not closed w.r.t.~flushing, then $\pred{\fbar{i} \conj e \fwrite{i} e'}$ is empty, and hence so too would be its flushing closure.  
 
 \subsection{Algebra}
 \label{sec:algebra}
