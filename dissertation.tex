@@ -342,6 +342,7 @@ A \emph{uniprocessor memory system} is a pair $(h,B)$, where: \begin{itemize}
     \item $B : \listof{(\setlocations \times \setvalues)}$ is a write buffer;
 \end{itemize}
 \end{definition} 
+The set of uniprocessor memory systems is abbreviated as $\setmemorysystems$.
 The pair that consists of a stack $s$, as defined in Section~\ref{sec:expressions}, which assigns values to identifiers, and a memory system $\mu$ is called a \emph{state}, typically abbreviated by $\sigma$. The collection of states is written $\setstates$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
 
 Note that the notion of machine state given here differs from that used to define the memory model. First and most obviously, there is only a single write buffer, because in this section we are discussing only the exection of sequential programs on uniprocessor machines. Second, the global lock value from the memory model is omitted because there is only one write buffer, and hence commands have no need to claim sole ownership of the memory system. Third, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
@@ -749,10 +750,6 @@ This chapter describes a program logic for a parallel programming language model
 
 In this section I describe a simplified C-like structured programming language. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
 
-\subsection{Expressions and Stacks}
-
-Expressions and stacks are exactly the same for the parallel, multiprocessor programming language as for the sequential, single-processor language, as described in Section~\ref{sec:expressions}. 
-
 \subsection{Commands and States}
 \label{sec:commands-and-states}
 
@@ -776,17 +773,17 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 
 The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p : \sigma \pstep{i} \sigma'. \] An informal reading of this quadruple indicates that when $p$ is executed on processor $i$ in state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p : \sigma \pstep{i} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
-To defined these relations formally, we must first define the notion of a machine state. 
+To defined these relations formally, we must first define the notions of (partial) memory system and machine state. 
 
 \begin{definition}
-A partial machine state is a four-tuple $(s,h,B,k)$, where: \begin{itemize}
-	\item $s : \setidentifiers \tfun \setvalues$ is a stack, as defined in Section~\ref{sec:expressions};
+A partial memory system is a triple $(h,B,k)$, where: \begin{itemize}
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
 	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; and
 	\item $k : \powerset{\setprocessors}$ is a set of blocked processors. 
 \end{itemize}
 \end{definition} 
-The collection of states is written $\setstates$. We sometimes refer to the three-tuple of components $(h,B,k)$ as a \emph{memory system} $\mu$, and refer to a state as a pair $(s,\mu)$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
+The set of uniprocessor memory systems is abbreviated as $\setmemorysystems$.
+The pair that consists of a stack $s$, as defined in Section~\ref{sec:expressions}, which assigns values to identifiers, and a memory system $\mu$ is called a \emph{machine state}, typically abbreviated by $\sigma$. The collection of states is written $\setstates$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
 
 Note that the notion of machine state given here differs from that used to define the memory model. First, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
 
