@@ -238,12 +238,30 @@ For any set $A$, we write $\ident{A}$ for the identity relation on $A$. For a bi
 For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \lambda x . \begin{cases}
 	b & \text{if $x = a$} \\
 	f(x) & \text{otherwise.}
-\end{cases}\] We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. When convenient, we also write $f_a$ as shorthand for $f(a)$. $a \mapsto b$ is shorthand for the partial function $f$ such that $f(a) = b$ and is undefined otherwise. For $A' \subseteq A$, $\restrict{f}{A'}$ is the restriction of $f$ to domain $A'$. 
+\end{cases}\] 
+
+We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \lambda x . \begin{cases}
+    f(x) & \text{if $x \in \dom{f}$} \\
+    g(x) & \text{else if $x \in \dom{g}$} \\
+    \bot & \text{otherwise.}
+\end{cases}\]
+
+ When convenient, we also write $f_a$ as shorthand for $f(a)$. $a \mapsto b$ is shorthand for the unique partial function $f$ such that $f(a) = b$ and is undefined otherwise. For $A' \subseteq A$, $\restrict{f}{A'}$ is the restriction of $f$ to domain $A'$. 
 
 For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \lambda x . \begin{cases}
 	g(x) & \text{if $x \in \dom{g}$} \\
 	f(x) & \text{otherwise.}
-\end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Note also that if $f$ and $g$ have disjoint domains then $f \override g = f \uplus g$. 
+\end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Some additional properties follow in Lemma~\ref{lem:override}. 
+
+\begin{lemma}
+    \label{lem:override}
+    Let $f,g,h : A \pfun B$. 
+    \begin{enumerate}
+        \item $f \override (g \override h) = (f \override g) \override h$. 
+        \item $\dom{f \override g} = \dom{f} \cup \dom{g}$. 
+        \item If $\dom{f} \cap \dom{g} = \nil$ then $f \override g = f \uplus g$, and hence $f \override g = g \override f$. 
+    \end{enumerate}
+\end{lemma}
 
 \subsection{Lists}
 \label{sec:lists}
@@ -264,6 +282,17 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 \end{align*}
 
 We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$. 
+
+As for function overriding, list overriding has the basic property that, if $a \in dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
+\begin{lemma}
+    \label{lem:list-override}
+    Let $l,m,n : \listof{A \times B}$. 
+    \begin{enumerate}
+        \item $l \override (m \override n) = (l \override m) \override n$. 
+        \item $\dom{\funof{m \override n}} = \dom{\funof{m}} \cup \dom{\funof{n}}$. 
+        \item If $\dom{\funof{m}} \cap \dom{\funof{n}} = \nil$ then $m \override n = m \merge n$, and hence $m \override n = n \override m$. 
+    \end{enumerate}
+\end{lemma}
 
 \section{Universes}
 
@@ -694,7 +723,7 @@ The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.
 The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as usual. The two axioms for $\cload{x}{e}$ reflect the fact that the write to be loaded may reside either in the buffer or in the heap. The schematic variable $P$ may be used to describe buffered writes to locations other than $e$ that are more recent than the write to $e$ being loaded, but not more recent writes to $e$. 
 
 The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
-    \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwriteu e'}}
+    \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwriteu e'') \fsseq P) \fseq e \fwriteu e'}}
 
     \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}}{((e \fpointsto e'') \fsseq P) \fseq e \fwriteu e'}}
 These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
