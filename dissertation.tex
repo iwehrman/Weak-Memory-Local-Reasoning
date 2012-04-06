@@ -424,7 +424,7 @@ The definition of the semantic relation for primitive commands is given in Figur
 
 The language of commands is defined by the following grammar: \[ \comms~c \bnfdef p_e \bnfbar (\cseq{c}{c'}) \bnfbar (\cchoice{c}{c'}) \bnfbar \cloop{c},\] where $p$ is a primitive command and $e$ is an expression which (hopefully) denotes a processor identifier.  
 
-The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration.
+The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. A configuration $\mathcal{C}$ is \emph{safe} if $\mathcal{C} \nostep \abort$. 
 
 The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,b \lapp \lsingle{(\ell,v)}) \taustep (\funup{h}{\ptup{\ell}{v}},b) 
 \end{align*} We write $\taurefines$ as shorthand for the reflexive-transitive closure $\taustep$. 
@@ -1539,7 +1539,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
 \begin{lemma}
     \label{lem:store-safe}
-    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, if $x \notin \fv{e,e',e'',f,P}$ then $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. 
+    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. 
 \end{lemma}
 
 \begin{proof}
@@ -1554,9 +1554,39 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
         In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))}$. 
 
-        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and $\mu_1 = \mu_0 \fseq $... (finish me)
-         % assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_j$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $(s',\mu'_J) \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$. Finally, $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$ follows from Lemma~\ref{lem:skip-safe} because $(s',\mu') = (\funup{s}{\ptup{x}{v}},\mu) \sentails ((e \fwrite{e'} e'') \fsseq P \conj x = e'')$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fsseq P)$ with $x \notin \fv{e,e',e'',P}$.  
+        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and $\mu_1 = \mu_0 \fseq (\nil,\beta,\nil)$, where $\beta$ defined by: \[ \beta \eqdef \lambda x . \begin{cases}
+          \ext{s}(f) & \text{if $x = \ext{s}(e)$} \\ 
+          \lnil & \text{otherwise.}
+        \end{cases}\] From $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$ we have:        
+        \Calc{ 
+
+          $\mu_1$
+
+          \conn{=}{definition}
+
+          $\mu_0 \fseq (\nil,\beta\nil)$
+
+          \conn{\in}{assumption $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$}
+
+          $(\mu_J \fsep (\mu_F \fhash \mu)) \fseq (\nil,\beta,\nil)$
+
+          \conn{\subseteq}{algebra of separation functions}
+
+          $\mu_J \fsep (\mu_F \fhash (\mu \fseq (\nil,\beta,\nil))) $
+
+        }
+
+         Finally, $\safe{n}{\cskip,s,(\mu \fseq (\nil,\beta,\nil)),J,((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))}$ follows from Lemma~\ref{lem:skip-safe} because $(s,(\mu \fseq (\nil,\beta,\nil))) \sentails ((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fseq P)$.  
     \end{enumerate}
+\end{proof}
+
+\begin{lemma}
+    \label{lem:store-sound}
+    $\truespec{J}{\left(e \fwrite{e'} e''\right) \fseq P}{\cstore{e}{f}_{e'}}{\left(e \fwrite{e'} e''\right) \fseq P \fseq \left(e \fwrite{e'} f\right)}$. 
+\end{lemma} 
+
+\begin{proof}
+    Immediate from Lemma~\ref{lem:store-safe}. 
 \end{proof}
 
 \begin{lemma}
