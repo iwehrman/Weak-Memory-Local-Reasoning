@@ -1600,24 +1600,55 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \begin{enumerate}
         \item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-        \item There are no aborting steps possible from command $\clock{e}$. 
+        \item There are no aborting steps possible from command $\clock_e$. 
 
         \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,\flock{e}}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-lock}. 
 
-        In the case of \textsc{c-tau}, $c' = (\clock_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails \femp$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,\flock{e}}$. 
+        In the case of \textsc{c-tau}, $c' = (\clock_{e})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails \femp$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,\flock{e}}$. 
 
-        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\set{\ext{s}(e')})$, assuming $\mu_0 = (h_0,B_0,k_0)$. By assumption, $k_0 = \nil$, and so from $\mu_0  \in (\mu_J \fsep (\mu_F \fhash \mu))$, we have that $\mu = (h,B,\nil)$. Let $\mu' = (h,b,\set{\ext{s}(e')})$. Then from $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$ and $k_0 = \nil$, we also have $\mu_1 \in \mu_J \fsep (\mu_F \fhash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\flock{e}}$ follows from Lemma~\ref{lem:skip-safe} because $(s,\mu') \sentails \flock{e}$, which itself is because $(s,\mu) \sentails \femp$.  
+        In the case of \textsc{c-prim} and \textsc{p-lock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\setprocessors \setminus \set{\ext{s}(e)})$, assuming $\mu_0 = (h_0,B_0,k_0)$. By assumption, $k_0 = \nil$, and so from $\mu_0  \in (\mu_J \fsep (\mu_F \fhash \mu))$, we have that $\mu = (h,B,\nil)$. Let $\mu' = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$. Then from $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$ and $k_0 = \nil$, we also have $\mu_1 \in \mu_J \fsep (\mu_F \fhash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\flock{e}}$ follows from Lemma~\ref{lem:skip-safe} because $(s,\mu') \sentails \flock{e}$, which itself is because $(s,\mu) \sentails \femp$.  
 
     \end{enumerate}
 \end{proof}
 
 \begin{lemma}
     \label{lem:lock-sound}
-    $\truespec{J}{\femp}{\clock_{e'}}{\flock{e}}$. 
+    $\truespec{J}{\femp}{\clock_{e}}{\flock{e}}$. 
 \end{lemma} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:lock-safe}. 
+\end{proof}
+
+\begin{lemma}
+    \label{lem:unlock-safe}
+    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \flock{e}$, \\ $\safe{n}{\cunlock_{e},s,\mu,J,\femp}$. 
+\end{lemma}
+
+\begin{proof}
+  By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
+
+    \begin{enumerate}
+        \item The command is not equal to $\cskip$, so this part holds vacuously. 
+
+        \item There are no aborting steps possible from command $\cunlock_e$. 
+
+        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\complete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,\flock{e}}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-unlock}. 
+
+        In the case of \textsc{c-tau}, $c' = (\clock_{e})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails \flock{e}$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,\femp}$. 
+
+        In the case of \textsc{c-prim} and \textsc{p-unlock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\nil)$, assuming $\mu_0 = (h_0,B_0,k_0)$. By assumption, $k_0 = \setprocessors \setminus \set{\ext{s}(e)}$, and so from $\mu_0  \in (\mu_J \fsep (\mu_F \fhash \mu))$, we have that $\mu = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$. Let $\mu' = (h,B,\nil)$. Then from $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$ and $k_0 = \setprocessors \setminus \set{\ext{s}(e)}$, we also have $\mu_1 \in \mu_J \fsep (\mu_F \fhash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\femp}$ follows from Lemma~\ref{lem:skip-safe} because $(s,\mu') \sentails \femp$, which itself is because $(s,\mu) \sentails \flock{e}$.  
+
+    \end{enumerate}
+\end{proof}
+
+\begin{lemma}
+    \label{lem:unlock-sound}
+    $\truespec{J}{\flock{e}}{\cunlock_{e}}{\femp}$. 
+\end{lemma} 
+
+\begin{proof}
+    Immediate from Lemma~\ref{lem:unlock-safe}. 
 \end{proof}
 
 \begin{lemma}
