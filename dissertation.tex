@@ -240,7 +240,7 @@ For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, w
 	f(x) & \text{otherwise.}
 \end{cases}\] 
 
-We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \lambda x . \begin{cases}
+We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$,i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \lambda x . \begin{cases}
     f(x) & \text{if $x \in \dom{f}$} \\
     g(x) & \text{else if $x \in \dom{g}$} \\
     \bot & \text{otherwise.}
@@ -509,9 +509,16 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 \subsection{Uniprocessor Predicates}
 \label{sec:uniprocessor-predicates}
 
-Assertions denote particular sets of uniprocessor machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
+Assertions are syntactic constructs, which are used to denote sets of uniprocessor machine states. The particular sets of states that are denoted by each assertion will be defined later, in Section~\ref{sec:uniprocessor-satisfaction}. It is worth noting now, though, that the sets of states assertions denote have a special structure: namely, they are down-closed w.r.t.\ the flushing relation, $\taustep$. I.e., if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. We call sets with this structure \emph{predicates}. 
+
+For example, the set $S_0 \eqdef \setof{(s,\nil,\lsingle{(\ell,v)})}{s \in \setstacks}$, which consists of states that have a single buffered write, is not closed w.r.t.\ flushing, because that write may nondeterministically commit to memory: \[(\nil,\lsingle{(\ell,v)}) \taustep (\ell \mapsto v,\lnil),\] according to the definition of the flushing relation $\taustep$ in Section~\ref{sec:sequential-programs}. On the other hand, the set $S_1 \eqdef \setof{(s,\ell \mapsto v,\lnil)}{s \in \setstacks}$ is closed w.r.t.\ flushing; each state in $S_1$ is completely flushed, and so can take no flushing steps. And so too is the set $S_0 \cup S_1$, because elements of $S_0$ may step to elements of $S_1$. 
+
+Predicates, as flushing-closed sets of states, are especially useful for the specification program behavior. Suppose we wish to show that some configuration $(c,\sigma)$ is safe and always terminates in some state from a set $S$. If $S$ is not flushing closed, then it is not sufficient to show, whenever $(c,\sigma) \rtstep (\cskip,\sigma')$, that $\sigma' \in S$. For it could be the case that \[ (c,\sigma) \rtstep (\cskip,\sigma') \step (\cskip,\sigma''),\] with $\sigma'' \notin S$. If, on the other hand, $S$ is a predicate, and hence is flushing-closed, then it is sufficient to show that fully evaluated commands result in the correct states, because any further state transitions are guaranteed to remain within the bounds of $S$. 
+
+An explicit goal of the semantics of assertions in Section~\ref{sec:uniprocessor-satisfaction} will be to ensure that the sets of states they denote are predicates. This has the effect of restricting the language of program specifications to statements that are \emph{stable} w.r.t.\ the nondeterministic flushing behavior of programs. As indicated above, reasoning about these specification may be considerably simpler than the general case. 
 
 \subsection{Locality}
+\label{sec:locality}
 
 Perhaps we wish to show that result of evaluating a command $c$ in a particular state $\sigma$ is always included in a predicate $S$---i.e., that the configuration $c,\sigma$ does not abort, and that if $c,\sigma \rtstep \cskip,\sigma'$ then $\sigma' \in S$. Suppose the elements of the predicate $S$ are all composed of elements from some other predicates $S_0$ and $S_1$---i.e., $\sigma \in S$ iff, for some $\sigma_0 \in S_0$ and $\sigma_1 \in S_1$, $\sigma = \sigma_0 \bullet \sigma_1$---and the initial state $\sigma = \sigma_0 \bullet \sigma_1$ with $\sigma_0 \in S_0$. In that case, we may wish to reduce the original problem to the potentially simpler task of showing that the result of evaluating $c$ in state $\sigma_1$ is always included in $S_1$---i.e., showing that the configuration $c,\sigma_1$ does not abort and that if $c,\sigma_1 \rtstep \cskip,\sigma'_1$ then $\sigma'_1 \in S_1$. 
 
