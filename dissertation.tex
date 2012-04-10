@@ -552,70 +552,75 @@ Unlike for the heap separation function, the heap-buffer separation function map
 
 We can informally observe locality as follows. For safety monotonicity, note that the domain of the memory systems $(\mu_0 \fsep \mu_1)$ are supersets of the domain of $\mu_1$, and so if, e.g., a load command does not abort with a memory error in $\mu_1$ then neither will it in $(\mu_0 \fsep \mu_1)$. For the frame property, a load in $\mu_0 \fsep \mu_1$ does not change the memory system, and since we have assumed that it does not abort in $\mu_1$ alone, then it will have the same result in $\mu_1$ as in $(\mu_0 \bullet \mu_1)$. For example, with $\mu_0 = (\nil,\lsingle{(\ell,v)})$, $\mu_1 = (\nil,\lsingle{(m,u)})$ and the load command $c = \cload{x}{\ell}$, it is clear that, for any $\mu \in \mu_0 \fsep \mu_1$, if $c,(s,\mu) \rtstep \cskip,(s',\mu')$ then also $c,(s,\mu_1) \rtstep \cskip,(s',\mu_1)$.
 
+\subsection{Temporal Separation}
+\label{sec:sequential-temporal-separation}
 
-\subsection{Uniprocessor Separation}
-\label{sec:uniprocessor-separation}
+Spatial separation results in a set of states that encompasses all possible interleavings of the composed write buffers. Consequently, it is unsuitable for composing states with a particular interleaving in mind. Temporal separation does just this. Given memory systems $\mu_0$ and $\mu_1$, the \emph{strong temporal separation}, $\mu_0 \fsseq \mu_1$ is the element of the set $\mu_0 \fsep \mu_1$ in which the writes of $\mu_0$ all precede the writes of $\mu_1$. For example, for $\mu_0 = (\nil,\lsingle{(\ell,v)})$ and $\mu_1 = (\nil,\lsingle{(m,u)})$, $\mu_0 \fsseq \mu_1 = (\nil,\lsingle{(\ell,v),(m,u)})$. Instead of interleaving the constituent write buffers as in spatial separation, they are concatenated by temporal separation. 
 
-Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
 
-Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \step \abort\] then also \[\cload{x}{y},(s,\mu_G) \step \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
+% \subsection{Uniprocessor Separation}
+% \label{sec:uniprocessor-separation}
 
-What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
-    (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
-    \bot & \text{otherwise.}
-\end{cases}\] Because the separation is only defined for heaps with disjoint domains, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
-\Calc{
+% Before defining notions of separation for multiprocessor memory systems as defined in Section~\ref{sec:commands-and-states}, we consider the simpler setting of uniprocessor memory systems, $(h,b)$, with a single write buffer $b : \listof{(\setlocations \times \setvalues)}$ instead of an array of write buffers $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ as found in multiprocessor states.\footnote{Because there is only a single write buffer in this simplified setting, we also do not require any (representation of a) global lock.} As described in the previous section, locality requires both that if a command aborts in a local state then it aborts in a global state (the safety monotonicity property), and that the non-aborting behavior of a command in a global state be determined by the behavior of the command in the local state (the frame property). C
 
-    $\dom{h_G \override \funof{b_G}}$
+% Consider, by way of example, the behavior of a load command $\cload{x}{y}$ in the context of a stack $s$ and a complete memory system $\mu_G$. Suppose further that there exists for some local memory system $\mu_L$ and frame $\mu_F$ such that $\mu_G = \mu_F \bullet \mu_L$, for some as-yet-unspecified notion of composition. Safety monotonicity requires that if \[\cload{x}{y},(s,\mu_L) \step \abort\] then also \[\cload{x}{y},(s,\mu_G) \step \abort.\] The frame property requires additionally that if \[\cload{x}{y},(s,\mu_G) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_G)\] then also \[\cload{x}{y},(s,\mu_L) \step \cskip,(\funup{s}{\ptup{x}{v}},\mu_L).\] In the context of the load command, this means that the lookup function must satisfy the safety monotonicity and frame properties: for $\mu_G = (h_G,b_G)$ and $\mu_L = (h_L,b_L)$, if $(h_G \override \funof{b_G})(\ext{s}(y)) = \bot$ then $(h_L \override \funof{b_L})(\ext{s}(y)) = \bot$, and otherwise $(h_L \override \funof{b_L})(\ext{s}(y)) = (h_G \override \funof{b_G})(\ext{s}(y))$. The first condition requires that the domain of the local state be included in the domain of the global state; and the second condition requires that the lookup functions of the global and local state agree for mutually defined points.  
 
-    \conn{=}{$(h_G,b_G) = (h_F,b_F) \bullet (h_L,b_L)$}
+% What might a reasonable definition be for $(\mu_F \bullet \mu_L)$? We might search for a \emph{temporal separation}, in which the writes of $\mu_F$ precede the writes of $\mu_L$ in the global state $(\mu_F \bullet \mu_L)$. A conservative first attempt at a definition for a temporal separation function might be to \emph{add} heaps of the respective memory systems when the domains of the heaps are disjoint, and to \emph{concatenate} the write buffers: \[ (h_F,b_F) \bullet (h_L,b_L) \eqdef \begin{cases}
+%     (h_F \cup h_L, b_F \lapp b_L) & \text{if $\dom{h_F} \cap \dom{h_L} = \nil$} \\ 
+%     \bot & \text{otherwise.}
+% \end{cases}\] Because the separation is only defined for heaps with disjoint domains, the addition of heaps does in fact result in a heap; and the concatenation of write buffers always results in a write buffer, so the separation is well defined partial function that maps a pair of uniprocessor memory systems to another uniprocessor memory system. Furthermore, the safety monotonicity property holds easily: 
+% \Calc{
 
-    $\dom{(h_F \cup h_L) \override \funof{(b_F \lapp b_L)}}$
+%     $\dom{h_G \override \funof{b_G}}$
 
-    \conn{=}{$\funof{m \lapp n} = \funof{m} \override \funof{n}$}
+%     \conn{=}{$(h_G,b_G) = (h_F,b_F) \bullet (h_L,b_L)$}
 
-    $\dom{(h_F \cup h_L) \override (\funof{b_F} \override \funof{b_L})}$
+%     $\dom{(h_F \cup h_L) \override \funof{(b_F \lapp b_L)}}$
 
-    \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+%     \conn{=}{$\funof{m \lapp n} = \funof{m} \override \funof{n}$}
 
-    $\dom{h_F} \cup \dom{h_L} \cup \dom{\funof{b_F}} \cup \dom{\funof{b_L}}$
+%     $\dom{(h_F \cup h_L) \override (\funof{b_F} \override \funof{b_L})}$
 
-    \conn{\supseteq}{set theory}
+%     \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
 
-    $\dom{h_L} \cup \dom{\funof{b_L}}$
+%     $\dom{h_F} \cup \dom{h_L} \cup \dom{\funof{b_F}} \cup \dom{\funof{b_L}}$
 
-     \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+%     \conn{\supseteq}{set theory}
 
-    $\dom{h_L \override \funof{b_L}}$
+%     $\dom{h_L} \cup \dom{\funof{b_L}}$
+
+%      \conn{=}{$\dom{f \override g} = \dom{f} \cup \dom{g}$}
+
+%     $\dom{h_L \override \funof{b_L}}$
     
-} 
-The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
-\Calc{
+% } 
+% The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
+% \Calc{
   
-    $(h_L \override \funof{b_L})(\ell)$
+%     $(h_L \override \funof{b_L})(\ell)$
 
-    \conn{=}{$\dom{h_F} \cap \dom{h_L} = \nil$}
+%     \conn{=}{$\dom{h_F} \cap \dom{h_L} = \nil$}
 
-    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
+%     $((h_F \cup h_L) \override \funof{b_L})(\ell)$
 
-    \conn{=}{$b_F = \lnil$}
+%     \conn{=}{$b_F = \lnil$}
 
-    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
-} Second, assuming $h_L = \nil$: 
-\Calc{
+%     $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
+% } Second, assuming $h_L = \nil$: 
+% \Calc{
   
-    $(h_L \override \funof{b_L})(\ell)$
+%     $(h_L \override \funof{b_L})(\ell)$
 
-    \conn{=}{$\ell \in\dom{g}$ and $f \subseteq f'$ implies $(f\override g)(\ell) = (f'\override g)(\ell)$}
+%     \conn{=}{$\ell \in\dom{g}$ and $f \subseteq f'$ implies $(f\override g)(\ell) = (f'\override g)(\ell)$}
 
-    $((h_F \cup h_L) \override \funof{b_L})(\ell)$
+%     $((h_F \cup h_L) \override \funof{b_L})(\ell)$
 
-    \conn{=}{$\funof{n}(\ell) = v$ implies $\funup{m \lapp n}(\ell) = v$}
+%     \conn{=}{$\funof{n}(\ell) = v$ implies $\funup{m \lapp n}(\ell) = v$}
 
-    $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
-}
+%     $((h_F \cup h_L) \override \funof{b_F \lapp b_L})(\ell)$.
+% }
 
-An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
+% An alternative notion of separation is \emph{spatial separation}, which describes a partition according to memory location; i.e., $\mu_G = \mu_F \bullet \mu_L$ is defined when the set of memory locations described by $\mu_F$ and $\mu_L$ are disjoint. 
 
 \subsection{Uniprocessor Satisfaction}
 \label{sec:uniprocessor-satisfaction}
@@ -1418,7 +1423,8 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 A proof is a tree of specifications, in which the leaves are instances of axiom schemas, and the internal specification nodes are instances of the conclusion of some inference rule, with the children of that node as instances of the hypotheses of the inference rule. We write $\overline{\spec{J}{P}{c}{Q}}$ to indicate that there exists a proof tree with the root labeled by $\spec{J}{P}{c}{Q}$. The soundness property simply asserts that provable specifications are true: 
 
 \begin{theorem}[Soundness]
-	$\overline{\spec{J}{P}{c}{Q}}$ only if $\truespec{J}{P}{c}{Q}$. 
+  \label{thm:soundness}
+	$\proofof{\spec{J}{P}{c}{Q}}$ only if $\truespec{J}{P}{c}{Q}$. 
 \end{theorem}
 
 \begin{proof}
@@ -1704,12 +1710,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\end{enumerate}
 \end{proof}
 
-\begin{lemma}[Weak Interleaving Frame Soundness]
+\begin{lemma}
+  \label{lem:general-separation-sound}
 	If $\truespec{J}{P}{c}{Q}$ and $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
 \end{lemma}
 
 \begin{proof}
 	Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:soundness}]
+
+By induction on the structure of an arbitrary derivation of $\proofof{\spec{J}{P}{c}{Q}}$. The base cases follow from Lemmas~\ref{lem:skip-sound},~\ref{lem:load-sound},~\ref{lem:store-sound},~\ref{lem:lock-sound},~\ref{lem:unlock-sound}, etc. The inductive cases follow from Lemma~\ref{lem:general-separation-sound}, etc. 
+
 \end{proof}
 
 \section{Summary of Notation}
