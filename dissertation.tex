@@ -266,11 +266,11 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
 \subsection{Lists}
 \label{sec:lists}
 
-The empty list is denoted by $\lnil$, the literal list by $\lsingle{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
+The empty list is denoted by $\lnil$, the literal list by $\llit{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
 
 For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
-	b &\text{ if $l = l' \lapp \lsingle{(x,b)}$}\\
-	\funof{l'}(x) &\text{ if $l = l' \lapp \lsingle{(y,b)}$ with $x \neq y$}\\
+	b &\text{ if $l = l' \lapp \llit{(x,b)}$}\\
+	\funof{l'}(x) &\text{ if $l = l' \lapp \llit{(y,b)}$ with $x \neq y$}\\
 	\bot & \text{otherwise.}
 \end{cases}\] For $A' \subseteq A$, $\restrict{l}{A'}$ is the sublist restriction of $l$ to domain $A'$.
 
@@ -406,7 +406,7 @@ Note that the notion of machine state given here differs from that used to defin
         
         \vspace{1em}
 
-        \infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{b}}$}}{\cstore{e}{e'} :(s,h,b) \step (s,h,b \lapp \lsingle{\ext{s}(e),\ext{s}(e')})}
+        \infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{b}}$}}{\cstore{e}{e'} :(s,h,b) \step (s,h,b \lapp \llit{\ext{s}(e),\ext{s}(e')})}
         
         \vspace{1em}
 
@@ -426,7 +426,7 @@ The language of commands is defined by the following grammar: \[ \comms~c \bnfde
 
 The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. A configuration $\mathcal{C}$ is \emph{safe} if $\mathcal{C} \nostep \abort$. 
 
-The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,b \lapp \lsingle{(\ell,v)}) \taustep (\funup{h}{\ptup{\ell}{v}},b) 
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,b \lapp \llit{(\ell,v)}) \taustep (\funup{h}{\ptup{\ell}{v}},b) 
 \end{align*} We write $\taurefines$ as shorthand for the reflexive-transitive closure $\taustep$. 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:sequential-command-semantics} below. The reflexive-transitive closure of command evaluation relation, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. 
@@ -511,7 +511,7 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 
 Assertions are syntactic constructs, which are used to denote sets of uniprocessor machine states. The particular sets of states that are denoted by each assertion will be defined later, in Section~\ref{sec:uniprocessor-satisfaction}. It is worth noting now, though, that the sets of states assertions denote have a special structure: namely, they are down-closed w.r.t.\ the flushing relation, $\taustep$. I.e., if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. We call sets with this structure \emph{predicates}. 
 
-For example, the set $S_0 \eqdef \setof{(s,\nil,\lsingle{(\ell,v)})}{s \in \setstacks}$, which consists of states that have a single buffered write, is not closed w.r.t.\ flushing, because that write may nondeterministically commit to memory: \[(\nil,\lsingle{(\ell,v)}) \taustep (\ell \mapsto v,\lnil),\] according to the definition of the flushing relation $\taustep$ in Section~\ref{sec:sequential-programs}. On the other hand, the set $S_1 \eqdef \setof{(s,\ell \mapsto v,\lnil)}{s \in \setstacks}$ is closed w.r.t.\ flushing; each state in $S_1$ is completely flushed, and so can take no flushing steps. And so too is the set $S_0 \cup S_1$, because elements of $S_0$ may step to elements of $S_1$. 
+For example, the set $S_0 \eqdef \setof{(s,\nil,\llit{(\ell,v)})}{s \in \setstacks}$, which consists of states that have a single buffered write, is not closed w.r.t.\ flushing, because that write may nondeterministically commit to memory: \[(\nil,\llit{(\ell,v)}) \taustep (\ell \mapsto v,\lnil),\] according to the definition of the flushing relation $\taustep$ in Section~\ref{sec:sequential-programs}. On the other hand, the set $S_1 \eqdef \setof{(s,\ell \mapsto v,\lnil)}{s \in \setstacks}$ is closed w.r.t.\ flushing; each state in $S_1$ is completely flushed, and so can take no flushing steps. And so too is the set $S_0 \cup S_1$, because elements of $S_0$ may step to elements of $S_1$. 
 
 Predicates, as flushing-closed sets of states, are especially useful for the specification program behavior. Suppose we wish to show that some configuration $(c,\sigma)$ is safe and always terminates in some state from a set $S$. If $S$ is not flushing closed, then it is not sufficient to show, whenever $(c,\sigma) \rtstep (\cskip,\sigma')$, that $\sigma' \in S$. For it could be the case that \[ (c,\sigma) \rtstep (\cskip,\sigma') \step (\cskip,\sigma''),\] with $\sigma'' \notin S$. If, on the other hand, $S$ is a predicate, and hence is flushing-closed, then it is sufficient to show that fully evaluated commands result in the correct states, because any further state transitions are guaranteed to remain within the bounds of $S$. 
 
@@ -546,16 +546,17 @@ We wish to define an analogous notion of separation for memory systems, which co
     \setof{(h_0 \uplus h_1, b)}{\dom{h_0,b_0} \cap \dom{h_1,b_1} = \nil}
 \] Above, we write $\dom{h,b}$ as shorthand for $\dom{h} \cup \dom{b}$. The set $\mu_0 \fsep \mu_1$ is called the \emph{spatial separation} of $\mu_0$ and $\mu_1$ because it requires disjointness of the constituent domains, and does not constrain the order of of the buffered writes. (In a later section, we will weaken the disjointness requirement to yield a weaker notion of separation.)
 
-Interleaving the write buffers results in a notion of separation in which the relative ordering between the writes in the constituent buffers, which necessarily have distinct memory locations, is irrelevant. For example, for $\mu_0 = (\nil,\lsingle{(\ell,v)})$ and $\mu_1 = (\nil,\lsingle{(m,u)})$, with $\ell \neq m$, we have both $(\nil,\lsingle{(\ell,v),(m,u)}) \in (\mu_0 \fsep \mu_1)$ and $(\nil,\lsingle{(m,u),(\ell,v)}) \in (\mu_0 \fsep \mu_1)$. 
+Interleaving the write buffers results in a notion of separation in which the relative ordering between the writes in the constituent buffers, which necessarily have distinct memory locations, is irrelevant. For example, for $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(m,u)})$, with $\ell \neq m$, we have both $(\nil,\llit{(\ell,v),(m,u)}) \in (\mu_0 \fsep \mu_1)$ and $(\nil,\llit{(m,u),(\ell,v)}) \in (\mu_0 \fsep \mu_1)$. 
 
 Unlike for the heap separation function, the heap-buffer separation function maps into the power-domain of memory systems: for compatible pairs of memory systems, the separation yields a memory system for each possible interleaving of the individual write buffers. The resulting set is non-empty if and only if the domains of the constituent memory systems are disjoint.\footnote{This is more convenient than defining a partial function into the power-domain. In that case, both $\bot$ and $\nil$ would apparently both indicate incompatibility.} This necessitates a slight change to the definition of a local command, as explained in Section~\ref{sec:locality}. Given a notion of separation that yields a set of memory systems, the safety monotonicity and frame properties must hold for each possible result: i.e., for every $\mu \in \mu_0 \fsep \mu_1$, if $c,\mu$ is safe then so is $c,\mu_1$; and if $c,\mu \rtstep \cskip,\mu'$ then there exists $\mu'_1$ such that $c,\mu_1 \rtstep \cskip,\mu'_1$ with $\mu' \in \mu_0 \fsep \mu'_1$. 
 
-We can informally observe locality as follows. For safety monotonicity, note that the domain of the memory systems $(\mu_0 \fsep \mu_1)$ are supersets of the domain of $\mu_1$, and so if, e.g., a load command does not abort with a memory error in $\mu_1$ then neither will it in $(\mu_0 \fsep \mu_1)$. For the frame property, a load in $\mu_0 \fsep \mu_1$ does not change the memory system, and since we have assumed that it does not abort in $\mu_1$ alone, then it will have the same result in $\mu_1$ as in $(\mu_0 \bullet \mu_1)$. For example, with $\mu_0 = (\nil,\lsingle{(\ell,v)})$, $\mu_1 = (\nil,\lsingle{(m,u)})$ and the load command $c = \cload{x}{\ell}$, it is clear that, for any $\mu \in \mu_0 \fsep \mu_1$, if $c,(s,\mu) \rtstep \cskip,(s',\mu')$ then also $c,(s,\mu_1) \rtstep \cskip,(s',\mu_1)$.
+We can informally observe locality as follows. For safety monotonicity, note that the domain of the memory systems $(\mu_0 \fsep \mu_1)$ are supersets of the domain of $\mu_1$, and so if, e.g., a load command does not abort with a memory error in $\mu_1$ then neither will it in $(\mu_0 \fsep \mu_1)$. For the frame property, a load in $\mu_0 \fsep \mu_1$ does not change the memory system, and since we have assumed that it does not abort in $\mu_1$ alone, then it will have the same result in $\mu_1$ as in $(\mu_0 \bullet \mu_1)$. For example, with $\mu_0 = (\nil,\llit{(\ell,v)})$, $\mu_1 = (\nil,\llit{(m,u)})$ and the load command $c = \cload{x}{\ell}$, it is clear that, for any $\mu \in \mu_0 \fsep \mu_1$, if $c,(s,\mu) \rtstep \cskip,(s',\mu')$ then also $c,(s,\mu_1) \rtstep \cskip,(s',\mu_1)$.
 
 \subsection{Temporal Separation}
 \label{sec:sequential-temporal-separation}
 
-Spatial separation results in a set of states that encompasses all possible interleavings of the composed write buffers. Consequently, it is unsuitable for composing states with a particular interleaving in mind. Temporal separation does just this. Given memory systems $\mu_0$ and $\mu_1$, the \emph{strong temporal separation}, $\mu_0 \fsseq \mu_1$ is the element of the set $\mu_0 \fsep \mu_1$ in which the writes of $\mu_0$ all precede the writes of $\mu_1$. For example, for $\mu_0 = (\nil,\lsingle{(\ell,v)})$ and $\mu_1 = (\nil,\lsingle{(m,u)})$, $\mu_0 \fsseq \mu_1 = (\nil,\lsingle{(\ell,v),(m,u)})$. Instead of interleaving the constituent write buffers as in spatial separation, they are concatenated by temporal separation. 
+Spatial separation results in a set of states that encompasses all possible interleavings of the composed write buffers. Consequently, it is unsuitable for composing states with a particular interleaving in mind. Temporal separation does just this. Given memory systems $\mu_0$ and $\mu_1$, the \emph{strong temporal separation}, $\mu_0 \fsseq \mu_1$ is the element of the set $\mu_0 \fsep \mu_1$ in which the writes of $\mu_0$ all precede the writes of $\mu_1$. For example, for $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(m,u)})$, $\mu_0 \fsseq \mu_1 = (\nil,\llit{(\ell,v),(m,u)})$. Instead of interleaving the constituent write buffers as in spatial separation, they are \emph{concatenated} by temporal separation. As another example, let $\mu'_0 = (\ell \mapsto v, \lnil)$. Then $\mu'_0 \fsseq \mu_1 = (\ell \mapsto v, \llit{(m,u)})$.
+
 
 
 % \subsection{Uniprocessor Separation}
@@ -594,7 +595,7 @@ Spatial separation results in a set of states that encompasses all possible inte
 %     $\dom{h_L \override \funof{b_L}}$
     
 % } 
-% The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \lsingle{(\ell,2)}) = (\nil, \lsingle{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
+% The frame property, however, does not hold for this definition. Consider, e.g., $(\ell \mapsto 1, \llit{(\ell,2)}) = (\nil, \llit{(\ell,2)}) \bullet (\ell \mapsto 1, \lnil)$. In the local, right-hand state the lookup function applied to $\ell$ returns one, but in the global, composite state the lookup function applied to $\ell$ returns 2. The problem is that this candidate decomposition violates temporal separation property: in the global state, the committed write $\ell \mapsto 1$ implicitly precedes every buffered write. Temporal separation should preserve this property, but it is violated by the candidate definition: the buffered write has been separated into the left-hand state, before the committed write in the right-hand state. To fix this, we need to strengthen the definedness condition of $\bullet$ to ensures that none of the later committed writes $h_L$ may precede the buffered frame writes $b_F$; i.e., we require additionally $b_F = \lnil \disj h_L = \nil$. With this extra condition, the frame property holds as well. First, assuming $b_F = \lnil$. 
 % \Calc{
   
 %     $(h_L \override \funof{b_L})(\ell)$
@@ -642,7 +643,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
         (s,h,b) & \sentails & {\forall x \st P} & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,b) \sentails{P} \\
         (s,h,b) & \sentails & {\femp} & \iffdef & h = \nil \conj b = \lnil \\
         (s,h,b) & \sentails & \fbaru & \iffdef & b = \lnil \\ 
-        (s,h,b) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \lsingle{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+        (s,h,b) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
         & & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil)) \\
         (s,h,b) & \sentails & {P \fhash P'} & \iffdef & \exists \mu,\mu' \st \mu \fhash \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
         (s,h,b) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
@@ -670,9 +671,9 @@ Consider, as a significant example, the set of states that satisfy the atomic fo
     \centering
     \begin{tabular}{c|c|c}
         $1 \fwriteu 3$ &  $1 \fwriteu 4$ & $1 \fwriteu 3 \fseq 1 \fwriteu 4$\\ \hline
-        $(\nil,\lsingle{(1,3)})$ & $(\nil,\lsingle{(1,4)})$ & $(\nil,\lsingle{(1,3),(1,4)})$\\ 
-        $(1 \mapsto 3,\lnil)$ & $(\nil,\lsingle{(1,4)})$ & $(1 \mapsto 3,\lsingle{(1,4)})$\\ 
-        $(\nil,\lsingle{(1,3)})$ & $(1 \mapsto 4,\lnil)$ & $\bot$ \\
+        $(\nil,\llit{(1,3)})$ & $(\nil,\llit{(1,4)})$ & $(\nil,\llit{(1,3),(1,4)})$\\ 
+        $(1 \mapsto 3,\lnil)$ & $(\nil,\llit{(1,4)})$ & $(1 \mapsto 3,\llit{(1,4)})$\\ 
+        $(\nil,\llit{(1,3)})$ & $(1 \mapsto 4,\lnil)$ & $\bot$ \\
         $(1 \mapsto 3,\lnil)$ & $(1 \mapsto 4,\lnil)$ & $(1 \mapsto 4,\lnil)$\\ 
     \end{tabular}
     \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
@@ -881,7 +882,7 @@ The definition of the semantic relation for primitive commands is given in Figur
 		
 		\vspace{1em}
 
-		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,k) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \lsingle{\ext{s}(e),\ext{s}(e')}}},k)}
+		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,k) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \llit{\ext{s}(e),\ext{s}(e')}}},k)}
 		
 		\vspace{1em}
 
@@ -908,7 +909,7 @@ The language of commands is defined by the following grammar: \[ \comms~c \bnfde
 
 The formal semantics of the successful execution of a command is given as a binary transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] But a command's execution may abort unsuccessfully as well, as with primitive commands. Unsuccessful executions are modeled as a transition relation between command-state pairs and an erroneous pseudo-state, as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
 
-The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,B,k) \taustep (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \lsingle{(\ell,v)} \lapp b \conj i \notin k 
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,B,k) \taustep (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k) \iffdef & B_i = \llit{(\ell,v)} \lapp b \conj i \notin k 
 \end{align*} We write $\taurefines$ for the reflexive-transitive closure of $\taustep$. 
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below.
@@ -985,7 +986,7 @@ The complete relation that defines the semantics of commands is given in Figure~
 
 The reflexive-transitive closure of command evaluation semantics, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. 
 
-\paragraph{Stability} Consider a state $\sigma_0 = (s,h,B,\nil)$ in which $h = \ell \mapsto 0$, $B(j) = \lsingle{(\ell,1)}$ and $B(x) = \lnil$ for all $x \neq j$. From this state, a load on processor $i$ may evaluate as follows: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] Because $j$ is not blocked, it is also possible for a flushing operation to take place: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil),\] and afterward for the load to evaluate as follows: \[ \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil) \step \cskip(\funup{s}{\ptup{y}{1}},\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil).\] Note that in the first evaluation the load resolves $\ell$ to $0$, and in the second evaluation it resolves $\ell$ to $1$, with the distinguishing characteristic of the latter being the preceding nondeterministic flushing operation. 
+\paragraph{Stability} Consider a state $\sigma_0 = (s,h,B,\nil)$ in which $h = \ell \mapsto 0$, $B(j) = \llit{(\ell,1)}$ and $B(x) = \lnil$ for all $x \neq j$. From this state, a load on processor $i$ may evaluate as follows: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] Because $j$ is not blocked, it is also possible for a flushing operation to take place: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil),\] and afterward for the load to evaluate as follows: \[ \cload{y}{\ell}_i,(s,\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil) \step \cskip(\funup{s}{\ptup{y}{1}},\funup{h}{\ptup{\ell}{1}},\funup{B}{\ptup{j}{\lnil}},\nil).\] Note that in the first evaluation the load resolves $\ell$ to $0$, and in the second evaluation it resolves $\ell$ to $1$, with the distinguishing characteristic of the latter being the preceding nondeterministic flushing operation. 
 
 By contrast, from the state $\sigma_1 = (s,h,B,\set{j})$, where $h$ and $B$ are defined as in $\sigma_0$, the \emph{only} reduction of $\cload{y}{\ell}_i$ is: \[ \cload{y}{\ell}_i,(s,h,B,\nil) \step \cskip,(\funup{s}{\ptup{y}{0}},h,B,\nil).\] This is because processor $j$ is blocked, and so its buffered write may not commit to memory. As a consequence, it is not possible for the load on processor $i$ to observe the write buffered on processor $j$. 
 
@@ -1198,7 +1199,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 		(s,\nil,B,\nil) & \sentails & {\femp} & \iffdef & B = (\lambda x . \lnil) \\ 
 		(s,h,B,k) & \sentails & {\fbar{e}} & \iffdef & B_{\ext{s}(e)} = \lnil \\ 
 		(s,\nil,B,k) & \sentails & {\flock{e}} & \iffdef & B = (\lambda x . \lnil) \conj k = \setprocessors \setminus \set{\ext{s}(e)}\\ 
-		(s,h,B,k) & \sentails & {e \fwrite{e'} e''} & \iffdef & k \subseteq \set{\ext{s}(e)} \conj (\forall i \neq \ext{s}(e) \st B_i = \lnil) \conj \\ & & & & ((h = \nil \conj B_{\ext{s}(e')} = \lsingle{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+		(s,h,B,k) & \sentails & {e \fwrite{e'} e''} & \iffdef & k \subseteq \set{\ext{s}(e)} \conj (\forall i \neq \ext{s}(e) \st B_i = \lnil) \conj \\ & & & & ((h = \nil \conj B_{\ext{s}(e')} = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
 		& & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e'') \conj B_{\ext{s}(e')} = \lnil \conj k = \nil)) \\
 		(s,h,B,k) & \sentails & {P \fhash P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fhash \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
 		(s,h,B,k) & \sentails & {P \fsep P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fsep \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
