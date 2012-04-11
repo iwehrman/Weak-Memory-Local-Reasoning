@@ -547,8 +547,7 @@ First, consider $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(\ell,
 
 Next consider also $\mu'_0 = (\ell \mapsto v,\lnil)$ and $\mu'_1 = (\ell \mapsto u, \nil)$. The weak temporal separation $\mu'_0 \fseq \mu_1$ is defined as for the strong variant: $(\ell \mapsto v, \llit{(\ell,u)})$. And the weak temporal separation $\mu_0 \fseq \mu'_1$ is undefined as for the strong variant because of the potential for the ostensibly more recent committed write from $\mu'_1$ preceding the buffered write of $\mu_0$. 
 
-Finally consider the weak temporal separation $\mu'_0 \fseq \mu'_1$. For the strong variant as well as for spatial separation this is, of course, undefined because the constituent domains are not disjoint. This is necessary because the result of adding the maps that represent heaps is  undefined in this case; for what would be the result of applying the hypothetical map $(\ell \mapsto v) \uplus (\ell \mapsto u)$ to $\ell$? Neither $u$ nor $v$ seem like suitable answers in general, but in the case of \emph{temporal} separation, we can answer confidently: the result should $u$, because the committed $u$ write is more recent than the committed $v$ write. Consequently we use the map overriding operation to combine heaps in the definition of weak temporal separation.
-
+Finally consider the weak temporal separation $\mu'_0 \fseq \mu'_1$. For the strong variant as well as for spatial separation this is, of course, undefined because the constituent domains are not disjoint. This is necessary because the result of adding the maps that represent heaps is  undefined in this case; for what would be the result of applying the hypothetical map $(\ell \mapsto v) \uplus (\ell \mapsto u)$ to $\ell$? Neither $u$ nor $v$ seem like suitable answers in general, but in the case of \emph{temporal} separation, we can answer confidently: the result should $u$, because the committed $u$ write is more recent than the committed $v$ write. Consequently we use the map overriding operation to combine heaps in the definition of weak temporal separation. 
 \[ (h,b) \fseq (h',b') \eqdef \begin{cases}
 (h \override h', b \lapp b') & \text{if $h' = \nil \disj b = \lnil$} \\
 \bot & \text{otherwise.}
@@ -572,7 +571,7 @@ Let us again consider the definition of weak temporal separation. In the context
 
     $(\funof{l \lapp l'}, b \lapp b')$
 
-    \Conn{$l \lapp l' \in l \override l'$ and, for any $m \in l \override l'$, $\funof{m} = \funof{l} \override \funof{l'}$ by definition}
+    \Conn{$l \lapp l' \in l \override l'$ and $m \in l \override l' \iffdef \funof{m} = \funof{l} \override \funof{l'}$}
 
     $(\funof{l} \override \funof{l'}, b \lapp b')$
 
@@ -585,8 +584,15 @@ Let us again consider the definition of weak temporal separation. In the context
     $\alpha(l, b) \fseq \alpha(l', b')$.
 }
 
+It is easy to see that both temporal separators are associative and, as for spatial separation, have $(\nil,\emp)$ as a unit. Furthermore, the weak variant is defined whenever the strong variant is defined; and when both are defined, they are equal. We may also lift these functions up to the power domain, as we did with spatial separation: \begin{align*}
+    S_0 \fsseq S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \setof{\sigma_0 \fsseq \sigma_1}{\defined{\sigma_1 \fsseq \sigma_2}} \\ 
+    S_0 \fseq S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \setof{\sigma_0 \fseq \sigma_1}{\defined{\sigma_1 \fseq \sigma_2}}
+\end{align*}
+
 \subsection{General Separation}
 \label{sec:sequential-general-separation}
+
+Both spatial and temporal are restrictions of a more general, unifying notion of separation. We write $\mu_0 \fhash \mu_1$ for the \emph{general separation} of memory systems $\mu_1$ and $\mu_2$, defined as follows: \[ (h_0,b_0) \fhash (h_1,b_1) \eqdef \bigcup_{b \in b_0 \override b_1} \setof{(h_0 \override h_1, b)}{\dom{b_0} \cap \dom{h_1} = \nil}.\]
 
 \section{Uniprocessor Assertions}
 \label{sec:uniprocessor-assertions}
