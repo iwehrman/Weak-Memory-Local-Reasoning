@@ -257,6 +257,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
     \label{lem:override}
     Let $f,g,h : A \pfun B$. 
     \begin{enumerate}
+        \item $f \override \nil = \nil \override f = f$
         \item $f \override (g \override h) = (f \override g) \override h$. 
         \item $\dom{f \override g} = \dom{f} \cup \dom{g}$. 
         \item If $\dom{f} \cap \dom{g} = \nil$ then $f \override g = f \uplus g$, and hence $f \override g = g \override f$. 
@@ -283,11 +284,12 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 
 We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$. 
 
-As for function overriding, list overriding has the basic property that, if $a \in dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
+As for function overriding, list overriding has the basic property that, if $a \in \dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
 \begin{lemma}
     \label{lem:list-override}
     Let $l,m,n : \listof{A \times B}$. 
     \begin{enumerate}
+        \item $l \override \nil = \nil \override l = l$
         \item $l \override (m \override n) = (l \override m) \override n$. 
         \item $\dom{\funof{m \override n}} = \dom{\funof{m}} \cup \dom{\funof{n}}$. 
         \item If $\dom{\funof{m}} \cap \dom{\funof{n}} = \nil$ then $m \override n = m \merge n$, and hence $m \override n = n \override m$. 
@@ -545,7 +547,46 @@ First, consider $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(\ell,
 
 Next consider also $\mu'_0 = (\ell \mapsto v,\lnil)$ and $\mu'_1 = (\ell \mapsto u, \nil)$. The weak temporal separation $\mu'_0 \fseq \mu_1$ is defined as for the strong variant: $(\ell \mapsto v, \llit{(\ell,u)})$. And the weak temporal separation $\mu_0 \fseq \mu'_1$ is undefined as for the strong variant because of the potential for the ostensibly more recent committed write from $\mu'_1$ preceding the buffered write of $\mu_0$. 
 
-Finally consider the weak temporal separation $\mu'_0 \fseq \mu'_1$. For the strong variant as well as for spatial separation this is, of course, undefined because the constituent domains are not disjoint. This is necessary because the result of adding the maps that represent heaps is  undefined in this case; for what would be the result of applying the hypothetical map $(\ell \mapsto v) \uplus (\ell \mapsto u)$ to $\ell$? Neither $u$ nor $v$ seem like suitable answers in general, but in the case of \emph{temporal} separation, we can answer confidently: the result is $u$, because the committed $u$ write is more recent than the committed $v$ write. The heap map, after all, is a simplifying abstraction for the entire history of committed writes. This history is summarized by a single function because only the most recent write is relevant to the operation of programs. But we can use this idea to give a coherent definition to a weak temporal separation operation on heaps. 
+Finally consider the weak temporal separation $\mu'_0 \fseq \mu'_1$. For the strong variant as well as for spatial separation this is, of course, undefined because the constituent domains are not disjoint. This is necessary because the result of adding the maps that represent heaps is  undefined in this case; for what would be the result of applying the hypothetical map $(\ell \mapsto v) \uplus (\ell \mapsto u)$ to $\ell$? Neither $u$ nor $v$ seem like suitable answers in general, but in the case of \emph{temporal} separation, we can answer confidently: the result should $u$, because the committed $u$ write is more recent than the committed $v$ write. Consequently we use the map overriding operation to combine heaps in the definition of weak temporal separation.
+
+\[ (h,b) \fseq (h',b') \eqdef \begin{cases}
+(h \override h', b \lapp b') & \text{if $h' = \nil \disj b = \lnil$} \\
+\bot & \text{otherwise.}
+\end{cases}\]
+
+One way top understand the choice of the overriding operation on heaps is w.r.t.\ an alternative, more concrete state model in which the heap is represented by a list of writes $l$ instead of a partial function. The list is intended to capture the complete history of committed writes in the same way that the buffer captures the history of uncommitted writes. The model of state given in Section~\ref{sec:sequential-programs} uses a partial function $h$ instead of a list of committed writes because only the most recent committed write to a particular location is relevant to the operational semantics. We can think of this model of state as an abstraction of the more concrete model in which committed writes are represented by lists. The abstraction function $\alpha$ that maps a concrete memory system $(l,b)$ into an abstract memory system $\alpha(l,b)$ is defined as follows:  \[ \alpha(l,b) \eqdef (\funof{l},b),\] where $\funof{l}$ is the lookup function for list $l$, as defined in Section~\ref{sec:lists}. 
+
+Let us again consider the definition of weak temporal separation. In the context of concrete states, the definition is completely natural: \[ (l,b) \fseq_\gamma (l',b') \eqdef \begin{cases}
+(l \lapp l', b \lapp b') & \text{if $l' = \lnil \disj b = \lnil$} \\
+\bot & \text{otherwise.}
+\end{cases} \] This definition and the abstraction function given above provide a correctness criterion for a candidate definition of weak temporal separation on abstract states, namely that: \[ \alpha((l,b) \fseq_\gamma (l',b')) = \alpha(l,b) \fseq \alpha(l',b').\] It is easy to see that the definition given above for weak temporal separation for abstract states satisfies this criterion: 
+\Calc{
+    
+    $\alpha((l,b) \fseq_\gamma (l',b'))$
+
+    \Conn{definition of $\fseq_\gamma$}
+
+    $\alpha(l \lapp l', b \lapp b')$
+
+    \Conn{definition of $\alpha(-)$}
+
+    $(\funof{l \lapp l'}, b \lapp b')$
+
+    \Conn{$l \lapp l' \in l \override l'$ and, for any $m \in l \override l'$, $\funof{m} = \funof{l} \override \funof{l'}$ by definition}
+
+    $(\funof{l} \override \funof{l'}, b \lapp b')$
+
+    \Conn{definition of $\fseq$}
+
+    $(\funof{l}, b) \fseq (\funof{l'}, b')$
+
+    \Conn{definition of $\alpha(-)$}
+
+    $\alpha(l, b) \fseq \alpha(l', b')$.
+}
+
+\subsection{General Separation}
+\label{sec:sequential-general-separation}
 
 \section{Uniprocessor Assertions}
 \label{sec:uniprocessor-assertions}
