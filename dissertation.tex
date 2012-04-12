@@ -594,15 +594,14 @@ It is easy to see that both temporal separators are associative and, as for spat
 
 Both spatial and temporal are restrictions of a more general, unifying notion of separation. We write $\mu_0 \fhash \mu_1$ for the \emph{spatiotemporal separation} of memory systems $\mu_1$ and $\mu_2$, defined as follows: \[ (h_0,b_0) \fhash (h_1,b_1) \eqdef \bigcup_{b \in b_0 \override b_1} \setof{(h_0 \override h_1, b)}{\dom{b_0} \cap \dom{h_1} = \nil}.\] 
 
-Some examples of spatiotemporal separation are as follows. Let $\mu_0 = (\nil,\llit{(\ell,1),(m,2)})$ and $\mu_1 = (\nil,\llit{(\ell,3),(n,4)})$. Note that $\mu_0$ and $\mu_1$ are not strongly disjoint, and hence $\mu_0 \fsep \ mu_1$ and $\mu_0 \fsseq \mu_1$ are undefined. The weak temporal separation $\mu_0 \fseq \mu_1$ is, on the other hand, defined and equal to $(\lnil,\llit{(\ell,1),(m,2),(\ell,3),(n,4)})$. The spatiotemporal separation $\mu_0 \fhash \mu_1$ includes additionally the following states: \begin{itemize}
-  \item $(\lnil,\llit{(\ell,1),(\ell,3),(m,2),(n,4)})$
+Some examples of spatiotemporal separation are as follows. Let $\mu_0 = (\nil,\llit{(\ell,1),(m,2)})$ and $\mu_1 = (\nil,\llit{(\ell,3),(n,4)})$. Note that $\mu_0$ and $\mu_1$ are not strongly disjoint, and hence $\mu_0 \fsep \ mu_1$ and $\mu_0 \fsseq \mu_1$ are undefined. The weak temporal separation $\mu_0 \fseq \mu_1$ is, on the other hand, defined and equal to $(\lnil,\llit{(\ell,1),(m,2),(\ell,3),(n,4)})$. The spatiotemporal separation $\mu_0 \fhash \mu_1$ includes additionally the following states: \begin{itemize} \item $(\lnil,\llit{(\ell,1),(\ell,3),(m,2),(n,4)})$
   \item $(\lnil,\llit{(\ell,1),(\ell,3),(n,4),(m,2)})$
   \item $(\lnil,\llit{(\ell,1),(\ell,3),(m,2),(n,4)})$
 \end{itemize} Note in particular that the latter write to $\ell$ with value $3$ does not precede the earlier write to $\ell$ with value 1, but otherwise all other interleavings are included. This is crucial to a locality argument because it ensures that a load in state $\mu_1$, if safe, will have the same result as a load in the separated state $(\mu_0 \fhash \mu_1)$. 
 
 It is easy to see that spatiotemporal separation generalizes both spatial and temporal separation. In the spatial case, the strongly disjoint definedness condition obviously implies the weakly disjoint definedness condition for general separation. And when the memory systems are strongly disjoint $h_0 \override h_1 = h_0 \uplus h_1$ by Lemma~\ref{lem:override} and $b_0 \override b_1 = b_0 \merge b_1$ by Lemma~\ref{lem:list-override}. For the strong temporal case, the definedness conditions are again obviously stronger, and $b_0 \lapp b_0 \in b_0 \override b_1$. In the weak case, $b_0 = \lnil \disj h_1 = \nil$ implies $\dom{b_0} \cap \dom{h_1} = \nil$, and again $b_0 \lapp b_0 \in b_0 \override b_1$. 
 
-
+As with spatial separation, we lift spatiotemporal separation up to a function on the power domain of memory systems (and states), and abuse notation to refer to whichever function is appropriate in context: \[ S_0 \fhash S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \fhash \sigma_1}.\] Spatiotemporal separation is associative and has $(\nil,\lnil)$ as a unit as for the other separators, but it is not commutative. 
 
 \section{Uniprocessor Assertions}
 \label{sec:uniprocessor-assertions}
