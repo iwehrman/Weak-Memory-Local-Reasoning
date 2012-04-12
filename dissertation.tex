@@ -349,6 +349,7 @@ The set of \emph{free variables} of a (boolean) expression $e$, written $\fv{e}$
 
 For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ if, for all $x \in X$, $s(x) = s'(x)$. The following basic lemma uses this relation to connect the static and dynamic semantics of expressions. 
 \begin{lemma}
+\label{lem:exp-stcong}
     If $s \stcong{\fv{e}} s'$ then $\ext{s}(e) = \ext{s'}(e)$. 
 \end{lemma}
 
@@ -631,8 +632,6 @@ Uniprocessor assertions denote sets of uniprocessor machine states, and will lat
 \end{align*} 
 The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the same basic meaning as in first-order logic: any state that the set of states with stacks for which the boolean expression $b$ evaluates to 1; the union of the set of states that satisfy $P$ and $P'$, etc. $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $\fbaru$ describes any state in which just the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
 
-The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
-
 \paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \begin{align*}
     e \fpointsto e' \eqdef & e \fwriteu e' \conj \fbaru\\
 \end{align*} 
@@ -748,6 +747,27 @@ We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef 
     P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
     P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
+
+
+The set of free variables of an assertion $P$, written $\fv{P}$, is defined as usual: \begin{align*}
+    \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} & \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} \\ 
+    \fv{\exists x \st P} \eqdef &\fv{P} \setminus \set{x} & \fv{\forall x \st P} \eqdef &\fv{P} \setminus \set{x} \\
+    \fv{\femp} \eqdef & \nil &  \fv{\fbaru} \eqdef & \nil \\
+    \fv{e \fwriteu e'} \eqdef & \fv{e} \cup \fv{e'} &
+    \fv{P \fhash P'} \eqdef & \fv{P} \cup \fv{P'} \\  
+    \fv{P \fsep P'} \eqdef & \fv{P} \cup \fv{P'} & 
+    \fv{P \fseq P'} \eqdef & \fv{P} \cup \fv{P'} \\
+    \fv{P \fsseq P'} \eqdef & \fv{P} \cup \fv{P'}
+\end{align*}
+
+The following lemma, analogous to Lemma~\ref{lem:exp-stcong}, relates the set of free variables of an assertion and the stack-component of the states that satisfy it:
+\begin{lemma}
+\label{lem:assertion-stcong}
+    If $s \stcong{\fv{P}} s'$ then $(s,\mu) \satisfies P$ iff $(s',\mu) \satisfies P$. 
+\end{lemma}
+\begin{proof}
+By induction on the structure of $P$, using Lemma~\ref{lem:exp-stcong} in the base cases. 
+\end{proof}
 
 \paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
 
