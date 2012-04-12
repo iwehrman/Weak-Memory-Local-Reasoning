@@ -336,6 +336,25 @@ Boolean expressions are terms that denote truth values. Their language is given 
     \end{cases}
 \end{align*}
 
+The set of \emph{free variables} of a (boolean) expression $e$, written $\fv{e}$, is defined as usual: \begin{align*}
+    \fv{v} \eqdef & \nil \\ 
+    \fv{x} \eqdef & \set{x} \\ 
+    \fv{e + e'} \eqdef & \fv{e} \cup \fv{e'} \\ 
+    \fv{e - e'} \eqdef & \fv{e} \cup \fv{e'} \\ 
+    \fv{\bexpf} \eqdef & \nil \\ 
+    \fv{\bexpt} \eqdef & \nil \\ 
+    \fv{!b} \eqdef & \fv{b} \\ 
+    \fv{e = e'} \eqdef & \fv{e} \cup \fv{e'}
+\end{align*}
+
+For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ if, for all $x \in X$, $s(x) = s'(x)$. The following basic lemma uses this relation to connect the static and dynamic semantics of expressions. 
+\begin{lemma}
+    If $s \stcong{\fv{e}} s'$ then $\ext{s}(e) = \ext{s'}(e)$. 
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of the expression $e$. 
+\end{proof}
 
 \chapter{A Sequential Program Logic}
 \label{ch:uniprocessor}
@@ -606,12 +625,11 @@ As with spatial separation, we lift spatiotemporal separation up to a function o
 \section{Uniprocessor Assertions}
 \label{sec:uniprocessor-assertions}
 
-Uniprocessor assertions denote sets of uniprocessor machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
+Uniprocessor assertions denote sets of uniprocessor machine states, and will later be used to express the pre- and post-conditions of commands in the specification logic. The language of uniprocessor assertions is given by the following grammar: \begin{align*}
     \asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
-    & \femp \bnfbar \fbaru \bnfbar e \fwriteu e' \bnfbar (P \fhash P') \bnfbar (P \fsep P') \bnfbar \\&  (P \fseq P') \bnfbar (P \fsseq P')
+    & \femp \bnfbar \fbaru \bnfbar e \fwriteu e' \bnfbar (P \fsep P') \bnfbar (P \fsseq P') \bnfbar \\&  (P \fseq P') \bnfbar (P \fhash P')
 \end{align*} 
-
-The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and empty write buffer. $\fbaru$ describes any state in which the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the same basic meaning as in first-order logic: any state that the set of states with stacks for which the boolean expression $b$ evaluates to 1; the union of the set of states that satisfy $P$ and $P'$, etc. $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $\fbaru$ describes any state in which just the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
 
 The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
 
