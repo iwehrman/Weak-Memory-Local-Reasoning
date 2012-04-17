@@ -648,22 +648,6 @@ In Section~\ref{sec:locality} we also described a particular strategy for showin
 \end{lemma}
 
 
-
-
-
-% Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor machine states. These sets of states have a special structure; namely, they are closed w.r.t.\ the flushing relation. That is, assertions denote sets $S$ with the property that if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$ as well. We call sets with this structure \emph{predicates}. 
-
-% \begin{lemma}
-%     For any assertion $P$, $\pred{P}$ is a predicate. 
-% \end{lemma}
-
-
-
-% Predicates, as flushing-closed sets of states, are especially useful for the specification program behavior. Suppose we wish to show that some configuration $(c,\sigma)$ is safe and always terminates in some state from a set $S$. If $S$ is not flushing closed, then it is not sufficient to show, whenever $(c,\sigma) \rtstep (\cskip,\sigma')$, that $\sigma' \in S$. For it could be the case that \[ (c,\sigma) \rtstep (\cskip,\sigma') \step (\cskip,\sigma''),\] with $\sigma'' \notin S$. If, on the other hand, $S$ is a predicate, and hence is flushing-closed, then it is sufficient to show that fully evaluated commands result in the correct states, because any further state transitions are guaranteed to remain within the bounds of $S$. 
-
-% An explicit goal of the semantics of assertions in Section~\ref{sec:uniprocessor-satisfaction} will be to ensure that the sets of states they denote are predicates. This has the effect of restricting the language of program specifications to statements that are \emph{stable} w.r.t.\ the nondeterministic flushing behavior of programs. As indicated above, reasoning about these specification may be considerably simpler than the general case. 
-
-
 \section{Uniprocessor Assertions}
 \label{sec:uniprocessor-assertions}
 
@@ -731,7 +715,15 @@ We write $\pred{P}$ for the set of states that satisfies an assertion $P$,\[ \pr
     P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
-\paragraph{Flushing Closure}A central claim is that, for each assertion $P$, $\pred{P}$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+
+Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor machine states. A central claim is that assertions denote predicates. 
+
+\begin{lemma}
+    \label{lem:assertions-denote-predicates}
+    For any assertion $P$, $\pred{P}$ is a predicate. 
+\end{lemma}
+
+An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
 
 Consider, as a significant example, the set of states that satisfy the atomic formula $e \fwriteu e'$. These states may be classified as follows: \begin{enumerate}
     \item states that describe a single buffered write, and 
@@ -750,9 +742,13 @@ Consider, as a significant example, the set of states that satisfy the atomic fo
     \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
 \end{figure}
 
-The requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe empty buffers, $\fbaru$, as well as empty heaps and empty buffers, $\femp$. An alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
+The predicate requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe empty buffers, $\fbaru$, as well as empty heaps and empty buffers, $\femp$. An alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
 
-Also note that it is important to define the satisfaction relation so that it preserves the flushing closure of atomic formulas, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ is not closed w.r.t.~flushing, then \[\pred{\fbaru \conj e \fwriteu e'} = \pred{\fbaru} \cap \pred{e \fwriteu e'} = \nil,\] and hence so too would be its flushing closure.  
+The predicate requirement also explains why we have omitted negation (and implication) from the assertion language. In a naive semantics, a state satisfies $\neg P$ if and only if it does not satisfy $P$; i.e., as a complement: \[ \pred{\neg P} \eqdef \setstates \setminus \pred{P}. \] But the complement of a down-closed set is not generally closed itself, which would violate the predicate requirement. 
+
+Let us call the complement of a closed set an \emph{open} set. Open sets are rather curious. For example, an open set of memory systems that contains $(\ell \mapsto v,\nil)$ also contains every possible memory system that, when flushed, results in this memory system, e.g., $(\nil, \llit{(\ell,v)})$, $(\nil, \llit{(\ell,u),(\ell,v)})$, $(\nil, \llit{(\ell,w),(\ell,u),(\ell,v)})$, etc. Closed sets are thus not appropriate for describing individual writes. Sets that are both closed and open would yield a well behaved algebra, allowing full negation and implication, but it is not obvious that such an algebra would be useful for program reasoning. 
+
+Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{\fbaru \conj e \fwriteu e'} = \pred{\fbaru} \cap \pred{e \fwriteu e'} = \nil,\] and hence so too would be its flushing closure.  
 
 \subsection{Sequential Algebra}
 \label{sec:sequential-algebra}
@@ -802,25 +798,20 @@ The first three semantic entailments follow trivially from their respective abbr
 \section{Sequential Specifications}
 \label{sec:sequential-specifications}
 
-The language of specifications is given by the following schema: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. 
+A \emph{sequential program specification} is a three-tuple, written as follows: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. The specifications considered here assert \emph{partial correctness} of a command, which means that any specification of a nonterminating command is true. Their informal meaning is roughly analogous to that of separation logic: if $c$ is evaluated in a state that satisfies $P$ then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
 
-\subsection{Uniprocessor Semantics}
-\label{sec:sequential-specification-semantics}
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
 
-A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $P$, then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
-
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st \sigma \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
-
-We now give a formal definition of $\safe{n}{c,s,\mu,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
+The formal definition of $\safe{n}{c,s,\mu,Q}$ is given by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
     \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
 
-    \item For all $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu)$, $c,(s,\mu_1) \nostep \abort$.
+    \item For all $\mu_0,\mu_F$ such that $\mu_0 \in (\mu_F \fhash \mu)$ it is the case that $c,(s,\mu_0) \nostep \abort$.
 
-    \item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
-        \item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
+    \item For all $\mu_0,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
+        \item $\mu_0 \in (\mu_F \fhash \mu)$,
         \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
-    \end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
-        \item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
+    \end{enumerate} there exists $\mu'_F,\mu'$ such that \begin{enumerate}
+        \item $\mu_1 \in (\mu'_F \fhash \mu')$,
         \item $\mu'_F \taurefines \mu_F$, and
         \item $\safe{n}{c',s',\mu',Q}$.
     \end{enumerate}
@@ -829,7 +820,8 @@ We now give a formal definition of $\safe{n}{c,s,\mu,Q}$ by natural number induc
 
 The definition of the predicate above differs significantly from Vafeiadis' in that the frame state $\mu_F$ is allowed to change from one step to another, but only by making silent transitions. 
 
-\subsection{Proof Theory}
+\subsection{Sequential Proof Theory}
+\label{sec:sequential-proof-theory}
 
 The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.
 
@@ -1559,6 +1551,8 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
     \item Why not just embed the memory model into the program? (E.g., \cite{DBLP:conf/tphol/Ridge07}) Hint: the frame rule is not very useful because it violates flushing closure. Also possibly requires reasoning extra complicated reasoning about flushing.  (Maybe can use old example?)
 
     \item Multiple resources, the CSL counterexample \cite{Brookes20115} and syntactic control of interference \cite{DBLP:conf/popl/ReddyR12}.  
+
+    \item Right-hand temporal frame rule and the top predicate. 
 \end{enumerate}
 
 
