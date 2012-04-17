@@ -647,7 +647,7 @@ In Section~\ref{sec:locality} we also described a particular strategy for showin
     \end{enumerate}
 \end{lemma}
 
-In each case, the proof follows from the fact that if $\mu \in \mu_0 \bullet \mu_1$ and $\mu' \taurefines \mu$ then there exists $\mu'_0$ and $\mu'_1$ such that $\mu'_0 \taurefines \mu_0$, $\mu'_1 \taurefines \mu_1$ and $\mu' \in \mu'_0 \bullet \mu'_1$. 
+In each case, the proof follows from the fact that if $\mu \in \mu_0 \bullet \mu_1$ and $\mu' \taurefines \mu$ then there exists $\mu'_0$ and r$\mu'_1$ such that $\mu'_0 \taurefines \mu_0$, $\mu'_1 \taurefines \mu_1$ and $\mu' \in \mu'_0 \bullet \mu'_1$. 
 
 \section{Uniprocessor Assertions}
 \label{sec:uniprocessor-assertions}
@@ -916,7 +916,9 @@ This chapter describes a program logic for a parallel programming language model
 \section{The Programming Language}
 \label{sec:programming-language}
 
-In this section I describe a simplified C-like structured programming language. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
+In this section I describe a simplified C-like structured programming language with parallelism. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not an assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
+
+The parallel language differs from the sequential language described in Section~\ref{sec:sequential-programs} in two ways. First, commands may be composed in parallel, indicating that there are no program-order dependencies between the primitives of the constituent commands. Second, each primitive must be annotated with an expression that indicates the processor on which the primitive will be executed. As is discussed below in Section~\ref{sec:commands-and-states}, this will allow us to express both concurrent and interleaving parallelism uniformly. 
 
 \subsection{Commands and States}
 \label{sec:commands-and-states}
