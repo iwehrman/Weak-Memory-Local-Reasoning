@@ -670,7 +670,7 @@ In Section~\ref{sec:locality} we also described a particular strategy for showin
 Uniprocessor assertions denote sets of uniprocessor machine states, and will later be used to express the pre- and post-conditions of commands in the specification logic. The language of uniprocessor assertions is given by the following grammar: \begin{align*}
     \setassertions~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \femp \bnfbar \\ & \fbaru \bnfbar e \fwriteu e' \bnfbar (P \fsep P') \bnfbar  (P \fseq P') \bnfbar (P \fhash P')
 \end{align*} 
-The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the same basic meaning as in first-order logic: any state that the set of states with stacks for which the boolean expression $b$ evaluates to 1; the union of the set of states that satisfy $P$ and $P'$, etc. $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $\fbaru$ describes any state in which just the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+The informal meaning of the assertions above are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the same basic meaning as in first-order logic: any state that the set of states with stacks for which the boolean expression $b$ evaluates to 1; the union of the set of states that satisfy $P$ and $P'$, etc. The assertion $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $\fbaru$ describes any state in which just the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. The assertion $(P \fsep P')$ describes spatial separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatial-separation}. The assertion $(P \fseq P')$ describes temporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-temporal-separation}.  Finally, the assertion $(P \fhash P')$ describes the spatiotemporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatiotemporal-separation}.
 
 \paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \[
     e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru \] And, as indicated at the end of Section~\ref{sec:sequential-temporal-separation}, we introduce a strong temporal separating conjunction as the (additive) conjunction of spatial and weak-temporal conjunctions: \[ P \fsseq P' \eqdef (P \fseq P') \conj (P \fsep P').\]
@@ -757,6 +757,47 @@ Also note that it is important to define the satisfaction relation so that it pr
 \subsection{Sequential Algebra}
 \label{sec:sequential-algebra}
 
+A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:sequential-equivalences} and~\ref{fig:sequential-entailments}, respectively. If a formula contains instances of $\bullet$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the four separating conjunctions. 
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+    \begin{align*}
+        P  \bullet \femp \sequiv & P \\
+        \femp \bullet P \sequiv & P \\
+        (P \bullet P') \bullet P'' \sequiv & P \bullet (P' \bullet P'') \\
+        P \fsep P' \sequiv & P' \fsep P \\ 
+        \fbaru \bullet \fbaru \sequiv & \fbaru \\
+        (P \bullet P') \conj \fbaru \sequiv & (P \conj \fbaru) \bullet (P' \conj \fbaru)
+    \end{align*}
+    \end{minipage}}
+    \caption{\label{fig:sequential-equivalences}Semantic equivalences}
+\end{figure}
+
+Each of the separating conjunctions is associative and has $\femp$ as a unit. Furthermore, the spatial separating conjunction is also commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbaru$, and $\fbaru$ also distributes fully through the separating conjunctions. 
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+    \begin{align*}
+        e \fpointsto e' \sentails & e \fwriteu e' \\
+        P \fsseq P' \sentails & P \fsep P' \\ 
+        P \fsseq P' \sentails & P \fseq P' \\ 
+        P \fsep P' \sentails & P \fhash P' \\ 
+        P \fseq P' \sentails & P \fhash P' \\ 
+        P \bullet (P' \circ P'') \sentails & (P \bullet P') \circ P'' & \text{for $P \bullet P' \sentails P \circ P'$} \\
+        (P \circ P') \bullet P'' \sentails & P \circ (P' \bullet P'') & \text{for $P \bullet P' \sentails P \circ P'$} \\
+        (P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''') \\
+        P \bullet P' \sentails & P'' \bullet P' & \text{if $P \sentails P''$} \\
+        P \bullet P' \sentails & P \bullet P'' & \text{if $P' \sentails P''$}
+    \end{align*}
+    \end{minipage}}
+    \caption{\label{fig:sequential-entailments}Semantic entailments}
+\end{figure}
+
+The first three semantic entailments follow trivially from their respective abbreviation expansions---e.g., $e \fpointsto e' \sentails e \fwriteu e'$ because $e \fpointsto e' \eqdef e \fwriteu e'$ and $P \conj P' \sentails P$. The four separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., $P \fhash P'$ is not commutative.
 
 \section{Sequential Specifications}
 \label{sec:sequential-specifications}
