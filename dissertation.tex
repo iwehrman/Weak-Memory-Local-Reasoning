@@ -452,7 +452,9 @@ The formal semantics of the successful execution of a command is given as a bina
 The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,b \lapp \llit{(\ell,v)}) \taustep (\funup{h}{\ptup{\ell}{v}},b) 
 \end{align*} We write $\taurefines$ as shorthand for the reflexive-transitive closure $\taustep$. 
 
-The complete relation that defines the semantics of commands is given in Figure~\ref{fig:sequential-command-semantics} below. The reflexive-transitive closure of command evaluation relation, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. The \emph{range} of a configuration $\mathcal{C}$, written \range{\mathcal{C}}, is defined as the set of states $\sigma$ for which $\mathcal{C} \rtstep \cskip,\sigma$. 
+The complete relation that defines the semantics of commands is given in Figure~\ref{fig:sequential-command-semantics} below. The semantics of primitive commands is lifted directly to the level of commands by \textsc{c-prim} and \textsc{c-prim-a}. The silent transitions as defined by the $\taustep$ relation are also lifted directly to the level of commands by \textsc{c-tau}. Sequential compositions $\cseq{c_1}{c_2}$ evaluate from left-to-right: by \textsc{c-seq} and \textsc{c-seq-a} if the left command $c_1$ evaluates or aborts, then so does the sequential composition; and by \textsc{c-seq-s}, once the left command $c_1$ has evaluated fully to $\cskip$ it is dropped so that evaluation of the right side $c_2$ may proceed. By \textsc{c-ch-1} and \textsc{c-ch-2}, a the nondeterministic choice command $\cchoice{c_1}{c_2}$ may evaluate to either $c_1$ or $c_2$, afterward continuing evaluation of the chosen command. Finally, by \textsc{c-loop}, a looping command $\cloop{c}$ may always evaluate without modifying the state by expanding to a nondeterministic choice between doing nothing (i.e., exiting the loop) and sequential composition that consists of evaluating the loop body $c$ once and then continuing with the loop. 
+
+The reflexive-transitive closure of command evaluation relation, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. The \emph{range} of a configuration $\mathcal{C}$, written \range{\mathcal{C}}, is defined as the set of states $\sigma$ for which $\mathcal{C} \rtstep \cskip,\sigma$. 
 
 \begin{figure}[ht]
     \centering
@@ -914,24 +916,20 @@ The inference rules of the sequential logic are given in Figure~\ref{fig:sequent
 
 This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 
 
-\section{The Programming Language}
+\section{Concurrent Programs}
 \label{sec:programming-language}
 
-In this section I describe a simplified C-like structured programming language with parallelism. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not an assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
+In this section I describe a simplified C-like structured programming language with concurrency. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not an assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
 
-The parallel language differs from the sequential language described in Section~\ref{sec:sequential-programs} in two ways. First, commands may be composed in parallel, indicating that there are no program-order dependencies between the primitives of the constituent commands. Second, each primitive must be annotated with an expression that indicates the processor on which the primitive will be executed. As is discussed below in Section~\ref{sec:commands-and-states}, this will allow us to express both concurrent and interleaving parallelism uniformly.
-\subsection{Commands and States}
-\label{sec:commands-and-states}
+The concurrent language differs from the sequential language described in Section~\ref{sec:sequential-programs} in two ways. First, commands may be composed in parallel, which indicates that there are no program-order dependencies between the primitives of the constituent commands. Second, each primitive must be annotated with an expression that indicates the processor on which the primitive will be executed. As is discussed below, this will allow us to express both concurrent and interleaving parallelism uniformly.
 
 In this setting, programs are identified with \emph{commands}, which consist of compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{I have no particular to reason to think that they will add significant complication though, and were also considered in earlier iterations of this project \cite{wmsldetails,lola11}.}
 
-The syntax of primitive commands is given by the following grammar: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
+The primitive commands for the concurrent language are a superset of those for the sequential language, as described in Section~\ref{sec:sequential-programs}: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
 	& \cstore{e}{e'} \bnfbar \cfence \bnfbar \clock \bnfbar \cunlock 	
-\end{align*}
-
-The informal meaning of the primitive commands is as follows. \begin{itemize}
+\end{align*} Compared to the primitives in the sequential language, the $\clock$ and $\cunlock$ commands are new to the parallel language. The informal meaning of the primitive commands is as follows. \begin{itemize}
 	\item $\cskip$ takes no evaluations steps;
-	\item $\cassume{b}$ evaluates to $\cskip$ if $b$ holds and becomes stuck otherwise; 
+	\item $\cassume{b}$ evaluates to $\cskip$ if $b$ holds; 
 	\item $\cassert{b}$ evaluates to $\cskip$ if $b$ holds and aborts otherwise;
 	\item $\cassign{x}{e}$ assigns $e$ to identifier $x$; 
 	\item $\cload{x}{e}$ assigns the value at memory address $e$ to identifier $x$; 
@@ -941,7 +939,9 @@ The informal meaning of the primitive commands is as follows. \begin{itemize}
 	\item $\cunlock$ releases the global lock and fences.
 \end{itemize}
 
-The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p : \sigma \pstep{i} \sigma'. \] The informal meaning of such a quadruple is that that when primitive $p$ is executed on processor $i$ state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) A primitive command may alternatively abort upon execution: \[ p : \sigma \pstep{i} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
+The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p : \sigma \pstep{i} \sigma'. \] The informal meaning of such a quadruple is that that when primitive $p$ is executed on processor $i$ state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) This differs from the relation used to describe the semantics of the primitives in the sequential language from Section~\ref{sec:sequential-programs} by requiring that processor on which on which the primitive should execute by specified explicitly. 
+
+A primitive command may alternatively abort upon execution: \[ p : \sigma \pstep{i} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
 To define this relation formally, we must first define the notions of memory system and machine state. 
 \begin{definition}
