@@ -927,17 +927,7 @@ In this setting, programs are identified with \emph{commands}, which consist of 
 
 The primitive commands for the concurrent language are a superset of those for the sequential language, as described in Section~\ref{sec:sequential-programs}: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
 	& \cstore{e}{e'} \bnfbar \cfence \bnfbar \clock \bnfbar \cunlock 	
-\end{align*} Compared to the primitives in the sequential language, the $\clock$ and $\cunlock$ commands are new to the parallel language. The informal meaning of the primitive commands is as follows. \begin{itemize}
-	\item $\cskip$ takes no evaluations steps;
-	\item $\cassume{b}$ evaluates to $\cskip$ if $b$ holds; 
-	\item $\cassert{b}$ evaluates to $\cskip$ if $b$ holds and aborts otherwise;
-	\item $\cassign{x}{e}$ assigns $e$ to identifier $x$; 
-	\item $\cload{x}{e}$ assigns the value at memory address $e$ to identifier $x$; 
-	\item $\cstore{e}{e'}$ stores the value $e'$ to memory address $e'$; 
-	\item $\cfence$ commits any buffered writes to memory; 
-	\item $\clock$ acquires the global lock and fences; and
-	\item $\cunlock$ releases the global lock and fences.
-\end{itemize}
+\end{align*} Compared to the primitives in the sequential language, the $\clock$ and $\cunlock$ commands are new to the parallel language, and serve to manipulate a single, global lock, which can either be free (available) or busy (held by a particular processor). 
 
 The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p : \sigma \pstep{i} \sigma'. \] The informal meaning of such a quadruple is that that when primitive $p$ is executed on processor $i$ state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) This differs from the relation used to describe the semantics of the primitives in the sequential language from Section~\ref{sec:sequential-programs} by requiring that processor on which on which the primitive should execute by specified explicitly. 
 
@@ -961,7 +951,7 @@ Second, the global lock from the memory model description is replaced in the mac
 
 This machine model is more general than the model used to describe the memory model because it allows an arbitrary subset of processors to be blocked. Intuitively, this can be thought of has representing partial information about the status of the lock. If the blocked set contains at least two processor identifiers then the global lock must be held by some processor, though it may be unclear which one specifically holds the lock. A partial memory system is called \emph{complete} if its set of blocked processors is a valid representation of a global lock, insofar as no processors are blocked when the lock is free, and all processors but $i$ are blocked when $i$ holds the lock: \[ \complete{h,B,k} \iffdef k = \nil \disj \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}.\] If a memory system is not (necessarily) complete, then it is called \emph{partial}.
 
-The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics} below. 
+The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics} below. The semantics of the primitives that are shared with the sequential language is very similar to the description given in Section~\ref{sec:sequential-programs}. The assume, assert and assignment primitives are exactly the same; the load, store and fence primitives operate w.r.t.\ the \emph{specified} buffer within the buffer array $B$, as opposed to the single buffer $b$ present in the uniprocessor state used to describe the sequential semantics. The $\clock$ command, w.r.t.\ processor $i$, changes an empty blocked set to one in which every processor except for $i$ is blocked (i.e., $\setprocessors \setminus \set{i}$), which indicates that $i$ alone holds the global lock. Furthermore, the $\clock$ command is only enabled when the buffer of the processor on which it executes is empty, which is analogous to an implicit fence instruction. Conversely, the $\cunlock$ changes a state in which ever processor but $i$ is blocked to one in which no processor is blocked (i.e., $\nil$). And, like the $\clock$ command, the $\cunlock$ includes an implicit fence, requiring that the buffer of the processor on which it executes be empty before proceeding. 
 
 \begin{figure}[p]
 	\centering
@@ -1005,11 +995,11 @@ The definition of the semantic relation for primitive commands is given in Figur
 		
 		\vspace{1em}
 
-		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\set{i})}
+		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\setprocessors \setminus \set{i})}
 		
 		\vspace{1em}
 
-		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock :(s,h,B,\set{i}) \pstep{i} (s,h,B,\nil)}
+		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock :(s,h,B,\setprocessors \setminus \set{i}) \pstep{i} (s,h,B,\nil)}
 	\end{minipage}
 	\caption{\label{fig:primitive-semantics} Semantics of primitive commands}
 \end{figure}
