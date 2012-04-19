@@ -804,32 +804,12 @@ The first three semantic entailments follow trivially from their respective abbr
 
 A \emph{sequential program specification} is a three-tuple, written as follows: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. The specifications considered here assert \emph{partial correctness} of a command, which means that any specification of a nonterminating command is true. Their informal meaning is roughly analogous to that of separation logic: if $c$ is evaluated in a state that satisfies $P$ then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
 
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
-
-The formal definition of $\safe{n}{c,s,\mu,Q}$ is given by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
-    \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
-
-    \item For all $\mu_0,\mu_F$ such that $\mu_0 \in (\mu_F \fhash \mu)$ it is the case that $c,(s,\mu_0) \nostep \abort$.
-
-    \item For all $\mu_0,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
-        \item $\mu_0 \in (\mu_F \fhash \mu)$,
-        \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
-    \end{enumerate} there exists $\mu'_F,\mu'$ such that \begin{enumerate}
-        \item $\mu_1 \in (\mu'_F \fhash \mu')$,
-        \item $\mu'_F \taurefines \mu_F$, and
-        \item $\safe{n}{c',s',\mu',Q}$.
-    \end{enumerate}
-
-\end{enumerate}
-
-The first part ensures that if a command is fully evaluated (i.e., is $\cskip$) after $n+1$ steps of evaluation, then the state satisfies the postcondition. The second part ensures that the command, when evaluated in any more completely described state---as defined by the spatiotemporal notion of separation---does not abort after $n+1$ steps of evaluation. The third part ensures that the command, if safely evaluated for $n$ steps, preserves safety for one additional step. The definition of the predicate above differs significantly from Vafeiadis' in that the frame state $\mu_F$ is allowed to change from one step of evaluation to the next, but only by making silent transitions. This represents the fact that the flushing of buffered writes is nondeterministic and not controlled by the command. If the frame memory system $\mu_F$ contains buffered writes, they may well flush to memory during evaluation; and if those writes succeed buffered writes described by the local memory system $\mu$, then those writes too must have been flushed. 
-
-Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \fhash \mu$. The second part requires that the command not abort in $\mu_F \fhash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition. 
-
 \subsection{Sequential Proof Theory}
 \label{sec:sequential-proof-theory}
 
-The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.
+We now present a proof theory for deriving true sequential program specifications. The axioms and inference rules are strongly inspired by Separation Logic; the axioms and inference rules of Hoare Logic are included verbatim. 
+
+The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.\footnote{The axioms and inference rules of the proof theory are of course correctly referred to as axiom schemas and rule schemas, because they must be instantiated metalogically with particular formulas, commands and expressions.} The axiom for $\cskip$ indicates its evaluation preserves any precondition into a postcondition. The fact that assertions denote down-closed sets of states is crucial for the soundness of this rule, because a configuration $\cskip,\sigma$ may well have non-trivial transitions. That is, it may be the case that, for some $\sigma \satisfies P$, that $\cskip,\sigma \step \cskip,\sigma'$. In this case it is clear from the operational semantics of commands that $\sigma' \taurefines \sigma$, and so $\sigma' \satisfies P$ as well because assertions denote predicates, which are closed w.r.t.\ the flushing relation. 
 
 \begin{figure}[ht]
     \centering
@@ -912,6 +892,30 @@ These reflect the two cases distinguished by the load axioms, and may or may not
 \end{figure}
 
 The inference rules of the sequential logic are given in Figure~\ref{fig:sequential-inference-rules}. The logical rules require little explanation. Observe that there is a single left-side frame rule for each of the four separating conjunctions. The strong interleaving conjunction is commutative, and so with the rule of consequence effectively provides a right-side frame rule as well. The structural rules are as in Hoare Logic. There has been no attempt to provide a conjunction rule because there has been no attempt as yet to identify a suitable notion of precision~\cite{DBLP:journals/entcs/GotsmanBC11}. 
+
+\subsection{Semantics of Sequential Specifications}
+
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
+
+The formal definition of $\safe{n}{c,s,\mu,Q}$ is given by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
+    \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
+
+    \item For all $\mu_0,\mu_F$ such that $\mu_0 \in (\mu_F \fhash \mu)$ it is the case that $c,(s,\mu_0) \nostep \abort$.
+
+    \item For all $\mu_0,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
+        \item $\mu_0 \in (\mu_F \fhash \mu)$,
+        \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
+    \end{enumerate} there exists $\mu'_F,\mu'$ such that \begin{enumerate}
+        \item $\mu_1 \in (\mu'_F \fhash \mu')$,
+        \item $\mu'_F \taurefines \mu_F$, and
+        \item $\safe{n}{c',s',\mu',Q}$.
+    \end{enumerate}
+
+\end{enumerate}
+
+The first part ensures that if a command is fully evaluated (i.e., is $\cskip$) after $n+1$ steps of evaluation, then the state satisfies the postcondition. The second part ensures that the command, when evaluated in any more completely described state---as defined by the spatiotemporal notion of separation---does not abort after $n+1$ steps of evaluation. The third part ensures that the command, if safely evaluated for $n$ steps, preserves safety for one additional step. The definition of the predicate above differs significantly from Vafeiadis' in that the frame state $\mu_F$ is allowed to change from one step of evaluation to the next, but only by making silent transitions. This represents the fact that the flushing of buffered writes is nondeterministic and not controlled by the command. If the frame memory system $\mu_F$ contains buffered writes, they may well flush to memory during evaluation; and if those writes succeed buffered writes described by the local memory system $\mu$, then those writes too must have been flushed. 
+
+Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \fhash \mu$. The second part requires that the command not abort in $\mu_F \fhash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition.
 
 \chapter{A Concurrent Program Logic}
 \label{ch:multiprocessor}
