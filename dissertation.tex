@@ -809,8 +809,6 @@ A \emph{sequential program specification} is a three-tuple, written as follows: 
 
 We now present a proof theory for deriving true sequential program specifications. The axioms and inference rules are strongly inspired by Separation Logic; the axioms and inference rules of Hoare Logic are included verbatim. 
 
-The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.\footnote{The axioms and inference rules of the proof theory are of course correctly referred to as axiom schemas and rule schemas, because they must be instantiated metalogically with particular formulas, commands and expressions.} The axiom for $\cskip$ indicates its evaluation preserves any precondition into a postcondition. The fact that assertions denote down-closed sets of states is crucial for the soundness of this rule, because a configuration $\cskip,\sigma$ may well have non-trivial transitions. That is, it may be the case that, for some $\sigma \satisfies P$, that $\cskip,\sigma \step \cskip,\sigma'$. In this case it is clear from the operational semantics of commands that $\sigma' \taurefines \sigma$, and so $\sigma' \satisfies P$ as well because assertions denote predicates, which are closed w.r.t.\ the flushing relation. 
-
 \begin{figure}[ht]
     \centering
     \resizebox{\columnwidth}{!}{
@@ -844,6 +842,7 @@ The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.\footnot
     \caption{\label{fig:sequential-axioms}Axioms}
 \end{figure}
 
+The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.\footnote{The axioms and inference rules of the proof theory are of course correctly referred to as axiom schemas and rule schemas, because they must be instantiated metalogically with particular formulas, commands and expressions.} The axiom for $\cskip$ indicates its evaluation preserves any precondition into a postcondition. The fact that assertions denote down-closed sets of states is crucial for the soundness of this rule, because a configuration $\cskip,\sigma$ may well have non-trivial transitions. That is, it may be the case that, for some $\sigma \satisfies P$, that $\cskip,\sigma \step \cskip,\sigma'$. In this case it is clear from the operational semantics of commands that $\sigma' \taurefines \sigma$, and so $\sigma' \satisfies P$ as well because assertions denote predicates, which are closed w.r.t.\ the flushing relation. 
 
 The axioms for both the assume and assert commands ensure that the property $P$ holds if the commands either evaluate successfully or diverge. In the case of $\cassume{b}$, the command will execute successfully if the boolean expression $b$ evaluates to 1 in the current state and $P$ holds to begin with, and will diverge if $b$ evaluates to 0. Hence, the precondition of $\cassume{b}$ requires $(!b \disj P)$, which means that either the command will diverge or the property $P$ holds to begin with. In the case of $\cassert{b}$, if $b$ evaluates to false then the command will abort, which would invalidate the axiom. Hence, the precondition requires both that $b$ evaluate to true and that $P$ holds to begin with; i.e., that $(b \conj P)$ is true of the starting state. 
 
@@ -853,11 +852,15 @@ There are two axioms for load, depending on whether the write to be loaded has n
 
 The ostensibly buffered write to be loaded could, however, flush to memory before or after the load has completed. But, again, because assertions denote predicates, the soundness of the rule is preserved. In case the write is known to be flushed in the precondition, then of course it remains in memory after executing the load. This is what is described by the \textsc{load-mem} axiom, in which the $e \fwriteu e'$ atomic formula used in the \textsc{load-buf} rule is replaced by $e \fpointsto e'$. (Recall from Section~\ref{sec:uniprocessor-assertions} that $e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru$.) 
 
-The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
+The store command requires that the address to be updated is already allocated. In this model, this simply means that there is an existing write to that address, either buffered or flushed. The precondition for the store axiom thus requires a witness to the allocation status of the address to be updated in the form of a flushed write $e \fpointsto e'$. Of course, there may be other, more recent, buffered writes, which do not affect the behavior of the store command. These are described by the assertion $P$, and are combined temporally with the witness: $(e \fpointsto e') \fseq P$. Because $e$ is asserted by the precondition to be an allocated address, the store command is safe, and as a result simply appends a new write after all others: $(e \fpointsto e') \fseq P \fseq (e \fwriteu e'')$. 
+
+There are other possible axioms for the store command, e.g.: 
     \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwriteu e'') \fsseq P) \fseq e \fwriteu e'}}
 
     \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}}{((e \fpointsto e'') \fsseq P) \fseq e \fwriteu e'}}
-These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
+These reflect the two cases distinguished by the load axioms; namely, whether or not the \emph{most recent} write to the location to be updated is necessarily flushed to memory or not. 
+
+Finally, the axiom for $\cfence$ may be applied to any precondition $P$, and simply filters away states in which there are buffered writes by conjoining the $\fbaru$ assertion. Consider, e.g., $\triple{x \fwriteu 1}{\cfence}{x \fpointsto 1}$. If write in the starting state is buffered, then the $\cfence$ command will not evaluate. Instead, it blocks until the nondeterministic flushing has completed. The $\cfence$ command then evaluates to $\cskip$, leaving a state with an empty buffer that satisfies $x \fpointsto 1 \eqdef x \fwriteu 1 \conj \fbaru$.  
 
 \begin{figure}[p]
     \centering
