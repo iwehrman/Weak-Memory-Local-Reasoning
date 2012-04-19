@@ -844,6 +844,12 @@ The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.\footnot
     \caption{\label{fig:sequential-axioms}Axioms}
 \end{figure}
 
+
+The axioms for both the assume and assert commands ensure that the property $P$ holds if the commands either evaluate successfully or diverge. In the case of $\cassume{b}$, the command will execute successfully if the boolean expression $b$ evaluates to 1 in the current state and $P$ holds to begin with, and will diverge if $b$ evaluates to 0. Hence, the precondition of $\cassume{b}$ requires $(!b \disj P)$, which means that either the command will diverge or the property $P$ holds to begin with. In the case of $\cassert{b}$, if $b$ evaluates to false then the command will abort, which would invalidate the axiom. Hence, the precondition requires both that $b$ evaluate to true and that $P$ holds to begin with; i.e., that $(b \conj P)$ is true of the starting state. 
+
+The assignment axiom, as in Hoare logic, effectively transforms a formula with occurrences of the expression to be assigned into one with that expression replace by the variable to which that the expression was assigned. For example, $\triple{y \leq x+1}{\cassign{x}{x+1}}{y \leq x}$ can be derived from the assignment axiom by instantiating $P$ by $y \leq x$, given that $(y \leq x)\subst{x}{x+1} = y \leq x+1$. 
+
+
 The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as usual. The two axioms for $\cload{x}{e}$ reflect the fact that the write to be loaded may reside either in the buffer or in the heap. The schematic variable $P$ may be used to describe buffered writes to locations other than $e$ that are more recent than the write to $e$ being loaded, but not more recent writes to $e$. 
 
 The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
