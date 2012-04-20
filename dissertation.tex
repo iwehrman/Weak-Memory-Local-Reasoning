@@ -374,16 +374,25 @@ We write $x \fpointsto 1$ to indicate that the value of $x$ is an allocated memo
 We prove this program specification by proving subordinate specifications for each of the constituent commands, and then composing those proofs using an inference rule (\textsc{seq}) for reasoning about sequentially composed commands as follows: 
 \[
   \infer[\textsc{seq}]{\triple{x \fpointsto -}{c}{x \fpointsto 1 \conj y = 1}}{
-    \triple{x \fpointsto -}{c_1}{R_1}
+    \infer{\triple{x \fpointsto -}{c_1}{R_1}}{\vdots}
     &
-    \infer[\textsc{seq}]{\triple{R_1}{\cseq{c_2}{c_3}}{x \fpointsto 1 \conj y = 1}}{\triple{R_1}{c_2}{R_2} & \triple{R_2}{c_3}{x \fpointsto 1 \conj y = 1}}
+    \infer[\textsc{seq}]{\triple{R_1}{\cseq{c_2}{c_3}}{x \fpointsto 1 \conj y = 1}}{\infer{\triple{R_1}{c_2}{R_2}}{\vdots} & \infer{\triple{R_2}{c_3}{x \fpointsto 1 \conj y = 1}}{\vdots}}
   }
 \] where we use the shorthand $c_1$ for $\cstore{x}{1}$, $c_2$ for $\cfence$, and $c_3$ for $\cload{y}{x}$. 
 
-To complete the proof, we must find intermediate assertions $R_1$ and $R_2$ for which the leaves of the proof sketch above can be derived. For the first command, note that store command $\cstore{x}{1}$ \emph{buffers} a new write, that may be flushed to memory later. We write $x \fwriteu 1$ to indicate a buffered write to memory address $x$ with value 1, and $x \fpointsto - \fseq x \fwriteu 1$ to describe a temporal composition of $x \fpointsto -$ and $x \fwriteu 1$, where the left-hand side can be thought to precede the right-hand side. The first leaf of the proof is thus: 
+To complete the proof, we must find intermediate assertions $R_1$ and $R_2$ for which the leaves of the proof sketch above can be derived. For the first command, note that store command $\cstore{x}{1}$ \emph{buffers} a new write, that may be flushed to memory later. We write $x \fwriteu 1$ to indicate a buffered write to memory address $x$ with value 1, and $x \fpointsto - \fseq x \fwriteu 1$ to describe the \emph{temporal composition} of $x \fpointsto -$ and $x \fwriteu 1$, where the left-hand side precedes the right-hand side. The first leaf of the proof is thus: 
 \[ 
 \infer[\textsc{store}]{\triple{x \fpointsto -}{\cstore{x}{1}}{x \fpointsto - \fseq x \fwriteu 1}}{}
 \] which is derivable by the \textsc{store} axiom. 
+
+For the second leaf, we must find $R_2$ such that \[ \triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{R_2}.\] The fence command flushes any buffered writes to main memory. In this case, the result of flushing the buffered write yields $x \fpointsto 1$. Hence, we wish specifically to derive: \[ \triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{x \fpointsto 1}. \] The axiom for the fence command allows us to additively conjoin to any precondition $P$ an assertion $\fbaru$ that ensures all writes have flushed. Hence, we may derive $(x \fpointsto - \fseq x \fwriteu 1) \conj \fbaru$. But this assertion is logically equivalent to $x \fpointsto 1$, and so we may use the \emph{rule of consequence} to complete this leaf of the proof tree as follows:
+\[ 
+  \infer[\textsc{cons}]{\triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{x \fpointsto 1}}{\infer[\textsc{fence}]{\triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{(x \fpointsto - \fseq x \fwriteu 1) \conj \fbaru}}{}}
+\]
+
+It remains to show $\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto 1 \conj y = 1},$ but this, as we shall see, is an instance of the \textsc{load-mem} axiom scheme: \[ \infer[\textsc{load-mem}]{\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto 1 \conj y = 1}}{}\] which completes the derivation.
+
+This completes the derivation of our original specification. 
 
 
 \section{Sequential Programs}
