@@ -870,7 +870,13 @@ Finally, the axiom for $\cfence$ may be applied to any precondition $P$, and sim
         \infrule[disj]{\triple{P}{c}{Q} \text{~~~} \triple{P'}{c}{Q}}{\triple{P \disj P'}{c}{Q}}
         \vspace{1em}
 
-        \infrule[ex]{\triple{P}{c}{Q} \text{~~~} x \notin \fv{c,P}}{\triple{\exists x \st P}{c}{Q}}
+        \infrule[ex]{\triple{P}{c}{Q} \text{~~~} x \notin \fv{c,Q}}{\triple{\exists x \st P}{c}{Q}}
+        \vspace{1em}
+
+        \infrule[conj]{\triple{P}{c}{Q} \text{~~~} \triple{P}{c}{Q'}}{\triple{P}{c}{Q \conj Q'}}
+        \vspace{1em}
+
+        \infrule[all]{\triple{P}{c}{Q} \text{~~~} x \notin \fv{c,P}}{\triple{P}{c}{\forall x \st Q}}
         \vspace{1em}
 
         \infrule[frame-wi]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fhash P}{c}{R \fhash Q}}
@@ -901,7 +907,14 @@ Finally, the axiom for $\cfence$ may be applied to any precondition $P$, and sim
     \caption{\label{fig:sequential-inference-rules}Sequential inference rules}
 \end{figure}
 
-The inference rules of the sequential logic are given in Figure~\ref{fig:sequential-inference-rules}. The logical rules require little explanation. Observe that there is a single left-side frame rule for each of the four separating conjunctions. The strong interleaving conjunction is commutative, and so with the rule of consequence effectively provides a right-side frame rule as well. The structural rules are as in Hoare Logic. There has been no attempt to provide a conjunction rule because there has been no attempt as yet to identify a suitable notion of precision~\cite{DBLP:journals/entcs/GotsmanBC11}. 
+The inference rules of the sequential logic are given in Figure~\ref{fig:sequential-inference-rules}. The logical rules \textsc{disj} and \textsc{ex} allow the precondition to be weakened. Dually, the logical rules \textsc{conj} and \textsc{all} allow the postcondition to be strengthened. 
+
+The next four inference rules are variants of the frame rule of separation logic for each of the four separating conjunctions. Note that, although the strong temporal conjunction is \emph{defined} as the additive conjunction of spatial and temporal conjunctions, its frame rule is not derivable from the other rules. The spatial separating conjunction is commutative, but the others---which have a temporal aspect---are not. We have left-side frame rules only for these conjunctions. 
+
+The rule of consequence, as in Hoare Logic, allows arbitrary strengthening of the precondition and weakening of the postcondition. Typically the side conditions, which ensure that the precondition is strengthened and
+ the postcondition is weakened, are described using syntactic entailment among assertions. But because in this project we have not developed a proof system for syntactic entailment---though some rules can be gleaned from Section~\ref{sec:sequential-algebra}---we describe these conditions using semantic entailment instead. 
+
+The remaining structural rules are exactly as in Hoare Logic. The rule for the sequential composition $\cseq{c}{c'}$ requires identifying an intermediate assertion used as a postcondition for former command and a precondition for the latter. A specification can be proved of the nondeterministic choice $\cchoice{c}{c'}$ if it the same specification can be proved of both commands individually. Finally, an invariant specification holds for a loop if the body the loop maintains the invariant. 
 
 \subsection{Semantics of Sequential Specifications}
 
