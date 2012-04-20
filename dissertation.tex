@@ -362,7 +362,7 @@ By induction on the structure of the expression $e$.
 \chapter{A Sequential Program Logic}
 \label{ch:uniprocessor}
 
-In this chapter I describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer, and the logic is tailored to reason about the behavior of sequential programs w.r.t.\ these states. The logic developed in this chapter is not especially useful; the behavior of sequential program execution on this model is essentially the same as on the typical, strong-memory model (in which memory is modeled as a single array of addresses), and existing logics for reasoning this behavior are certainly simpler than the one developed here. But the sequential program logic is a pedagogical stepping stone toward the current program logic, for which the behavior of programs may well be significantly different from that of a strong-memory model. The development of the sequential logic is vastly simpler than weak-memory multi-processor logic, and many of the more difficult issues in that task can be introduced and explained more easily in a single-processor setting. 
+In this chapter we describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer, and the logic is tailored to reason about the behavior of sequential programs w.r.t.\ these states. The logic developed in this chapter is not especially useful; the behavior of sequential program execution on this model is essentially the same as on the typical, strong-memory model (in which memory is modeled as a single array of addresses), and existing logics for reasoning this behavior are certainly simpler than the one developed here. But the sequential program logic is a pedagogical stepping stone toward the current program logic, for which the behavior of programs may well be significantly different from that of a strong-memory model. The development of the sequential logic is vastly simpler than weak-memory multi-processor logic, and many of the more difficult issues in that task can be introduced and explained more easily in a single-processor setting. 
 
 A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously in \cite{wmsldetails}. 
 
@@ -390,10 +390,7 @@ For the second leaf, we must find $R_2$ such that \[ \triple{x \fpointsto - \fse
   \infer[\textsc{cons}]{\triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{x \fpointsto 1}}{\infer[\textsc{fence}]{\triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{(x \fpointsto - \fseq x \fwriteu 1) \conj \fbaru}}{}}
 \]
 
-It remains to show $\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto 1 \conj y = 1},$ but this, as we shall see, is an instance of the \textsc{load-mem} axiom scheme: \[ \infer[\textsc{load-mem}]{\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto 1 \conj y = 1}}{}\] which completes the derivation.
-
-This completes the derivation of our original specification. 
-
+It remains to show $\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto 1 \conj y = 1},$ but this, as we shall see, is an instance of the \textsc{load-mem} axiom scheme: \[ \infer[\textsc{load-mem}]{\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto 1 \conj y = 1}}{}\] which completes the derivation of third leaf of the proof tree, and hence completes the derivation of the example specification. 
 
 \section{Sequential Programs}
 \label{sec:sequential-programs}
@@ -1592,28 +1589,40 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 
 \chapter{Loose Ends}
 
-\begin{enumerate}
-	\item The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
 
-    \item Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}. In particular, counting permissions can unify the the weak and strong sequential conjunctions, and fractional permissions may be able to unify the weak and strong parallel conjunctions. Fractions are also needed for the message passing example. 
+\section{Multiplicative Barriers} 
 
-    \item Memory management commands \cite{wmsldetails,lola11}. Counting permissions are useful for these commands. 
+The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
 
-    \item Negation and implication, or lack thereof. Maybe also discuss the connection to the Alexandrov topology, etc. The negation of a closed set is not a closed set. Phase semantics of Linear Logic? 
+\section{Memory Management Commands and Counting Permissions}
 
-    \item Why not just embed the memory model into the program? (E.g., \cite{DBLP:conf/tphol/Ridge07}) Hint: the frame rule is not very useful because it violates flushing closure. Also possibly requires reasoning extra complicated reasoning about flushing.  (Maybe can use old example?)
+Memory management commands \cite{wmsldetails,lola11}. An asymmetric variant of counting permissions are useful for these commands. 
 
-    \item Multiple resources, the CSL counterexample \cite{Brookes20115} and syntactic control of interference \cite{DBLP:conf/popl/ReddyR12}.  
+\section{Fractional Permissions} 
 
-    \item Right-hand temporal frame rule and the top predicate. 
-\end{enumerate}
+Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}. In particular, counting permissions can unify the the weak and strong sequential conjunctions, and fractional permissions may be able to unify the weak and strong parallel conjunctions. Fractions are also needed for the message passing example. 
 
+\section{Negation}
+    
+Negation and implication, or lack thereof. Maybe also discuss the connection to the Alexandrov topology, etc. The negation of a closed set is not a closed set. Phase semantics of Linear Logic? 
+
+\section{Multiple Resource Bundles}
+
+Multiple resources, the CSL counterexample \cite{Brookes20115} and syntactic control of interference \cite{DBLP:conf/popl/ReddyR12}.  
+
+\section{A Smaller Load Axiom} 
+Right-hand temporal frame rule and the top predicate. 
 
 \chapter{Related Work}
 
 \section{Inspiration}
 
 Technical inspiration for this project comes primarily from work on separation logic \cite{DBLP:conf/lics/Reynolds02,DBLP:conf/csl/OHearnRY01,DBLP:journals/bsl/OHearnP99} and abstract separation logic \cite{DBLP:conf/lics/CalcagnoOY07}, as well as concurrent separation logic  \cite{DBLP:journals/tcs/OHearn07,DBLP:journals/tcs/Brookes07}, which this program logic resembles insofar as it strives to enable local (instead of global) reasoning about shared-state invariants (instead of two-place state relations). Although perhaps not obviously so, the semantics of the programming language was influenced by work on graphical models \cite{DBLP:journals/ipl/WehrmanHO09,DBLP:conf/RelMiCS/HoareMSW09,DBLP:journals/jlp/HoareMSW11} and the pomset model of true concurrency from Pratt \cite{DBLP:conf/popl/Pratt82,DBLP:conf/concur/Pratt84}. The style of semantics of specifications, and the associated soundness proof, is taken almost directly from Vafeiadis' recent soundness proof of concurrent separation logic \cite{V11}. Vafeiadis' excellent dissertation has also been an invaluable guide \cite{VafeiadisDissertation}. 
+
+\section{Program Transformations}
+
+Why not just embed the memory model into the program? (E.g., \cite{DBLP:conf/tphol/Ridge07}) Hint: the frame rule is not very useful because it violates flushing closure. Also possibly requires reasoning extra complicated reasoning about flushing.  (Maybe can use old example?)
+
 
 \section{Program Logics for Non-Local Reasoning}
 
