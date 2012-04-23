@@ -973,6 +973,19 @@ Note that the two conditions for locality---the safety monotonicity and and fram
 
 This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 
 
+\section{A Concurrent Example}
+\label{sec:concurrent-example}
+
+Consider the following program, $c_w$, which updates two memory locations successively: \[ c_w \eqdef \clock_0 \opseq \cstore{d}{1}_0 \opseq \cstore{r}{1}_0 \opseq \cunlock_0. \] Each primitive command in this program is annotated with the processor identifier $0$, which indicates that, on a multiprocessor machine, it will be executed on the $0^{\mathrm{th}}$ processor. The program first acquires a global lock with the $\clock$
+ command, then stores the value $1$ to the locations given by $d$ and $r$ in succession, and finally releases the lock with the $\cunlock$. 
+
+Next consider the program $c_r$, which reads the same two memory locations in the opposite order: \[ c_r \eqdef \cload{x}{r}_1 \opseq \cload{y}{d}_1.\] Here, the value at address $r$ is loaded into $x$ and then the value at address $d$ is loaded into $y$. The primitive commands are annotated with the processor identifier 1 to indicate that the command will be executed on the $1^{\mathrm{st}}$ processor on a multiprocessor machine. 
+
+The parallel composition of these command, $c_w \oppar c_r$, is a simplified message passing program. The writing thread $c_w$ communicates prepares some data at address $d$, and indicates to the reading thread that the data is ready by setting a flag at address $r$. The reading thread first checks the value at address $r$ to see if the data is ready, and if so the subsequent load of the data should have the expected value---in this case, just the value $1$. 
+
+
+
+
 \section{Concurrent Programs}
 \label{sec:programming-language}
 
@@ -1600,7 +1613,7 @@ Memory management commands \cite{wmsldetails,lola11}. An asymmetric variant of c
 
 \section{Fractional Permissions} 
 
-Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09,lola11}. In particular, counting permissions can unify the the weak and strong sequential conjunctions, and fractional permissions may be able to unify the weak and strong parallel conjunctions. Fractions are also needed for the message passing example. 
+Permissions \cite{DBLP:conf/sas/Boyland03,DBLP:conf/popl/BornatCOP05,ParkinsonDissertation,DBLP:conf/aplas/DockinsHA09}. In particular, counting permissions can unify the the weak and strong sequential conjunctions, and fractional permissions may be able to unify the weak and strong parallel conjunctions. Fractions are also needed for the message passing example. 
 
 \section{Negation}
     
