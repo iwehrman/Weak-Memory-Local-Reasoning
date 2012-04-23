@@ -1437,46 +1437,13 @@ We note that the four separating conjunctions naturally form a sort of lattice, 
 \end{figure}
 
 
-\section{Specifications}
+\section{Concurrent Specifications}
 \label{sec:specifications}
 
 The language of specifications is given by the following schema: \[ \spec{J}{P}{c}{Q}, \] where $c$ is a command and $J,P,Q$ are assertions, referred to as the \emph{invariant}, \emph{precondition} and \emph{postcondition}, respectively. 
 
-\subsection{Semantics}
-\label{specification-semantics}
-
-A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
-
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall \sigma \sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,J,Q}.\]
-
-In the sequel, let $\locked{\mu}$ indicate that some processor holds the lock in memory system $\mu$: \[ \locked{h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
-
-We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
-	\item If $c = \cskip$ then $(s,\mu) \sentails Q$.
-
-	\item For all $\mu_0,\mu_J,\mu_F$ such that \begin{enumerate}[(i)]
-		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
-		\item $\complete{\mu_0}$, and
-		\item either $(s,\mu_J) \sentails J$ or $\locked{\mu_1}$,
-	\end{enumerate} $c,(s,\mu_1) \nrightarrow \abort$.
-
-	\item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
-		\item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
-		\item $\complete{\mu_0}$,
-		\item either $s,\mu_J \sentails J$ or $\locked{\mu_0}$, and 
-		\item $c,(s,\mu_0) \step c',(s',\mu_1)$,
-	\end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
-		\item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
-		\item $\mu'_F \taurefines \mu_F$,
-		\item either $s',\mu'_J \sentails J$ or $\locked{\mu_1}$, and
-		\item $\safe{n}{c',s',\mu',J,Q}$.
-	\end{enumerate}
-
-\end{enumerate}
-
-The definition of the predicate above differs from Vafeiadis' in three ways. First, the separating conjunctions are obviously different and, in particular, there are two different separating conjunctions used: one for framing and one for partitioning the local from the shared state. It may be possible (or even necessary) to make use of $\fhash$ uniformly in the definition, which would yield a stronger notion of specification.\footnote{Checking this specifically is next on my agenda. I have in the past proved the soundness of the frame rules with semantics similar to, but not identical to, the one presented.} Second, the frame state is allowed to change from one step to another, but only by making silent transitions. Third, because there is no inherent notion of atomicity, we cannot require that the system state always be separable so that one part satisfies the invariant assertion. For even while one processor holds the lock, others may continue to execute. Hence, we weaken the invariant condition to require only that it hold while the lock is available.
-
 \subsection{Proof Theory}
+\label{sec:proof-theory}
 
 The axioms of the logic are given in Figure~\ref{fig:axioms}.
 
@@ -1592,6 +1559,41 @@ We may also consider two additional ``daring'' inference rules, the soundness of
 These rules differ from the invariant rule because they allow reasoning about the behavior of individual load and store instructions in which the value of the lock is unspecified. Intuitively, the shared load rule might be shown to be true because a load may only proceed on a live processor, and so will never access shared state while it is being modified by another process, which holds the lock. On the other hand, the shared store axiom might be shown to be true because although a store may take place while another process is modifying the shared state---and hence while the shared state does not satisfy the stated invariant $J$---the buffered write will not commit until the other process has released the lock and repaired the shared state, restoring the invariant.
 
 The daring rules may be needed to reason about, e.g., x86 spinlock implementations. The spinlock is typically acquired using a compare-and-swap instruction, which in this language is simply a locked if-the-else command. The invariant rule and lock axioms thus should be sufficient for demonstrating correctness of spinlock acquisition. But the spinlock is released by writing to a shared memory address without first acquiring the global lock or fencing. This obviates the invariant rule, but not the shared write rule, and so there is yet hope. 
+
+\subsection{Semantics}
+\label{sec:specification-semantics}
+
+A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
+
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall \sigma \sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,J,Q}.\]
+
+In the sequel, let $\locked{\mu}$ indicate that some processor holds the lock in memory system $\mu$: \[ \locked{h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
+
+We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
+  \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
+
+  \item For all $\mu_0,\mu_J,\mu_F$ such that \begin{enumerate}[(i)]
+    \item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
+    \item $\complete{\mu_0}$, and
+    \item either $(s,\mu_J) \sentails J$ or $\locked{\mu_1}$,
+  \end{enumerate} $c,(s,\mu_1) \nrightarrow \abort$.
+
+  \item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
+    \item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
+    \item $\complete{\mu_0}$,
+    \item either $s,\mu_J \sentails J$ or $\locked{\mu_0}$, and 
+    \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
+  \end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
+    \item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
+    \item $\mu'_F \taurefines \mu_F$,
+    \item either $s',\mu'_J \sentails J$ or $\locked{\mu_1}$, and
+    \item $\safe{n}{c',s',\mu',J,Q}$.
+  \end{enumerate}
+
+\end{enumerate}
+
+The definition of the predicate above differs from Vafeiadis' in three ways. First, the separating conjunctions are obviously different and, in particular, there are two different separating conjunctions used: one for framing and one for partitioning the local from the shared state. It may be possible (or even necessary) to make use of $\fhash$ uniformly in the definition, which would yield a stronger notion of specification. Second, the frame state is allowed to change from one step to another, but only by making silent transitions. Third, because there is no inherent notion of atomicity, we cannot require that the system state always be separable so that one part satisfies the invariant assertion. For even while one processor holds the lock, others may continue to execute. Hence, we weaken the invariant condition to require only that it hold while the lock is available.
+
 
 \subsection{Soundness}
 
