@@ -1339,11 +1339,11 @@ Observe that if $\sigma \fsseq \sigma'$ then $\sigma \fseq \sigma'$ is defined a
 
 Assertions denote sets of machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
 	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
-	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar  \\ 
+	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar  \fexp{P} \bnfbar \\ 
 	& (P \fhash P') \bnfbar (P \fsep P') \bnfbar (P \fseq P') \bnfbar (P \fsseq P')
 \end{align*} 
 
-The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar{e}$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. $\fexp{P}$ describes the heap expansion of $P$; i.e., states in which the heap-part of the memory system satisfies $P$. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
 
 The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
 
@@ -1360,7 +1360,16 @@ Assertions denote particular sets of machine states, which we refer to as predic
 
 The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
 
-The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}. 
+The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}, which makes use of the following auxiliary definitions: \begin{align*}
+  \mathit{emp} \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\lambda x.\lnil) \conj k = \nil} \\ 
+  \mathit{bar}(i) \eqdef & \setof{(h,B,k)}{B(i) = \lnil} \\ 
+  \mathit{lock}(i) \eqdef & \setof{(h,B,k)}{h = \nil \conj (\forall j \st B(j) = \lnil) \conj k = \setprocessors \setminus \set{i}} \\ 
+  \mathit{kernel}(S) \eqdef & \setof{\mu \in S}{\forall \mu' \taurefines \mu \st \mu' \in S}\\  
+  \mathit{trim}(h,B,k) \eqdef & (h,(\lambda x .\lnil),k)\\  
+  \mathit{exp}(\mu) \eqdef & \mathit{kernel}(\mathit{trim}^{-1}(\mu))\\ 
+  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,k)}{h = \nil \conj (\forall j \st j = i \disj B(j) = \lnil) \conj B(i) = \llit{(\ell,v)} \conj k \subseteq \set{i}} \\ 
+  \mathit{flushed}(\ell,v) \eqdef & \setof{(h,B,k)}{h = \ell \mapsto v \conj (\forall j \st j \neq i \onlyif B(j) = \nil) \conj k = \nil} 
+\end{align*}
 
 \begin{figure}[ht]
 	\centering
@@ -1376,6 +1385,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 		(s,\nil,B,\nil) & \sentails & {\femp} & \iffdef & B = (\lambda x . \lnil) \\ 
 		(s,h,B,k) & \sentails & {\fbar{e}} & \iffdef & B_{\ext{s}(e)} = \lnil \\ 
 		(s,\nil,B,k) & \sentails & {\flock{e}} & \iffdef & B = (\lambda x . \lnil) \conj k = \setprocessors \setminus \set{\ext{s}(e)}\\ 
+    (s,h,B,k) & \sentails & \fexp{P} & \iffdef & \forall h',B' \st (h',B',k)\taurefines (h,B,k) \onlyif \\ & & & & (s,h',(\lambda x . \lnil),k) \sentails P \\ 
 		(s,h,B,k) & \sentails & {e \fwrite{e'} e''} & \iffdef & k \subseteq \set{\ext{s}(e)} \conj (\forall i \neq \ext{s}(e) \st B_i = \lnil) \conj \\ & & & & ((h = \nil \conj B_{\ext{s}(e')} = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
 		& & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e'') \conj B_{\ext{s}(e')} = \lnil \conj k = \nil)) \\
 		(s,h,B,k) & \sentails & {P \fhash P'} & \iffdef & \exists \sigma,\sigma' \st \sigma \fhash \sigma' = (s,h,B,k) \conj \\ & & & & \;\;\sigma \sentails{P} \conj \sigma' \sentails{P'} \\
