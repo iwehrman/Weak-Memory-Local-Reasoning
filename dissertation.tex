@@ -1638,6 +1638,7 @@ A proof is a tree of specifications, in which the leaves are instances of axiom 
 
 
 \section{Multiplicative Barriers} 
+\label{sec:multiplicative-barriers}
 
 The $\fbar{e}$ assertion is additive. It would be better if it described no writes, and if we could express flushing by writing $P \fhash \fbar{e}$ instead of $P \conj \fbar{e}$. Then the fence axiom could be smaller. We might accomplish this by augmenting partial states with the set of processor identifiers that have flushed.  
 
@@ -1658,7 +1659,15 @@ Negation and implication, or lack thereof. Maybe also discuss the connection to 
 Multiple resources, the CSL counterexample \cite{Brookes20115} and syntactic control of interference \cite{DBLP:conf/popl/ReddyR12}.  
 
 \section{A Smaller Load Axiom} 
-Right-hand temporal frame rule and the top predicate. 
+
+Previous iterations of the logic included an additional right-side frame rule for the strong temporal separating conjunction: \infrule[r-frame]{\spec{J}{P}{c}{Q}\text{~~~}\fv{R}\cap\mod{c'}=\nil}{\spec{J}{P \fsseq R}{c}{Q \fsseq R}} The intuition behind this rule is that additional, more recent writes to distinct locations are irrelevant to the load command. In fact, this frame rule allows for the following smaller load axiom: \infax[sm-load]{\spec{J}{e \fwrite{e'} e''}{\cload{x}{e}_{e'}}{e \fwrite{e'} e'' \conj x = e''}} The load axiom defined in Chapter~\ref{ch:multiprocessor} is then derivable from the smaller load axiom and the right-side strong temporal frame rule: \[ \infer[\textsc{cons}]{\spec{J}{e \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{(e \fwrite{e'} e'' \fsseq P) \conj x = e''}}{\infer[\textsc{r-frame}]{\spec{J}{e \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{(e \fwrite{e'} e'' \conj x = e'') \fsseq P }}{\infer[\textsc{sm-load}]{\spec{J}{e \fwrite{e'} e''}{\cload{x}{e}_{e'}}{e \fwrite{e'} e'' \conj x = e''}}{}}}\]
+
+Unfortunately this frame rule is not sound for the store command, which only adds new writes to the ``top'' of the write buffer, and never in the middle. For example, the following derived specification is false: \[ \infer[\textsc{r-frame}]{\spec{J}{x \fpointsto - \fsseq y \fwrite{0} 2}{\cstore{x}{1}_0}{(x \fpointsto 0 \fseq x \fwrite{0} 1) \fsseq y \fwrite{0} 2}}{\infer[\textsc{store}]{\spec{J}{x \fpointsto - }{\cstore{x}{1}_0}{x \fpointsto 0 \fseq x \fwrite{0} 1}}{}}\] This specification is false because, from a state with a buffered write $y \fwrite{0} 2$, a store command will always add a succeeding write, not a preceding write as above. 
+
+We can work around this problem with a new assertion, $\ftop{e}$, which describes an empty write buffer that can only be extended with preceding and not succeeding writes. For example, $x \fwrite{0} 1$ describes a part of the 0th write buffer, which may be extended using either the left- or right-side separating conjunctions. But $x \fwrite{0} 1 \fsseq \ftop{0}$ specifically the top part of the 0th frame buffer, which may be extended only with preceding writes. This is accomplished by augmenting the semantics with an additional set of flags (analogous to those described in Section~\ref{sec:multiplicative-barriers}) and redefining the separating conjunctions so that, e.g., $\ftop{0} \fsseq y \fwrite{0} 2$ be inconsistent. We then update the store command to specifically require that the top of the write buffer be described in the precondition, so that a new top may be specified in the postcondition: \infax[sm-store-buf]{\spec{J}{e \fwrite{e'} e'' \fsseq P \fsseq \ftop{e'}}{\cstore{e}{f}_{e'}}{e \fwrite{e'} e'' \fsseq P \fsseq e \fwrite{e'} f \fsseq \ftop{e'}}}
+
+Although this model simplifies the load axiom, it is not clear that this is an improvement overall compared the assertions and proof theory described in Chapter~\ref{ch:multiprocessor}. Furthermore, the additional required flags complicate an already challenging model. 
+
 
 \chapter{Related Work}
 
