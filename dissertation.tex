@@ -11,6 +11,8 @@
 \usepackage{tocbibind}
 
 
+% \usepackage{setspace}
+% \doublespacing
 
 \synctex=1
 
@@ -1681,6 +1683,8 @@ Using the fractional permission model, we can prove the desired specification of
   \spec{J}{x \stackrel{0.5}{\fpointsto} 1}{\cload{t}{x}}{x \stackrel{0.5}{\fpointsto} 1 \conj t = 1} \\
   \spec{J}{x \stackrel{0.5}{\fpointsto} 1}{\cload{u}{x}}{x \stackrel{0.5}{\fpointsto} 1 \conj u = 1}  
 \end{align*} The parallel composition rule and is then used to derive \[ \spec{J}{x \stackrel{0.5}{\fpointsto} 1 \fsep x \stackrel{0.5}{\fpointsto} 1}{\cload{t}{x}\oppar \cload{u}{x}}{(x \stackrel{0.5}{\fpointsto} 1 \conj t = 1) \fsep (x \stackrel{0.5}{\fpointsto} 1 \conj u = 1)}\] And now the precondition of this specification is equivalent to $x \stackrel{1}{\fpointsto} 1$ and the postcondition to $x \stackrel{1}{\fpointsto} 1 \conj t = 1 \conj u = 1$, as desired. 
+
+The weak memory logic described in this dissertation would greatly benefit from the addition of a fractional model of permissions. 
 
 \section{Memory Management Commands and Counting Permissions}
 
