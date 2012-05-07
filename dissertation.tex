@@ -370,8 +370,10 @@ A detailed description and soundness proof of a single-processor, weak-memory pr
 
 \section{A Sequential Example}
 
-Consider the following simple sequential program $c$, which stores the value 1 into an address $x$, flushes that value to memory with a fence instruction, and then loads the value in memory back from $x$ into variable $y$: \[ c \eqdef \cseq{\cstore{x}{1}}{\cseq{\cfence}{\cload{y}{x}}}.\] This sequential program will fail with a memory error if the value of $x$ is not allocated memory address; any provable specification of this program must require this from the beginning. If the value of $x$ is indeed an allocated address, then upon termination the write buffer will be empty, the value in memory at location $x$ will be equal to $y$. In the program logic developed in this chapter, we express this as the following specification: \begin{align}\label{eq:seq-ex-spec} \triple{x \fpointsto -}{c}{x \fpointsto y}.\end{align}
-We write $e \fpointsto f$ to indicate that the value of expression $f$ is an allocated memory address, and that the value of memory at that address is equal to the value of the expression $f$. If the particular value in memory is unimportant, we write $e \fpointsto -$. Hence, the precondition of the program $c$ above is $x \fpointsto -$, which indicates that $x$ describes an allocated memory address with unspecified value; and the postcondition is $x \fpointsto y$, which indicates that upon termination of the command, the value in memory at address $x$ will be equal to the $y$. 
+Consider the following simple sequential program $c$, which stores the value 1 at an address $x$, flushes that value back to memory with a fence instruction, and then loads the value in memory from address $x$ into variable $y$: \[ c \eqdef \cseq{\cstore{x}{1}}{\cseq{\cfence}{\cload{y}{x}}}.\] This sequential program will fail with a memory error if the value of $x$ is not properly allocated memory address; any provable specification of this program must require that this holds of $x$ initially. If the value of $x$ is indeed an allocated address, then upon termination the write buffer will be empty and the value in memory at location $x$ will be equal to $y$, which is itself equal to 1. 
+
+In the program logic developed in this chapter, we express this informal specification of $c$ with the following formal specification: \begin{align}\label{eq:seq-ex-spec} \triple{x \fpointsto -}{c}{x \fpointsto y}.\end{align}
+We write $x \fpointsto y$ in the postcondition to indicate that the value of $x$ is an allocated memory address, and that the value of memory at that address is equal to the value of $y$. In the precondition, the particular value of memory at $x$ is unimportant, so write $x \fpointsto -$.  
 
 A \emph{proof sketch} of the program specification in Equation~\ref{eq:seq-ex-spec} is as follows:
 \Calc{
@@ -405,15 +407,6 @@ As the name indicates, a proof sketch provides a skeleton of a complete proof of
 
 } indicates that a complete proof will include proofs of the sub-specifications $\triple{P}{c_1}{R}$ and $\triple{R}{c_2}{Q}$, which will be combined in the last step using a rule of inference (\textsc{seq}) for composing specifications of sequentially combined commands: 
 \[ \infer[{\textsc{seq}}]{\triple{P}{c_1 \opseq c_2}{Q}}{\infer{\triple{P}{c_1}{R}}{\vdots} & \infer{\triple{R}{c_2}{Q}}{\vdots}}\] where the vertical dots represent the remaining proofs to be supplied. 
-
-We prove this program specification by proving subordinate specifications for each of the constituent commands, and then composing those proofs using an inference rule (\textsc{seq}) for reasoning about sequentially composed commands as follows: 
-\[
-  \infer[\textsc{seq}]{\triple{x \fpointsto -}{c}{x \fpointsto 1 \conj y = 1}}{
-    \infer{\triple{x \fpointsto -}{c_1}{R_1}}{\vdots}
-    &
-    \infer[\textsc{seq}]{\triple{R_1}{\cseq{c_2}{c_3}}{x \fpointsto 1 \conj y = 1}}{\infer{\triple{R_1}{c_2}{R_2}}{\vdots} & \infer{\triple{R_2}{c_3}{x \fpointsto 1 \conj y = 1}}{\vdots}}
-  }
-\] where we use the shorthand $c_1$ for $\cstore{x}{1}$, $c_2$ for $\cfence$, and $c_3$ for $\cload{y}{x}$. 
 
 Returning to the proof sketch of the program specification in Equation~\ref{eq:seq-ex-spec}, we see that to complete the proof we must derive three sub-specifications, one for each primitive command: \begin{enumerate}
   \item $\triple{x \fpointsto -}{\cstore{x}{1}}{x \fpointsto - \fseq x \fwriteu 1}$
@@ -1026,38 +1019,59 @@ This chapter describes a program logic for a parallel programming language model
 Consider the following simple program, $c_s$, which updates a single memory location while holding a global memory lock: \[ c_s \eqdef \clock_0 \opseq \cstore{d}{1}_0 \opseq \cunlock_0. \] Each primitive command in this program is annotated with the processor identifier $0$, which indicates that, on a multiprocessor machine, it will be executed on the $0^{\mathrm{th}}$ processor. The program first acquires a global lock with the $\clock$
  primitive, then stores the value $1$ to the location given by $d$, and then finally releases the lock with the $\cunlock$ primitive. 
 
-Next consider the program $c_r$, which reads the same memory location while holding the global memory lock: \[ c_r \eqdef \clock_1 \opseq \cload{x}{d}_1 \opseq \cunlock_1 \opseq (\cifthen{x}{\cstore{d}{2}}).\] Here, the value in memory at address $d$ is loaded into $x$ after acquiring the lock and before releasing it; if the result of the load was 1 (i.e., if $x = 1$) the value 2 is stored back into memory at $d$. The primitive commands are annotated with the processor identifier 1, which indicates that the command will be executed on the $1^{\mathrm{st}}$ processor on a multiprocessor machine. 
+Next consider the program $c_r$, which reads the same memory location while holding the global memory lock: \[ c_r \eqdef \clock_1 \opseq \cload{x}{d}_1 \opseq \cunlock_1 \opseq \cifthen{x}{(\cstore{d}{2}_1 \opseq \cfence_1)}.\] Here, the value in memory at address $d$ is loaded into $x$ after acquiring the lock and before releasing it; if the result of the load was 1 (i.e., if $x = 1$) the value 2 is written to address $d$ and flushed back to memory. The primitive commands are annotated with the processor identifier 1, which indicates that the command will be executed on the $1^{\mathrm{st}}$ processor on a multiprocessor machine. 
 
-The parallel composition of these commands, $c_s \oppar c_r$, is a very simple message-passing program. The sending thread $c_s$ communicates to the receiving thread by setting a flag at address $d$. If the receiving thread loads the address $d$ and observes that the flag has been set, then it knows something about the progress of the sending thread: namely, that it completed execution up to and including the location of the flag setting in the program order. In this particular program, if the receiver observes that the flag has been set then the receiver may claim sole ownership of the address $d$ and may read and write to it without concern of future interference, and hence without first having acquired the global memory lock. We might like to prove this: i.e., assuming $d \fpointsto 0$ holds initially, that the composition is safe and and that $d \fpointsto (x+1)$ holds upon termination: \begin{align}
+The parallel composition of these commands, $c_s \oppar c_r$, is a very simple message-passing program. The sending thread $c_s$ communicates to the receiving thread by setting a flag at address $d$. If the receiving thread loads the address $d$ and observes that the flag has been set, then it knows something about the progress of the sending thread: namely, that it completed execution up to and including the location of the flag setting in the program order. In this particular program, if the receiver observes that the flag has been set then the receiver may claim sole ownership of the address $d$ and may read and write to it without concern of future interference, and hence without first having acquired the global memory lock.
+
+We might like to prove such a specification: i.e., assuming $d \fpointsto 0$ holds initially, that the composition is safe and and that $d \fpointsto (x+1)$ holds upon termination: \begin{align}
 \label{eq:conc-ex-spec} \spec{}{d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)}\end{align} In the concurrent program logic, however, specifications distinguish between local state, which is only accessible to the specified command, and global state, which is accessible to the environment at large. Local state is still described with pre and postconditions, but the shared state is described using a single assertion, which must be maintained as an invariant throughout the specified command's execution. We write $\spec{J}{P}{c}{Q}$ for the specification of a (possibly) concurrent command $c$ with shared state described by invariant assertion $J$, local precondition $P$ and local postcondition $Q$. The specification in Equation~\ref{eq:conc-ex-spec} is completely local, and so the shared invariant is simply $\femp$, an assertion that describes no memory addresses. Thus, the revised specification is: \begin{align}\label{eq:conc-ex-spec-rev} \spec{\femp}{d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)}\end{align}
 
-From the perspective of the constituent commands $c_s$ and $c_r$, however, the memory at address $d$ must be considered shared because neither command makes sole use of the memory at that address. Hence, to prove specifications of the constituent commands, we must describe the evolution of the memory at address $d$ using an invariant assertion and then show that both commands maintain that invariant. To do this, we augment the commands $c_s$ and $c_r$ with assignments to auxiliary program variables $s$ and $r$, respectively, to allow us to express the desired invariant in terms of the progress the commands: 
+From the perspective of the constituent commands $c_s$ and $c_r$, however, the memory at address $d$ must be considered shared because neither command makes sole use of the memory at that address. Hence, to prove specifications of the constituent commands, we must describe the evolution of the memory at address $d$ using an invariant assertion and then show that both commands maintain that invariant. 
+
+To aid this description, it can help to augment the commands with auxiliary program variables that track the progress of their evaluation. In this case, it helps to augment the sender thread with a variable assignment that indicates that the memory update has taken place: 
 \begin{align*}
-c'_s \eqdef & \clock_0 \opseq \cstore{d}{1}_0 \opseq \cassign{s}{1}_0 \opseq \cunlock_0 \\ 
-c'_r \eqdef & \clock_1 \opseq \cload{x}{d}_1 \opseq \cassign{r}{1}_0 \opseq \cunlock_0 \opseq (\cifthen{x}{\cstore{d}{2}_0})
+c'_s \eqdef & \clock_0 \opseq \cstore{d}{1}_0 \opseq \cassign{s}{1}_0 \opseq \cunlock_0
 \end{align*}
 
-Informally, the invariant should express that either $c'_s$ has not yet set the flag, and hence $d \fpointsto 0$, or it has set the flag, and hence $d \fpointsto 1$. In terms of the auxiliary variable $s$, which we assume to be 0 initially, we can express this by $(s = 0 \fsep d \fpointsto 0) \disj (s = 1 \fsep d \fpointsto 1)$. But we also want to express that the receiving thread may take private ownership of the memory at address $d$ if it observes that the sending thread has set the flag. That is, before its observation (with $r = 0$), the memory at address $d$ is certainly shared between the commands, but if the receiving thread observes the address \emph{after} the sending thread has performed its update, then the receiving thread may take ownership of the address, leaving no further memory addresses shared between the threads. Formally, the receiving thread requires that $(r = 0 \fsep d \fpointsto - ) \disj (r = 1 \fsep \femp)$. The sharing requirements for both threads are combined into the following invariant $I$: 
-\[ 
-I \eqdef (s = 0 \fsep d \fpointsto 0) \disj (s = 1 \fsep r = 0 \fsep d \fpointsto 1) \disj (s = 1 \fsep r = 1  \fsep \femp)
-\]
+We can now provide an invariant that is maintained by both the augmented sender $c'_s$ and the given receiver $c_r$. Informally, the evolution of the value and ownership of the memory at address $d$ can be described as follows: the memory at address $d$ is shared between the threads and has value $s$ until the value of $x$ becomes 1, when the receiver takes sole ownership of $d$. And, crucially, it is impossible for $x = 1$ and $s = 0$ simultaneously because the receiver will only take ownership if the sender has set the flag. So, more formally, either the the receiver has not taken ownership and $d$ is shared with value $s$---i.e., $x = 0 \fsep d \fpointsto s$---or the receiver takes sole ownership with $x = 1$ and $s = 1$ and the address is no longer shared---i.e., $x = 1 \fsep \femp$. Hence, we define the invariant $I$ as follows: \[ I \eqdef (x = 0 \fsep d \fpointsto s) \disj (x = 1 \fsep s = 1 \fsep \femp).\]
 
-Hence, we may then try to prove the following constituent specifications, which maintain the invariant $I$: \begin{align*}
+We may then try to prove the following constituent specifications, which maintain the invariant $I$: \begin{align*}
   &\spec{I}{s = 0 \fsep \femp}{c'_s}{s = 1 \fsep \femp} \\
-  &\spec{I}{r = 0 \fsep \femp}{c'_r}{r = 1 \fsep ((x = 0 \fsep \femp) \disj (x = 1 \fsep d \fpointsto 2))}
-\end{align*} The first specification asserts that the invariant $I$ is maintained by $c'_s$ and that, if evaluated in a state with $s = 0$ and with no thread-private memory, the command also finishes evaluation with no memory addresses. The second specification asserts that the invariant $I$ is maintained by $c'_r$ and that, if evaluated in a state with $r = 0$ and with no thread-private memory, the command either finishes with no thread-private memory (when $x = 0$) or with private ownership of $d$ (when $x = 1$). 
+  &\spec{I}{x = 0 \fsep \femp}{c_r}{(x = 0 \fsep \femp) \disj (x = 1 \fsep d \fpointsto 1)}
+\end{align*} The first specification asserts that the invariant $I$ is maintained by $c'_s$ and that, if evaluated in a state with $s = 0$ with no thread-private memory, the command also finishes evaluation with no private memory addresses and $s = 1$. The second specification asserts that the invariant $I$ is maintained by $c_r$ and that, if evaluated in a state with $r = 0$ and with no thread-private memory, the command either finishes with no thread-private memory (when $x = 0$) or with private ownership of $d$ (when $x = 1$). 
 
-If we are successful in proving these specifications, then we use an inference rule (\textsc{par}) to derive a specification for the parallel composition of commands whose individual specifications agree to maintain the same invariant, as the above specifications of $c'_s$ and $c'_r$ do: \[ \infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c'_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c'_r}{Q_r}}{\vdots} }\] (For space, we abbreviate the preconditions of $c'_s$ and $c'_r$ as $P_s$ and $P_r$ respectively, and the postconditions as $Q_s$ and $Q_r$ respectively.) 
-
-Next, an inference rule (\textsc{share}) is applied that allows shared state to be considered as local state: \[ \infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c'_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c'_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c'_r}{Q_r}}{\vdots} }}\]
+If we are successful in proving these specifications, then we may use an inference rule (\textsc{par}) to derive a specification for the parallel composition of commands whose individual specifications agree to maintain the same invariant, as do the above specifications of $c'_s$ and $c_r$: \[ \infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }\] (For space, we abbreviate the preconditions of $c'_s$ and $c_r$ as $P_s$ and $P_r$ respectively, and the postconditions as $Q_s$ and $Q_r$ respectively.) Next, an inference rule (\textsc{share}) may be applied that allows shared state to be considered as local to the specified commands: \[ \infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c'_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c'_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c'_r}{Q_r}}{\vdots} }}\]
 
 The precondition can then be strengthened and the postcondition weakened using the rule of consequence (\textsc{cons}) with and the following semantic entailments: \begin{align*}
-s = 0 \fsep r = 0 \fsep d \fpointsto 0 & \sentails I \fsep P_s \fsep P_r \\ 
+s = 0 \fsep x = 0 \fsep d \fpointsto 0 & \sentails I \fsep P_s \fsep P_r \\ 
 I \fsep Q_s \fsep Q_r & \sentails d \fpointsto (x + 1)
-\end{align*} With a final inference rule (\textsc{aux}) we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
-\[ \infer[\textsc{aux}]{ \spec{\femp}{d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \fsep r = 0 \fsep d \fpointsto 0}{c'_s \oppar c'_r}{d \fpointsto (x+1)} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c'_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c'_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c'_r}{Q_r}}{\vdots} }}}}\]
+\end{align*} With a final inference rule (\textsc{aux})\footnote{No attempt shall be made here to formalize the notion of auxiliary variable or the auxiliary variable elimination rule.} we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
+\[ \infer[\textsc{aux}]{ \spec{\femp}{x = 0 \fsep d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \fsep x = 0 \fsep d \fpointsto 0}{c'_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }}}}\]
 
-It remains to show that the sequential commands $c_w$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. 
+It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{x = 0 \fsep d \fpointsto 0}{\clock_0 \opseq c \opseq \cunlock_0}{d \fpointsto 1} }{\spec{\femp}{\flock{0} \fsep \fexp{I} \fsep x = 0 \fsep d \fpointsto 0}{c}{\flock{0} \fsep \fexp{I} \fsep d \fpointsto 1}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. 
+
+A proof sketch of $c_r$ is as follows: 
+\Calc{
+  
+  \conn{}{$x = 0 \fsep \femp$}
+
+  $\clock_1 \opseq \cstore{d}{1}_1 \opseq \cunlock_1$
+
+  \conn{}{$(x = 0 \fsep \femp) \disj (x = 1 \fsep d \fpointsto 1)$}
+
+  $\mathsf{if} (x)$
+
+  \conn{}{$x = 1 \fsep d \fpointsto 1$}
+
+  $\cstore{d}{2}_1$
+
+  \conn{}{$(x = 1 \fsep d \fpointsto 1) \fseq d \fwrite{1} 2$}
+
+  $\cfence_1$
+
+  \conn{}{$d \fpointsto (x + 1)$}
+
+}
 
 
 
@@ -1788,7 +1802,9 @@ Negation and implication, or lack thereof. Maybe also discuss the connection to 
 
 Multiple resources, the CSL counterexample \cite{Brookes20115} and syntactic control of interference \cite{DBLP:conf/popl/ReddyR12}.  
 
+\section{Local Reasoning and Sequential Consistency}
 
+It seems likely that local reasoning is only possible for sequentially consistent programs. 
 
 \chapter{Related Work}
 
