@@ -1048,9 +1048,25 @@ I \fsep Q_s \fsep Q_r & \sentails d \fpointsto (x + 1)
 \end{align*} With a final inference rule (\textsc{aux})\footnote{No attempt shall be made here to formalize the notion of auxiliary variable or the auxiliary variable elimination rule.} we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
 \[ \infer[\textsc{aux}]{ \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \conj x = 0 \conj d \fpointsto 0}{c'_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }}}}\]
 
-It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows from an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{x = 0 \conj d \fpointsto 0}{\clock_0 \opseq c \opseq \cunlock_0}{d \fpointsto 1} }{\spec{\femp}{\flock{0} \fsep \fexp{I} \fsep (x = 0 \conj d \fpointsto 0)}{c}{\flock{0} \fsep \fexp{I} \fsep d \fpointsto 1}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. Once the lock has been acquired with the $\clock$ primitive, the antecedent of this rule moves the invariant $I$ from the shared portion of state into the the thread's private state. While the lock is held the command may temporarily violate the the invariant, so long as it is repaired by the time the command has finished executing and before releasing the lock with the $\cunlock$ primitive. 
+It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows from an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{P_s}{\clock_0 \opseq c \opseq \cunlock_0}{Q_s} }{\spec{\femp}{\flock{0} \fsep (I \fseqri \fbar{0}) \fsep P_s}{c}{\flock{0} \fsep (I \fseqri \fbar{0}) \fsep Q_s}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. Once the lock has been acquired with the $\clock$ primitive, the antecedent of this rule moves the invariant $I$ from the shared portion of state into the the thread's private state. While the lock is held the command may temporarily violate the the invariant, so long as it is repaired by the time the command has finished executing and before releasing the lock with the $\cunlock$ primitive. 
 
-In the pre and postcondition, the assertion $\flock{0}$ ensures that in the starting and ending state, processor 0 does in fact hold the lock. When the shared invariant $I$ is moved into the threads local state, it is interpreted as the \emph{expansion} of the invariant, $\fexp{I}$. The expansion of a formula (informally) describes not just the states that satisfy $I$, but also other states which have heap parts that, as they flush to memory, would also satisfy $I$. For example, $x \fpointsto 1 \fseq x \fwrite{0} 1 \sentails \fexp{x \fpointsto 1}$, because regardless of how the buffered write on the left is flushed, the heap part of the state always satisfies the assertion $x \fpointsto 1$. 
+In the pre and postcondition, the presence of the $\flock{0}$ assertion ensures that, in the starting and ending states, processor 0 does in fact hold the lock. When the shared invariant $I$ is moved into the threads local state, it is interpreted as the \emph{expansion} of the invariant, $(I \fseqri \fbar{0})$. The expansion of a formula (informally) describes not just the states that satisfy $I$, but also other states which have heap parts that, as they flush to memory, would also satisfy $I$. For example, $x \fpointsto 1 \fseq x \fwrite{0} 1 \sentails \fexp{x \fpointsto 1}$, because regardless of how the buffered write on the left is flushed, the heap part of the state always satisfies the assertion $x \fpointsto 1$. A proof sketch of the antecedent is as follows: 
+
+\Calc{
+  
+  \conn{}{$\flock{0} \fsep (I \fseqri \fbar{0}) \fsep (s = 0 \conj \femp)$}
+
+  \conn{}{$\flock{0} \fsep (d \fpointsto 0 \disj ((I \fseqri \fbar{0}) \fseq d \fwrite{0} 0)) \conj s = 0$}
+
+  $\cstore{d}{1}_0$
+
+  \conn{}{$\flock{0} \fsep (d \fpointsto 0 \disj ((I \fseqri \fbar{0}) \fseq d \fwrite{0} 0)) \fseq d \fwrite{0} 1 \conj s = 0$}
+
+  $\cassign{s}{1}$
+
+  \conn{}{$\flock{0} \fsep (d \fpointsto 0 \disj ((I \fseqri \fbar{0}) \fseq d \fwrite{0} 0)) \fseq d \fwrite{0} 1 \conj s = 0$}
+
+}
 
 A proof sketch of $c_r$ is as follows: 
 \Calc{
