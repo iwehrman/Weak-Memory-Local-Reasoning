@@ -90,7 +90,8 @@
 \newcommand{\cloop}[1]{\ensuremath{#1^{\oploop}}}
 \newcommand{\clocal}[3]{\ensuremath{\oplocal #1 \opassign #2 \opin #3}}
 \newcommand{\cres}[2]{\ensuremath{\opresource #1 \opin #2}}
-\newcommand{\cwith}[2]{\ensuremath{\opwith #1 \opdo #2}}
+\newcommand{\cwith}[2]{\ensuremath{\left\langle #2\right\rangle_{#1}}}
+% \newcommand{\cwith}[2]{\ensuremath{\opwith #1 \opdo #2}}
 \newcommand{\catomic}[1]{\ensuremath{\left\langle #1 \right\rangle}}
 \newcommand{\ccas}[1]{\ensuremath{\mathsf{cas}(#1)}}
 
@@ -149,7 +150,7 @@
 \newcommand{\femp}{\ensuremath{\mathbf{emp}}}
 \newcommand{\fbar}[1]{\ensuremath{\mathbf{bar}_{#1}}}
 \newcommand{\flock}[1]{\ensuremath{\mathbf{lock}_{#1}}}
-\newcommand{\fexp}[1]{\ensuremath{\mathbf{exp}_{#1}}}
+\newcommand{\fexp}[1]{\ensuremath{\mathbf{exp}({#1})}}
 \newcommand{\ftop}[1]{\ensuremath{\mathbf{top}_{#1}}}
 %\newcommand{\fwrite}[1]{\ensuremath{\!\stackrel{#1}{\leadsto}\!}}
 \newcommand{\fwrite}[1]{\ensuremath{\!\leadsto_{#1}\!}}
@@ -160,6 +161,9 @@
 \DeclareMathOperator{\fsep}{\,\ast\,}
 \DeclareMathOperator{\fseq}{\,\vartriangleleft\,}
 \DeclareMathOperator{\fsseq}{\,\blacktriangleleft\,}
+\DeclareMathOperator{\fsepi}{\,\relbar\!\!\ast\,}
+\DeclareMathOperator{\fseqli}{\,\relbar\!\vartriangleleft\,}
+\DeclareMathOperator{\fseqri}{\,\vartriangleleft\!\relbar\,}
 
 \newcommand{\fbaru}{\ensuremath{\mathbf{bar}}}
 \newcommand{\fwriteu}{\ensuremath{\!\leadsto\!}}
