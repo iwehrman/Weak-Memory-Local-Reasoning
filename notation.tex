@@ -92,8 +92,12 @@
 
 \newcommand{\Calc}[1]{\begin{description}
                 \item \begin{tabbing}\qquad\=\quad\=\kill
-                \> \> #1\end{tabbing}
+                #1\end{tabbing}
+                %\> \> #1\end{tabbing}
                 \end{description}}
+\newcommand{\aconn}[1]{\> \{#1\}\\ }
+\newcommand{\aconni}[1]{\> \> \{#1\}\\ }
+\newcommand{\acomm}[1]{\> \> #1 \\}
 \newcommand{\conn}[2]{\\*$#1 $\> \{#2\}\\\> \>}
 \newcommand{\Conn}[1]{\conn{=}{#1}}
 

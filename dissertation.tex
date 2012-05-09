@@ -1048,27 +1048,40 @@ I \fsep Q_s \fsep Q_r & \sentails d \fpointsto (x + 1)
 \end{align*} With a final inference rule (\textsc{aux})\footnote{No attempt shall be made here to formalize the notion of auxiliary variable or the auxiliary variable elimination rule.} we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
 \[ \infer[\textsc{aux}]{ \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \conj x = 0 \conj d \fpointsto 0}{c'_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }}}}\]
 
-It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows from an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{P_s}{\clock_0 \opseq c \opseq \cunlock_0}{Q_s} }{\spec{\femp}{\flock{0} \fsep (I \fseqri \fbar{0}) \fsep P_s}{c}{\flock{0} \fsep (I \fseqri \fbar{0}) \fsep Q_s}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. Once the lock has been acquired with the $\clock$ primitive, the antecedent of this rule moves the invariant $I$ from the shared portion of state into the the thread's private state. While the lock is held the command may temporarily violate the the invariant, so long as it is repaired by the time the command has finished executing and before releasing the lock with the $\cunlock$ primitive. 
+It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows from an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{P_s}{\clock_0 \opseq c \opseq \cunlock_0}{Q_s} }{\spec{\femp}{(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}}{c}{(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. 
 
-In the pre and postcondition, the presence of the $\flock{0}$ assertion ensures that, in the starting and ending states, processor 0 does in fact hold the lock. When the shared invariant $I$ is moved into the threads local state, it is interpreted as the \emph{expansion} of the invariant, $(I \fseqri \fbar{0})$. The expansion of a formula (informally) describes not just the states that satisfy $I$, but also other states which have heap parts that, as they flush to memory, would also satisfy $I$. For example, $x \fpointsto 1 \fseq x \fwrite{0} 1 \sentails \fexp{x \fpointsto 1}$, because regardless of how the buffered write on the left is flushed, the heap part of the state always satisfies the assertion $x \fpointsto 1$. A proof sketch of the antecedent is as follows: 
+This rule, in essence, asserts that if a command $c$ can be shown to maintain an invariant as part of its local specification, then the corresponding locked command must also maintain the invariant as part of the shared state. In particular, because the introductory $\clock_0$ command acquires the global lock and the final $\cunlock_0$ command releases it, the pre and postconditions both assert ownership of the lock with the $\flock{0}$ assertion. While the lock is held the command may temporarily violate the the invariant, so long as it is repaired by the time the command has finished executing and before releasing the lock with the $\cunlock$ primitive. 
 
+Similarly, the pre and postcondition both assert private ownership of the invariant $I$, along with but distinct from the local precondition $P_s$ and postcondition $Q_s$. The $\clock_0$ command implicitly fences, flushing any pending writes described by the invariant or local state, and so the entire precondition in the antecedent is succeeded by $\fbar{0}$. The $\cunlock_0$ command also implicitly fences, so the postcondition of the antecedent is generalized to include states that \emph{would} satisfy the invariant and local postcondition if they were succeeded by $\fbar{0}$. This generalization is accomplished with the \emph{temporal separating implication}, $P \fseqri Q$, which describes states that satisfy $P$ if they are temporally combined on the right with states that satisfy $Q$. For example, assertion $d \fpointsto 0 \fseqri \fbar{0}$ describes states which, when processor 0 is flushed, satisfy $d \fpointsto 0$; that is, states which include any number of writes to $d$, followed by a write to $d$ with value 1. 
+
+A proof sketch of the antecedent follows below: 
 \Calc{
+
+  \aconn{$(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}$}
+
+  \aconn{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 0 \conj \femp)) \fseq \fbar{0}$}
+
+  \aconn{$(\flock{0} \fsep (x = 0 \conj \femp) \fsep d \fpointsto -) \fseq \fbar{0}$}
+
+  \aconn{$\flock{0} \fsep (x = 0 \conj \femp) \fsep d \fpointsto -$}
   
-  \conn{}{$\flock{0} \fsep (I \fseqri \fbar{0}) \fsep (s = 0 \conj \femp)$}
+  \acomm{$\cstore{d}{1}_0$}
 
-  \conn{}{$\flock{0} \fsep (d \fpointsto 0 \disj ((I \fseqri \fbar{0}) \fseq d \fwrite{0} 0)) \conj s = 0$}
+  \aconn{$\flock{0} \fsep (x = 0 \conj \femp) \fsep d \fpointsto - \fseq d \fwrite{0} 1$}
 
-  $\cstore{d}{1}_0$
+  \acomm{$\cassign{s}{1}$}
 
-  \conn{}{$\flock{0} \fsep (d \fpointsto 0 \disj ((I \fseqri \fbar{0}) \fseq d \fwrite{0} 0)) \fseq d \fwrite{0} 1 \conj s = 0$}
+  \aconn{$\flock{0} \fsep (x = 0 \conj s = 1 \conj \femp) \fsep d \fpointsto - \fseq d \fwrite{0} 1$}
 
-  $\cassign{s}{1}$
+  \aconn{$(\flock{0} \fsep x = 0 \conj s = 1 \conj d \fpointsto 1) \fseqri \fbar{0}$}
 
-  \conn{}{$\flock{0} \fsep (d \fpointsto 0 \disj ((I \fseqri \fbar{0}) \fseq d \fwrite{0} 0)) \fseq d \fwrite{0} 1 \conj s = 0$}
+  \aconn{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 1 \conj \femp)) \fseqri \fbar{0}$}
 
+  \aconn{$(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}$}
+      
 }
 
-A proof sketch of $c_r$ is as follows: 
+The specification for $c_r$ can be proved similarly to that of $c'_s$. The locked portion of the command is proved using the atomic rule; and the rest by basic sequential reasoning. A proof sketch of the specification of $c_r$ follows below: 
 \Calc{
   
   \conn{}{$x = 0 \conj \femp$}
@@ -1092,7 +1105,7 @@ A proof sketch of $c_r$ is as follows:
   \conn{}{$(x = 0 \conj \femp) \disj (x = 1 \conj d \fpointsto 2)$}
 
 }
-
+This completes the proof of the concurrent program specification of Equation~\ref{eq:conc-ex-spec-rev}.
 
 
 \section{Concurrent Programs}
@@ -1594,7 +1607,7 @@ The axioms of the logic are given in Figure~\ref{fig:axioms}.
 		\infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i}}}
 		\vspace{1em}
 		
-		\infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\fbar{i}}}
+		\infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\femp}}
 	\end{minipage}}
 	\caption{\label{fig:axioms}Axioms}
 \end{figure}
