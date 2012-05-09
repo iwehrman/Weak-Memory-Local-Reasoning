@@ -1008,6 +1008,10 @@ The first part ensures that if a command is fully evaluated (i.e., is $\cskip$) 
 
 Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \fhash \mu$. The second part requires that the command not abort in $\mu_F \fhash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition.
 
+\section{Barrier as Resource: A Digression}
+
+In this section we briefly discuss a generalization of the sequential program logic described previously in this chapter. In particular, we refine the semantics of the $\fbaru$ assertion. Immediately, the changes we introduce will allow for a simpler sequential proof theory. They also constitute a necessary generalization for the multiprocessor model and concurrent program logic described in the next chapter. But because is possible to discuss the generalization in sequential setting, we shall do so for the sake of simplicity. 
+
 \chapter{A Concurrent Program Logic}
 \label{ch:multiprocessor}
 
@@ -1106,7 +1110,6 @@ The specification for $c_r$ can be proved similarly to that of $c'_s$. The locke
 
 }
 This completes the proof of the concurrent program specification of Equation~\ref{eq:conc-ex-spec-rev}.
-
 
 \section{Concurrent Programs}
 \label{sec:programming-language}
