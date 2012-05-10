@@ -755,7 +755,6 @@ The meaning of uniprocessor assertions is given by a satisfaction relation $\sig
         (s,h,b) & \sentails & {P \fhash P'} & \iffdef & \exists \mu,\mu' \st \mu \fhash \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
         (s,h,b) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
         (s,h,b) & \sentails & {P \fseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} 
-        %(s,h,b) & \sentails & {P \fsseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fsseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'}
     \end{array}
     \]
 \end{minipage}}
@@ -1018,21 +1017,24 @@ It is possible to interpret memory systems and states as described in the previo
 
 It can be convenient to make formal the distinction the partial and complete states. This allows us to add some additional structure to the partial states, which can enable a more flexible definition of the semantics of assertions, while the semantics of programs and their specifications may be restricted to just the complete states. 
 
-In this section, we shall specifically introduce additional structure to partial states to represent partiality of the write buffers. An additional bit is added to the states that can be informally interpreted as indicating whether or not the ``bottom'' of the write buffer part of the state (i.e., the end of the buffer connected to the shared memory) has been completely described, or alternatively whether additional writes may be appended later to the bottom of the buffer. 
+In this section, we shall specifically introduce additional structure to partial states to represent partiality of the write buffers. An additional bit is added to the state structures, which can be informally interpreted as indicating whether or not the ``bottom'' of the write buffer part of the state (i.e., the end of the buffer connected to the shared memory) has been completely described, or alternatively whether additional writes may be appended later to the bottom of the buffer. Alternatively, the bottom-completeness bit can be interpreted as indicating whether or not some writes have flushed from the write buffer to the memory. 
 
 \begin{definition}
   A \emph{partial uniprocessor memory system} is a three-tuple $(h,b,c)$, in which: 
   \begin{itemize}
-    \item $h$ is a heap, 
-    \item $b$ is a write buffer, and 
-    \item $c$ is a boolean indicating completeness of the write buffer. 
-  \end{itemize} Furthermore, we require that $h = \nil$ whenever $c = \bvf$ then. A partial uniprocessor memory system $(h,b,c)$ in which $c = \bvt$ is called \emph{complete}.  
+    \item $h : \setlocations \pfun \setvalues$ is a heap, 
+    \item $b : \listof{(\setlocations \times \setvalues)}$ is a write buffer, and 
+    \item $c : \setbooleans$ is a boolean indicating bottom-completeness of the write buffer. 
+  \end{itemize} Furthermore, we require that $h = \nil$ whenever $c = \bvf$. A partial uniprocessor memory system $(h,b,c)$ in which $c = \bvt$ is called \emph{complete}.  
 \end{definition}
 
+Generally, the semantics of sequential commands is essentially unchanged from the definition given in the previous chapter: each transition defined between uniprocessor memory systems is defined similarly for partial uniprocessor memory systems, with the bottom-completeness flag unchanged in each step. The only exception is with the definition of the $\taustep$ relation---and hence the \textsc{c-tau} rule---which now sets the bottom-completeness flag whenever a write is flushed to memory: \begin{align*} (h,b \lapp \llit{(\ell,v)},c) \taustep (\funup{h}{\ptup{\ell}{v}},b,\bvt) 
+\end{align*}
 
-\section{Partial Assertions}
 
-\section{Simplified Sequential Proof Theory}
+\section{Partial Assertions and Separating Implications}
+
+\section{A Simplified Sequential Proof Theory}
 
 With the generalized model of state described in this chapter and the adjusted semantics of $\fbaru$, we can simplify the sequential proof theory of Section~\ref{sec:sequential-specifications}. In particular, we replace the previous \textsc{load-buf} and \textsc{load-mem} axioms with a single \textsc{load} axiom, and reduce the scope of the \textsc{fence} axiom considerably, as shown below in Figure~\ref{fig:sequential-axioms-rev}. 
 
