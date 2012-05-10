@@ -1008,9 +1008,51 @@ The first part ensures that if a command is fully evaluated (i.e., is $\cskip$) 
 
 Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \fhash \mu$. The second part requires that the command not abort in $\mu_F \fhash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition.
 
-\section{Barrier as Resource: A Digression}
+\chapter{Barrier as Resource: A Digression}
 
 In this section we briefly discuss a generalization of the sequential program logic described previously in this chapter. In particular, we refine the semantics of the $\fbaru$ assertion. Immediately, the changes we introduce will allow for a simpler sequential proof theory. They also constitute a necessary generalization for the multiprocessor model and concurrent program logic described in the next chapter. But because is possible to discuss the generalization in sequential setting, we shall do so for the sake of simplicity. 
+
+\section{Partial and Complete States}
+
+It is possible to interpret memory systems and states as described in the previous chapter as \emph{partial} descriptions of \emph{complete} states. For example, the precondition of one axiom for the load command: \infax[load-buf]{\triple{e \fwriteu e' \fsseq P}{\cload{x}{e}}{(e \fwriteu e' \fsseq P) \conj x = e'}} which describes a single write to location $e$, and possibly some additional writes to other locations, can be interpreted as describing only the part of a complete state that is relevant to the operation of the load command. The frame rules can then be used to infer specifications w.r.t.\ more complete descriptions of the state. 
+
+It can be convenient to make formal the distinction the partial and complete states. This allows us to add some additional structure to the partial states, which can enable a more flexible definition of the semantics of assertions, while the semantics of programs and their specifications may be restricted to just the complete states. 
+
+In this section, we shall specifically introduce additional structure to partial states to represent partiality of the write buffers. An additional bit is added to the states that can be informally interpreted as indicating whether or not the ``bottom'' of the write buffer part of the state (i.e., the end of the buffer connected to the shared memory) has been completely described, or alternatively whether additional writes may be appended later to the bottom of the buffer. 
+
+\begin{definition}
+  A \emph{partial uniprocessor memory system} is a three-tuple $(h,b,c)$, in which: 
+  \begin{itemize}
+    \item $h$ is a heap, 
+    \item $b$ is a write buffer, and 
+    \item $c$ is a boolean indicating completeness of the write buffer. 
+  \end{itemize} Furthermore, we require that $h = \nil$ whenever $c = \bvf$ then. A partial uniprocessor memory system $(h,b,c)$ in which $c = \bvt$ is called \emph{complete}.  
+\end{definition}
+
+
+\section{Partial Assertions}
+
+\section{Simplified Sequential Proof Theory}
+
+With the generalized model of state described in this chapter and the adjusted semantics of $\fbaru$, we can simplify the sequential proof theory of Section~\ref{sec:sequential-specifications}. In particular, we replace the previous \textsc{load-buf} and \textsc{load-mem} axioms with a single \textsc{load} axiom, and reduce the scope of the \textsc{fence} axiom considerably, as shown below in Figure~\ref{fig:sequential-axioms-rev}. 
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+        
+        \infax[load]{\triple{(e \fwriteu e') \fsseq P}{\cload{x}{e}}{((e \fwriteu e') \fsseq P)\conj x = e'}}
+        \vspace{1em}
+        
+        \infax[fence]{\triple{\femp}{\cfence}{\fbaru}}
+        \vspace{1em}
+
+    \end{minipage}}
+    \caption{\label{fig:sequential-axioms-rev}Revised Axioms}
+\end{figure}
+
+The specifications akin to the previous instantiation of the \textsc{load-mem} and \textsc{fence} rules can be easily derived in this generalized logic. (The \textsc{load-buf} axiom is syntactically identical to the new \textsc{load} above.) The former by instantiating the placeholder formula $P$ with an additional barrier assertion: \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}}{\infer[\textsc{load}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cload{x}{e}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \conj x = e'}}{}}\] And the latter by using the temporal frame rule, in which the assertion $P \fseq Q$ in this model is analogous to the meaning of assertion $P \conj \fbaru$ in the previous chapter: \[ \infer[\textsc{cons}]{\triple{P}{\cfence}{P \fseq \fbaru}}{\infer[\textsc{frame-tm}]{\triple{P \fseq \femp}{\cfence}{P \fseq \fbaru}}{\infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}}\] 
+
 
 \chapter{A Concurrent Program Logic}
 \label{ch:multiprocessor}
