@@ -731,6 +731,10 @@ The informal meaning of the assertions above are as follows. The lifting of a bo
 \paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \[
     e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru \] And, as indicated at the end of Section~\ref{sec:sequential-temporal-separation}, we introduce a strong temporal separating conjunction as the (additive) conjunction of spatial and weak-temporal conjunctions: \[ P \fsseq P' \eqdef (P \fseq P') \conj (P \fsep P').\]
 
+Because the spatial separating conjunction $P \fsep Q$ is commutative, there is no need to define its converse operation. The temporal separating conjunction, however, is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseqc P$, and similarly for $P \fsseqc Q$: \begin{align*}
+  P \fseqc Q \eqdef & Q \fseq P \\ 
+  P \fsseqc Q \eqdef & Q \fsseq P \\ 
+\end{align*}
 
 \subsection{Uniprocessor Satisfaction}
 \label{sec:uniprocessor-satisfaction}
@@ -1032,7 +1036,7 @@ Generally, the semantics of sequential commands is essentially unchanged from th
 \end{align*} 
 
 
-\section{Partial Assertions and Separating Implications}
+\section{Partial Assertions}
 
 As indicated at the beginning of the chapter, the main reason for the additional structure in the representation of states it to give a better semantics for the barrier assertion. The semantics of $\fbaru$ given in the last chapter describes any state with a fully flushed buffer. To describe the result of flushing buffered writes described by assertion $P$, we additively conjoin the $\fbaru$ assertion: $P \conj \fbaru$. This model of $\fbaru$, however, does not work well with the separating conjunctions. For example, $P \fseq \fbaru$ may describe \emph{any} memory location, because a state with any set of allocated memory locations satisfies $\fbaru$. 
 
@@ -1063,6 +1067,24 @@ Figure~\ref{fig:uniprocessor-satisfaction-relation-rev} gives the revised formal
 \end{minipage}}
     \caption{\label{fig:uniprocessor-satisfaction-relation-rev} The revised uniprocessor satisfaction relation}
 \end{figure}
+
+Note that in this model, we have the following semantic entailment which did not hold in the previous model: \[ \fbaru \sentails \femp. \] Informally, the previous meaning of $\fbaru$ can be recovered by using temporal separation with the additive identity, $\bexpt \fseq \fbaru$, because $P \conj (\bexpt \fseq \fbaru)$ describes only those states of $P$ which are completely flushed. Additionally, as a result of the changes to the model, we redefine the abbreviation for points-to assertions as follows: \[ e \fpointsto f \eqdef e \fwriteu f \fseq \fbaru. \] 
+
+\subsection{Separating Implications}
+
+The new model also makes it useful to define \emph{separating implications} for each of the separating conjunctions. Separating implications are related to separating conjunctions in the same way that the additive implication $P \onlyif Q$ is related to the additive conjunction $P \conj Q$. For example, the separating implication for spatial separation, written $P \fsepi Q$, describes states that, when spatially conjoined with another state that satisfies $P$, satisfy $Q$. Or, less formally, $P \fsepi Q$ describes $Q$ states with $P$-shaped holes. For example, if $Q$ describes a particular kind of record and $P$ a field in that record, then $P \fsepi Q$ describes records that lack the $P$ field. Consequently, adding such a field using the spatial separating conjunction, $(P \fsepi Q) \fsep P$, yields a $Q$ record: \[ (P \fsepi Q) \fsep P \sequiv Q.\] The meaning of the spatial implication $P \fsepi Q$ is given as follows: \begin{align*} (s,\mu) \sentails P \fsepi Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu_0 \fsep \mu \onlyif  s,\mu_1 \sentails Q \end{align*} 
+
+Note that, if defined directly, the converse relation $P \fsep\!\!\!\relbar Q$ would be equivalent to $Q \fsepi P$ because spatial separation is commutative. Consequently, we simply define $P \fsepic Q$ to be shorthand for $Q \fsepi P$. On the other hand, temporal separation is not commutative, and so we may define \emph{two} notions of temporal implication: $P \fseqli Q$ and $P \fseqri Q$. The former describes states that, when temporally conjoined on the left side (i.e., the past) with a state that satisfies $P$, satisfies $Q$. The latter describes states that, when temporally conjoined on the right side (i.e., the future) with a state that satisfies $P$, satisfies $Q$. Formally: \begin{align*} (s,\mu) \sentails P \fseqli Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu_0 \fseq \mu \onlyif  s,\mu_1 \sentails Q \\
+(s,\mu) \sentails P \fseqri Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu \fseq \mu_0 \onlyif  s,\mu_1 \sentails Q \end{align*} The equivalences that characterize the relationship between these implications and temporal conjunction are as follows: \begin{align*}
+  P \fseq (P \fseqli Q) \sequiv & Q \\ 
+  (P \fseqri Q) \fseq Q \sequiv & Q \\ 
+\end{align*} As with spatial implication, we simply define the converse relations as shorthand: \begin{align*}
+  P \fseqlic Q \eqdef & Q \fseqli P \\
+  P \fseqric Q \eqdef & Q \fseqri P \\
+\end{align*}
+
+In conjunction with the revised semantics of $\fbaru$, the right-side temporal implication $P \fseqri Q$ and its converse are especially useful. In particular, the formula $P \fseqric \fbaru$ (i.e., $\fbaru \fseqri P$) describes states which, if flushed, would satisfy $P$. For example, $x \fpointsto 1 \fseqric \fbaru$ describes states with any number of buffered writes to address $x$, with the final one having value 1. One consequence is that: \[(x \fwriteu 2) \fseq (x \fwriteu 1) \sentails (x \fpointsto 1) \fseqric \fbaru.\] The ability to express such sets of states will be of crucial importance to the program logic for concurrent programs described in the following chapter. 
+
 
 \section{A Simplified Sequential Proof Theory}
 
