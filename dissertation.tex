@@ -1015,7 +1015,7 @@ In this section we briefly discuss a generalization of the sequential program lo
 
 It is possible to interpret memory systems and states as described in the previous chapter as \emph{partial} descriptions of \emph{complete} states. For example, the precondition of one axiom for the load command: \infax[load-buf]{\triple{e \fwriteu e' \fsseq P}{\cload{x}{e}}{(e \fwriteu e' \fsseq P) \conj x = e'}} which describes a single write to location $e$, and possibly some additional writes to other locations, can be interpreted as describing only the part of a complete state that is relevant to the operation of the load command. The frame rules can then be used to infer specifications w.r.t.\ more complete descriptions of the state. 
 
-It can be convenient to make formal the distinction the partial and complete states. This allows us to add some additional structure to the partial states, which can enable a more flexible definition of the semantics of assertions, while the semantics of programs and their specifications may be restricted to just the complete states. 
+It can be convenient to make formal the distinction the partial and complete states. This allows us to add some additional structure to the representation of states, which can enable a more flexible definition of the semantics of assertions, while the semantics of programs and their specifications may be restricted to just the complete states. 
 
 In this section, we shall specifically introduce additional structure to partial states to represent partiality of the write buffers. An additional bit is added to the state structures, which can be informally interpreted as indicating whether or not the ``bottom'' of the write buffer part of the state (i.e., the end of the buffer connected to the shared memory) has been completely described, or alternatively whether additional writes may be appended later to the bottom of the buffer. Alternatively, the bottom-completeness bit can be interpreted as indicating whether or not some writes have flushed from the write buffer to the memory. 
 
@@ -1029,10 +1029,40 @@ In this section, we shall specifically introduce additional structure to partial
 \end{definition}
 
 Generally, the semantics of sequential commands is essentially unchanged from the definition given in the previous chapter: each transition defined between uniprocessor memory systems is defined similarly for partial uniprocessor memory systems, with the bottom-completeness flag unchanged in each step. The only exception is with the definition of the $\taustep$ relation---and hence the \textsc{c-tau} rule---which now sets the bottom-completeness flag whenever a write is flushed to memory: \begin{align*} (h,b \lapp \llit{(\ell,v)},c) \taustep (\funup{h}{\ptup{\ell}{v}},b,\bvt) 
-\end{align*}
+\end{align*} 
 
 
 \section{Partial Assertions and Separating Implications}
+
+As indicated at the beginning of the chapter, the main reason for the additional structure in the representation of states it to give a better semantics for the barrier assertion. The semantics of $\fbaru$ given in the last chapter describes any state with a fully flushed buffer. To describe the result of flushing buffered writes described by assertion $P$, we additively conjoin the $\fbaru$ assertion: $P \conj \fbaru$. This model of $\fbaru$, however, does not work well with the separating conjunctions. For example, $P \fseq \fbaru$ may describe \emph{any} memory location, because a state with any set of allocated memory locations satisfies $\fbaru$. 
+
+It would be preferable to consider the $\fbaru$ assertion as describing a sort of system resource; namely a sort of virtual barrier. Then $P \fseq \fbaru$ could be interpreted as the sequence of writes described by $P$ \emph{followed by} a barrier, which would then be logically equivalent to a formula that describes the result of having flushed the writes of $P$. And the desired system resource is exactly the bottom-completeness flag added to the state structure in the previous section. 
+
+The semantic functions for the separating conjunctions must also be updated to give $P \fseq \fbaru$ the desired meaning. The resulting value of the bottom-completeness flag in the combined partial uniprocessor memory system for all the separators is simply the disjunction of the constituent flags; and, for the temporal separator in particular, the left-side states must be flushed whenever the right-side flag is set: 
+\[ (h,b,c) \fseq (h',b',c') \eqdef \begin{cases}
+(h \override h', b \lapp b',c\disj c') & \text{if $c' = \bvf \disj b = \lnil$} \\
+\bot & \text{otherwise.}
+\end{cases}\]
+
+Figure~\ref{fig:uniprocessor-satisfaction-relation-rev} gives the revised formal semantics of (select) assertions in terms of partial uniprocessor memory systems. 
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\columnwidth}{!}{
+    \begin{minipage}{\columnwidth}
+    \[
+    \begin{array}{lllll}
+        (s,h,b,c) & \sentails & {\femp} & \iffdef & h = \nil \conj b = \lnil \\
+        (s,h,b,c) & \sentails & \fbaru & \iffdef & h = \nil \conj b = \lnil \conj b = \bvt \\ 
+        (s,h,b,c) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+        & & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil \conj  c = \bvt)) \\
+        (s,h,b,c) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
+        (s,h,b,c) & \sentails & {P \fseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} 
+    \end{array}
+    \]
+\end{minipage}}
+    \caption{\label{fig:uniprocessor-satisfaction-relation-rev} The revised uniprocessor satisfaction relation}
+\end{figure}
 
 \section{A Simplified Sequential Proof Theory}
 
