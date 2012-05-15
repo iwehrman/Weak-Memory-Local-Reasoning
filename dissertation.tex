@@ -1011,7 +1011,7 @@ The first part ensures that if a command is fully evaluated (i.e., is $\cskip$) 
 
 Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \fhash \mu$. The second part requires that the command not abort in $\mu_F \fhash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition.
 
-\chapter{Barrier as Resource: A Digression}
+\chapter{Barrier as Resource: An Incremental Improvement to the Sequential Program Logic} 
 
 In this section we briefly discuss a generalization of the sequential program logic described previously in this chapter. In particular, we refine the semantics of the $\fbaru$ assertion. Immediately, the changes we introduce will allow for a simpler sequential proof theory. They also constitute a necessary generalization for the multiprocessor model and concurrent program logic described in the next chapter. But because is possible to discuss the generalization in sequential setting, we shall do so for the sake of simplicity. 
 
@@ -1028,13 +1028,11 @@ In this section, we shall specifically introduce additional structure to partial
   \begin{itemize}
     \item $h : \setlocations \pfun \setvalues$ is a heap, 
     \item $b : \listof{(\setlocations \times \setvalues)}$ is a write buffer, and 
-    \item $c : \setbooleans$ is a boolean indicating bottom-completeness of the write buffer. 
-  \end{itemize} Furthermore, we require that $h = \nil$ whenever $c = \bvf$. A partial uniprocessor memory system $(h,b,c)$ in which $c = \bvt$ is called \emph{complete}.  
+    \item $\gamma : \setbooleans$ is a boolean indicating bottom-completeness of the write buffer. 
+  \end{itemize} Furthermore, we require that $h = \nil$ whenever $\gamma = \bvf$. A partial uniprocessor memory system $(h,b,\gamma)$ in which $\gamma = \bvt$ is called \emph{complete}.  
 \end{definition}
 
-Generally, the semantics of sequential commands is essentially unchanged from the definition given in the previous chapter: each transition defined between uniprocessor memory systems is defined similarly for partial uniprocessor memory systems, with the bottom-completeness flag unchanged in each step. The only exception is with the definition of the $\taustep$ relation---and hence the \textsc{c-tau} rule---which now sets the bottom-completeness flag whenever a write is flushed to memory: \begin{align*} (h,b \lapp \llit{(\ell,v)},c) \taustep (\funup{h}{\ptup{\ell}{v}},b,\bvt) 
-\end{align*} 
-
+The semantics of sequential commands is adapted from the definition given in the previous chapter by requiring that transitions only occur between complete uniprocessor memory systems. That is, configurations of the shape $c,(s,h,b,\bvf)$ have no transitions. 
 
 \section{Partial Assertions}
 
@@ -1086,7 +1084,9 @@ Note that, if defined directly, the converse relation $P \fsep\!\!\!\relbar Q$ w
 In conjunction with the revised semantics of $\fbaru$, the right-side temporal implication $Q \fseqri P$ is especially useful. In particular, the formula $Q \fseqri \fbaru$ describes states which, if flushed, would satisfy $Q$. For example, $x \fpointsto 1 \fseqric \fbaru$ describes states with any number of buffered writes to address $x$, with the final one having value 1. One consequence is that: \[(x \fwriteu 2) \fseq (x \fwriteu 1) \sentails (x \fpointsto 1) \fseqri \fbaru.\] The ability to express such sets of states will be of crucial importance to the program logic for concurrent programs described in the following chapter. 
 
 
-\section{A Simplified Sequential Proof Theory}
+\section{A Simplified Proof Theory}
+
+Because programs have no defined meaning in the context of partial states, the semantics of specifications must be adapted to the new model as well. In particular, the behavior of programs is only considered w.r.t.\ complete states. 
 
 With the generalized model of state described in this chapter and the adjusted semantics of $\fbaru$, we can simplify the sequential proof theory of Section~\ref{sec:sequential-specifications}. In particular, we replace the previous \textsc{load-buf} and \textsc{load-mem} axioms with a single \textsc{load} axiom, and reduce the scope of the \textsc{fence} axiom considerably, as shown below in Figure~\ref{fig:sequential-axioms-rev}. 
 
@@ -1107,7 +1107,9 @@ With the generalized model of state described in this chapter and the adjusted s
 
 The specifications akin to the previous instantiation of the \textsc{load-mem} and \textsc{fence} rules can be easily derived in this generalized logic. (The \textsc{load-buf} axiom is syntactically identical to the new \textsc{load} above.) The former by instantiating the placeholder formula $P$ with an additional barrier assertion: \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}}{\infer[\textsc{load}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cload{x}{e}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \conj x = e'}}{}}\] And the latter by using the temporal frame rule, in which the assertion $P \fseq Q$ in this model is analogous to the meaning of assertion $P \conj \fbaru$ in the previous chapter: \[ \infer[\textsc{cons}]{\triple{P}{\cfence}{P \fseq \fbaru}}{\infer[\textsc{frame-tm}]{\triple{P \fseq \femp}{\cfence}{P \fseq \fbaru}}{\infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}}\] 
 
-We can also use the sequential separating implication to give an alternative axiom for the fence command for backwards reasoning: \[ \infer[\textsc{backwards-fence}]{\triple{P \fseqri \fbaru}{\cfence}{P}}{} \] This axiom describes a sufficiently weak\footnote{It seems likely that $P \fseqri \fbaru$ is in fact the weakest precondition, but I have not proved this.} precondition for the operation of the $\cfence$ command in terms of an arbitrary postcondition $P$. 
+We can also use the sequential separating implication to give an alternative axiom for the fence command for backwards reasoning: \[ \infer[\textsc{backwards-fence}]{\triple{P \fseqri \fbaru}{\cfence}{P}}{} \] This axiom describes a sufficiently weak\footnote{It seems likely that $P \fseqri \fbaru$ is in fact the weakest precondition, but I have not proved this.} precondition for the operation of the $\cfence$ command in terms of an arbitrary postcondition $P$.
+
+
 
 
 \chapter{A Concurrent Program Logic}
