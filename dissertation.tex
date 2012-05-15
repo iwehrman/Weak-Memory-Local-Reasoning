@@ -1107,6 +1107,8 @@ With the generalized model of state described in this chapter and the adjusted s
 
 The specifications akin to the previous instantiation of the \textsc{load-mem} and \textsc{fence} rules can be easily derived in this generalized logic. (The \textsc{load-buf} axiom is syntactically identical to the new \textsc{load} above.) The former by instantiating the placeholder formula $P$ with an additional barrier assertion: \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}}{\infer[\textsc{load}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cload{x}{e}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \conj x = e'}}{}}\] And the latter by using the temporal frame rule, in which the assertion $P \fseq Q$ in this model is analogous to the meaning of assertion $P \conj \fbaru$ in the previous chapter: \[ \infer[\textsc{cons}]{\triple{P}{\cfence}{P \fseq \fbaru}}{\infer[\textsc{frame-tm}]{\triple{P \fseq \femp}{\cfence}{P \fseq \fbaru}}{\infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}}\] 
 
+We can also use the sequential separating implication to give an alternative axiom for the fence command for backwards reasoning: \[ \infer[\textsc{backwards-fence}]{\triple{P \fseqri \fbaru}{\cfence}{P}}{} \] This axiom describes a sufficiently weak\footnote{It seems likely that $P \fseqri \fbaru$ is in fact the weakest precondition, but I have not proved this.} precondition for the operation of the $\cfence$ command in terms of an arbitrary postcondition $P$. 
+
 
 \chapter{A Concurrent Program Logic}
 \label{ch:multiprocessor}
