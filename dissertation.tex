@@ -1018,56 +1018,72 @@ In this chapter we discuss a generalization of the sequential program logic desc
 
 \section{States and Models}
 
-In the previous chapter, we identified models of assertions with machine states---i.e., the semantics of assertions was given directly in terms of machine states. In this chapter, we generalize the semantics of assertions---and hence also specifications---by describing their semantics in terms of a more elaborate kind of structure: namely, machine state that have been augmented with some additional structure. This additional structure is irrelevant to the behavior of programs, but is required to model an improved assertion logic. 
+In the previous chapter, we identified models of assertions with machine states---i.e., the semantics of assertions was given directly in terms of machine states. In this chapter, we generalize the semantics of assertions---and hence also of specifications---by describing their semantics in terms of a more elaborate kind of structure: namely, machine states that have been augmented with some additional structure. This additional structure is irrelevant to the behavior of programs, but is required to model an improved assertion logic. 
 
-Informally speaking, it is possible to interpret the machine states that model assertions as merely \emph{partial} descriptions of \emph{complete} states. For example, the precondition of the axiom schema for loading buffered writes \infax[load-buf]{\triple{e \fwriteu e' \fsseq P}{\cload{x}{e}}{(e \fwriteu e' \fsseq P) \conj x = e'}} describes a single write to location $e$, along with some additional writes to other locations described by $P$. Instead of interpreting the axiom as describing the exact precondition for the execution of the load command, one can instead interpret it as describing only the portion of a hypothetical completely described state that is relevant to the operation of the load command. This interpretation is justified by the fact that the frame rules can then be used to infer specifications w.r.t.\ more complete descriptions of the state in a way that preserves truth.  
+It is possible to interpret informally the machine states that model assertions as merely \emph{partial} descriptions of complete system states. For example, the precondition of the axiom schema for loading buffered writes \infax[load-buf]{\triple{e \fwriteu e' \fsseq P}{\cload{x}{e}}{(e \fwriteu e' \fsseq P) \conj x = e'}} describes a single write to location $e$, along with some additional writes to other locations described by $P$. Instead of interpreting the axiom as describing the exact precondition for the execution of the load command---e.g., a buffer with exactly one write to address $e$ with value $e'$, etc.---one can instead interpret it as describing only the portion of a hypothetical completely described state that is relevant to the operation of the load command---e.g., any sequence of writes in which the final buffered $e$ write has value $e'$. This interpretation is justified by the fact that the frame rules can then be used to infer specifications w.r.t.\ more complete descriptions of the state in a way that preserves truth.  
 
-It can be convenient to make formal the distinction the partial and complete states. This allows us to add some additional structure to the representation of states, which can enable a more flexible definition of the semantics of assertions, while the semantics of programs and their specifications may be restricted to just the complete states. 
+On the other hand, the precondition of the axiom schema for loading flushed writes \infax[load-buf]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}} describes states which are in some sense complete, insofar as they can not be augmented with additional preceding buffered or flushed writes to address $e$. After all, $e \fwriteu f \fseq e \fpointsto e'$ is semantically equivalent to the original precondition $e \fpointsto e'$, because added buffered write precedes a flushed write, and hence it too must have flushed, effectively erased by the later write. 
 
-In this section, we shall specifically introduce additional structure to partial states to represent partiality of the write buffers. An additional bit is added to the state structures, which can be informally interpreted as indicating whether or not the ``end'' of the write buffer-part of the state (i.e., the side of the buffer from which writes are flushed to the shared memory) has been completely described, or alternatively whether additional writes may be appended later to the end of the buffer. Alternatively, the buffer-completeness bit can be interpreted as indicating whether or not some writes have flushed from the write buffer to the memory. 
+The distinction between partial and complete states can be made more clear by augmenting the models of assertions with additional information about the completeness of the state. In particular, let us augment the models of assertions with an additional boolean value $\gamma$ that indicates whether preceding writes are allowed---i.e., the write buffer is partial w.r.t.\ the end from which writes are flushed---or not---i.e., that end of the buffer is completely described, and hence preceding writes must also be flushed. Clearly, the boolean $\gamma$ should be $\bvt$ in the model of $e \fpointsto e'$, because no buffered writes may precede it. On the other hand, $\gamma$ need not be set in models of $e \fwriteu e'$, because it is reasonable to allow buffered writes to precede the buffered write explicitly described by the assertion. 
 
-\begin{definition}
-  A \emph{partial uniprocessor memory system} is a three-tuple $(h,b,c)$, in which: 
-  \begin{itemize}
-    \item $h : \setlocations \pfun \setvalues$ is a heap, 
-    \item $b : \listof{(\setlocations \times \setvalues)}$ is a write buffer, and 
-    \item $\gamma : \setbooleans$ is a boolean indicating bottom-completeness of the write buffer. 
-  \end{itemize} Furthermore, we require that $h = \nil$ whenever $\gamma = \bvf$. A partial uniprocessor memory system $(h,b,\gamma)$ in which $\gamma = \bvt$ is called \emph{complete}.  
-\end{definition}
+This style of model also allows us to give a considerably simpler model to the $\fbaru$ assertion. In the previous chapter, $\fbaru$ was modeled by any state in which the write buffer was completely flushed, and the points-to assertion $e \fpointsto e'$ was defined as the additive conjunction $e \fwriteu e' \conj \fbaru$. Additive conjunction was used because $\fbaru$ does not interact well with the separating conjunctions. For example, the temporal separating conjunction $e \fwriteu e' \fseq \fbaru$ describes system states with an arbitrary set of allocated memory locations, destroying the intentionally concise state descriptions given by the $e \fwriteu e'$ assertion and intended for $e \fpointsto e'$. We might alternatively consider a defining $e \fpointsto e'$ by using a temporal composition with the assertion $\fbaru \conj \femp$, which certainly adds no additional memory locations to models. But this does not work either, because $\fbaru \conj \femp$ is semantically equivalent to $\femp$, and $e \fwriteu e' \fseq \femp \sequiv e \fwriteu e'$. But additive conjunction is not particularly in the context of the program logic because it lacks a sound frame rule, and so it is worth finding a model of $\fbaru$ that interacts well with the separating conjunctions, which of course do have sound frame rules. 
 
-The semantics of sequential commands is adapted from the definition given in the previous chapter by requiring that transitions only occur between complete uniprocessor memory systems. That is, configurations of the shape $c,(s,h,b,\bvf)$ have no transitions. 
-
-\section{Partial Assertions}
-
-As indicated at the beginning of the chapter, the main reason for the additional structure in the representation of states it to give a better semantics for the barrier assertion. The semantics of $\fbaru$ given in the last chapter describes any state with a fully flushed buffer. To describe the result of flushing buffered writes described by assertion $P$, we additively conjoin the $\fbaru$ assertion: $P \conj \fbaru$. This model of $\fbaru$, however, does not work well with the separating conjunctions. For example, $P \fseq \fbaru$ may describe \emph{any} memory location, because a state with any set of allocated memory locations satisfies $\fbaru$. 
-
-It would be preferable to consider the $\fbaru$ assertion as describing a sort of system resource; namely a sort of virtual barrier. Then $P \fseq \fbaru$ could be interpreted as the sequence of writes described by $P$ \emph{followed by} a barrier, which would then be logically equivalent to a formula that describes the result of having flushed the writes of $P$. And the desired system resource is exactly the buffer-completeness flag added to the state structure in the previous section. 
-
-The semantic functions for the separating conjunctions must also be updated to give $P \fseq \fbaru$ the desired meaning. The resulting value of the bottom-completeness flag in the combined partial uniprocessor memory system for all the separators is simply the disjunction of the constituent flags; and, for the temporal separator in particular, the left-side states must be flushed whenever the right-side flag is set: 
-\[ (h,b,c) \fseq (h',b',c') \eqdef \begin{cases}
-(h \override h', b \lapp b',c\disj c') & \text{if $c' = \bvf \disj b = \lnil$} \\
-\bot & \text{otherwise.}
-\end{cases}\]
-
-Figure~\ref{fig:uniprocessor-satisfaction-relation-rev} gives the revised formal semantics of (select) assertions in terms of partial uniprocessor memory systems. 
+The solution is to use the $\gamma$ flag in the semantics of $\fbaru$. In particular, models of $\fbaru$ should consist of empty states with $\gamma = \bvt$. Models of $\fbaru$ are empty states in which the end of the write buffer is completely described, such that any preceding writes must be flushed. The revised formal semantics of assertions is summarized below in Figure~\ref{fig:uniprocessor-satisfaction-relation-rev}. 
 
 \begin{figure}[ht]
     \centering
     \resizebox{\columnwidth}{!}{
     \begin{minipage}{\columnwidth}
     \[
-    \begin{array}{lllll}
-        (s,h,b,c) & \sentails & {\femp} & \iffdef & h = \nil \conj b = \lnil \\
-        (s,h,b,c) & \sentails & \fbaru & \iffdef & h = \nil \conj b = \lnil \conj b = \bvt \\ 
-        (s,h,b,c) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
-        & & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil \conj  c = \bvt)) \\
-        (s,h,b,c) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
-        (s,h,b,c) & \sentails & {P \fseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} 
+    \begin{array}{lcl}
+        (s,h,b,\gamma) \sentails b & \iffdef & \ext{s}(b) = 1 \\
+        (s,h,b,\gamma) \sentails {\femp} & \iffdef & h = \nil \conj b = \lnil \\
+        (s,h,b,\gamma) \sentails \fbaru & \iffdef & h = \nil \conj b = \lnil \conj \gamma = \bvt \\ 
+        (s,h,b,\gamma) \sentails {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+        & & (h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil \conj \gamma = \bvt)) \\
+        (s,h,b,\gamma) \sentails P \fsep P' & \iffdef & \exists h_1,b_1,h_2,b_2 \st (h,b) \in (h_1,b_1) \fsep (h_2,b_2) \conj \\ & &
+        \exists \gamma_1,\gamma_2 \st \gamma = (\gamma_1 \disj \gamma_2) \conj \\ & & s,h_1,b_1\gamma_1 \sentails{P} \conj s,h_2,b_2,\gamma_2 \sentails{P'} \\ 
+        (s,h,b,\gamma) \sentails P \fseq P' & \iffdef & \exists h_1,b_1,h_2,b_2 \st (h,b) \in (h_1,b_1) \fseq (h_2,b_2) \conj \\ & &
+        \exists \gamma_1,\gamma_2 \st \gamma = (\gamma_1 \disj \gamma_2) \conj \\ & & (\gamma_2 = \bvf) \disj (b_1 = \nil) \\ & & s,h_1,b_1,\gamma_1 \sentails{P} \conj s,h_2,b_2,\gamma_2 \sentails{P'} 
     \end{array}
     \]
 \end{minipage}}
     \caption{\label{fig:uniprocessor-satisfaction-relation-rev} The revised uniprocessor satisfaction relation}
 \end{figure}
+
+
+
+% \section{Partial Assertions}
+
+% As indicated at the beginning of the chapter, the main reason for the additional structure in the representation of states it to give a better semantics for the barrier assertion. The semantics of $\fbaru$ given in the last chapter describes any state with a fully flushed buffer. To describe the result of flushing buffered writes described by assertion $P$, we additively conjoin the $\fbaru$ assertion: $P \conj \fbaru$. This model of $\fbaru$, however, does not work well with the separating conjunctions. For example, $P \fseq \fbaru$ may describe \emph{any} memory location, because a state with any set of allocated memory locations satisfies $\fbaru$. 
+
+% It would be preferable to consider the $\fbaru$ assertion as describing a sort of system resource; namely a sort of virtual barrier. Then $P \fseq \fbaru$ could be interpreted as the sequence of writes described by $P$ \emph{followed by} a barrier, which would then be logically equivalent to a formula that describes the result of having flushed the writes of $P$. And the desired system resource is exactly the buffer-completeness flag added to the state structure in the previous section. 
+
+% The semantic functions for the separating conjunctions must also be updated to give $P \fseq \fbaru$ the desired meaning. The resulting value of the bottom-completeness flag in the combined partial uniprocessor memory system for all the separators is simply the disjunction of the constituent flags; and, for the temporal separator in particular, the left-side states must be flushed whenever the right-side flag is set: 
+% \[ (h,b,c) \fseq (h',b',c') \eqdef \begin{cases}
+% (h \override h', b \lapp b',c\disj c') & \text{if $c' = \bvf \disj b = \lnil$} \\
+% \bot & \text{otherwise.}
+% \end{cases}\]
+
+% Figure~\ref{fig:uniprocessor-satisfaction-relation-rev} gives the revised formal semantics of (select) assertions in terms of partial uniprocessor memory systems. 
+
+% \begin{figure}[ht]
+%     \centering
+%     \resizebox{\columnwidth}{!}{
+%     \begin{minipage}{\columnwidth}
+%     \[
+%     \begin{array}{lllll}
+%         (s,h,b,c) & \sentails & {\femp} & \iffdef & h = \nil \conj b = \lnil \\
+%         (s,h,b,c) & \sentails & \fbaru & \iffdef & h = \nil \conj b = \lnil \conj b = \bvt \\ 
+%         (s,h,b,c) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
+%         & & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil \conj  c = \bvt)) \\
+%         (s,h,b,c) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
+%         (s,h,b,c) & \sentails & {P \fseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} 
+%     \end{array}
+%     \]
+% \end{minipage}}
+%     \caption{\label{fig:uniprocessor-satisfaction-relation-rev} The revised uniprocessor satisfaction relation}
+% \end{figure}
 
 Note that in this model, we have the following semantic entailment which did not hold in the previous model: \[ \fbaru \sentails \femp. \] Informally, the previous meaning of $\fbaru$ can be recovered by using temporal separation with the additive identity, $\bexpt \fseq \fbaru$, because $P \conj (\bexpt \fseq \fbaru)$ describes only those states of $P$ which are completely flushed. Additionally, as a result of the changes to the model, we redefine the abbreviation for points-to assertions as follows: \[ e \fpointsto f \eqdef e \fwriteu f \fseq \fbaru. \] 
 
