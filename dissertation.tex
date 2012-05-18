@@ -697,7 +697,7 @@ It is easy to see that spatiotemporal separation generalizes both spatial and te
 As with spatial separation, we lift spatiotemporal separation up to a function on the power domain of memory systems (and states), and abuse notation to refer to whichever function is appropriate in context: \[ S_0 \fhash S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \fhash \sigma_1}.\] Spatiotemporal separation is associative and has $(\nil,\lnil)$ as a unit as for the other separators, but it is not commutative. 
 
 
-\section{Uniprocessor Predicates}
+\subsection{Uniprocessor Predicates}
 \label{sec:uniprocessor-predicates}
 
 In Section~\ref{sec:locality} we considered the task of showing, for some configuration $C$ and set of states $S$, that $C$ is safe and, if it evaluates to a configuration $\cskip,\sigma$ then $\sigma \in S$. The second part of this task is equivalently restated as requiring that $\range{C} \subseteq S$. The set $\range{C}$ has a special structure worth noting: namely, it is \emph{down-closed w.r.t.\ the flushing order}. That is, if $\sigma \in \range{C}$ and $\sigma \taustep \sigma'$ then $\sigma' \in \range{C}$ as well. This is a consequence of the fact that the nondeterministic flushing of buffered writes is incorporated in the evaluation semantics of programs; from \textsc{c-tau}, if $\sigma \taustep \sigma'$ then $c,\sigma \step c,\sigma'$. Hence, if $C \rtstep \cskip,\sigma$ (by assumption that $\sigma \in \range{C}$) and $\sigma \taustep \sigma'$, then \[ C \rtstep \cskip,\sigma \step \cskip,\sigma'.\] By transitivity, $C \rtstep \cskip,\sigma'$ and so by definition of the range of a configuration, $\sigma' \in \range{C}$. 
@@ -724,22 +724,14 @@ In each case, the proof follows from the fact that if $\mu \in \mu_0 \bullet \mu
 \label{sec:uniprocessor-assertions}
 
 Uniprocessor assertions denote sets of uniprocessor machine states, and will later be used to express the pre- and post-conditions of commands in the specification logic. The language of uniprocessor assertions is given by the following grammar: \begin{align*}
-    \setassertions~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \femp \bnfbar \\ & \fbaru \bnfbar e \fwriteu e' \bnfbar (P \fsep P') \bnfbar  (P \fseq P') \bnfbar (P \fhash P')
+    \setassertions~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\ & \femp \bnfbar e \fwriteu e' \bnfbar \fbaru \bnfbar (P \fsep P') \bnfbar  (P \fseq P')
 \end{align*} 
-The informal meaning of the assertions above are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the same basic meaning as in first-order logic: any state that the set of states with stacks for which the boolean expression $b$ evaluates to 1; the union of the set of states that satisfy $P$ and $P'$, etc. The assertion $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $\fbaru$ describes any state in which just the write buffer is empty. $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. The assertion $(P \fsep P')$ describes spatial separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatial-separation}. The assertion $(P \fseq P')$ describes temporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-temporal-separation}.  Finally, the assertion $(P \fhash P')$ describes the spatiotemporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatiotemporal-separation}.
-
-\paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \[
-    e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru \] And, as indicated at the end of Section~\ref{sec:sequential-temporal-separation}, we introduce a strong temporal separating conjunction as the (additive) conjunction of spatial and weak-temporal conjunctions: \[ P \fsseq P' \eqdef (P \fseq P') \conj (P \fsep P').\]
-
-Because the spatial separating conjunction $P \fsep Q$ is commutative, there is no need to define its converse operation. The temporal separating conjunction, however, is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseqc P$, and similarly for $P \fsseqc Q$: \begin{align*}
-  P \fseqc Q \eqdef & Q \fseq P \\ 
-  P \fsseqc Q \eqdef & Q \fsseq P \\ 
-\end{align*}
+The informal meaning of the assertions above are as follows. The lifting of a boolean expression ($\bexpt$, $\bexpf$, $x = y$, etc.)\ to an atomic formula, disjunction, conjunction and quantifiers have the same basic meaning as in first-order logic: models for which the boolean expression $b$ evaluates to 1; the models that satisfy either $P$ or $P'$, etc. The assertion $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $\fbaru$ describes empty states in which preceding writes must have been committed to memory. The assertion $(P \fsep P')$ describes spatial separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatial-separation}. The assertion $(P \fseq P')$ describes temporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-temporal-separation}. 
 
 \subsection{Uniprocessor Satisfaction}
 \label{sec:uniprocessor-satisfaction}
 
-The meaning of uniprocessor assertions is given by a satisfaction relation $\sigma \satisfies P$, relating states $\sigma$ to uniprocessor assertions $P$. The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:uniprocessor-satisfaction-relation}. 
+The meaning of uniprocessor assertions is given by a satisfaction relation $s,\amod \satisfies P$, relating stacks $s$ and \emph{uniprocessor models} $\amod$ to uniprocessor assertions $P$. A model is a pair $(\mu,\gamma)$, in which $\mu$ is a uniprocessor memory system, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. 
 
 \begin{figure}[ht]
     \centering
@@ -747,51 +739,60 @@ The meaning of uniprocessor assertions is given by a satisfaction relation $\sig
     \begin{minipage}{\columnwidth}
     \[
     \begin{array}{lllll}
-        (s,h,b) & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
-        (s,h,b) & \sentails & {P \disj Q} & \iffdef & (s,h,b) \sentails{P} \disj (s,h,b) \sentails{Q} \\
-        (s,h,b) & \sentails & {P \conj Q} & \iffdef & (s,h,b) \sentails{P} \conj (s,h,b) \sentails{Q} \\
-        (s,h,b) & \sentails & {\exists x \st P} & \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,b) \sentails{P} \\
-        (s,h,b) & \sentails & {\forall x \st P} & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},h,b) \sentails{P} \\
-        (s,h,b) & \sentails & {\femp} & \iffdef & h = \nil \conj b = \lnil \\
-        (s,h,b) & \sentails & \fbaru & \iffdef & b = \lnil \\ 
-        (s,h,b) & \sentails & {e \fwriteu e'} & \iffdef & ((h = \nil \conj b = \llit{(\ext{s}(e),\ext{s}(e''))}) \disj \\ 
-        & & & & \,\;(h = \ext{s}(e) \mapsto \ext{s}(e') \conj b = \lnil)) \\
-        (s,h,b) & \sentails & {P \fhash P'} & \iffdef & \exists \mu,\mu' \st \mu \fhash \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
-        (s,h,b) & \sentails & {P \fsep P'} & \iffdef & \exists \mu,\mu' \st \mu \fsep \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} \\
-        (s,h,b) & \sentails & {P \fseq P'} & \iffdef & \exists \mu,\mu' \st \mu \fseq \mu' = (h,b) \conj \\ & & & & \;\;s,\mu \sentails{P} \conj s,\mu' \sentails{P'} 
+        s,\amod & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
+        s,\amod & \sentails & P \disj Q & \iffdef & s,\amod \sentails P \disj s,\amod \sentails Q \\
+        s,\amod & \sentails & P \conj Q & \iffdef & s,\amod \sentails P \conj s,\amod \sentails Q \\
+        s,\amod & \sentails &  \exists x \st P & \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},\amod) \sentails P \\
+        s,\amod & \sentails &  \forall x \st P & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},\amod) \sentails P \\
+        s,\amod & \sentails & \femp & \iffdef & \amod = (\nil,\lnil,\bvf) \disj \amod = (\nil,\lnil,\bvt) \\
+        s,\amod & \sentails & \fbaru & \iffdef & \amod = (\nil,\lnil,\bvt) \\
+        s,\amod & \sentails & e \fwriteu e' & \iffdef & \amod = (\nil,\llit{(\ext{s}(e),\ext{s}(e'))},\bvf) \disj \\ 
+        & & & & \,\; \amod = (\nil,\llit{(\ext{s}(e),\ext{s}(e'))},\bvt) \disj \\ 
+        & & & & \,\; \amod = (\ext{s}(e) \mapsto \ext{s}(e'),\lnil,\bvt) \\
+        s,\amod & \sentails & P_1 \fsep P_2 & \iffdef & \exists \amod_1,\amod_2 \st \amod \in (\amod_1 \hat{\fsep} \amod_2) \conj \\ & & & & \;\;s,\amod_1 \sentails P_1 \conj s,\amod_2 \sentails P_1 \\
+        s,\amod & \sentails & P_1 \fseq P_2 & \iffdef & \exists \amod_1,\amod_2 \st \amod = (\amod_1 \hat{\fseq} \amod_2) \conj \\ & & & & \;\;s,\amod_1 \sentails P_1 \conj s,\amod_2 \sentails P_1
     \end{array}
     \]
 \end{minipage}}
     \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
 \end{figure}
 
+The satisfaction relation is defined by recursion on the structure of $P$ in Figure~\ref{fig:uniprocessor-satisfaction-relation}. The meaning of the standard first-order logic formulas is as usual. A model $(s,\mu,\gamma)$satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
+\begin{align*}
+  (h_1,b_1,\gamma_1) \hat{\fsep} (h_2,b_2,\gamma_2) \eqdef & \setof{(\mu,\gamma_1 \disj \gamma_2)}{\mu \in (h_1,b_1) \bar{\fsep} (h_2,b_2)} \\ 
+  (h_1,b_1,\gamma_1) \hat{\fseq} (h_2,b_2,\gamma_2) \eqdef & \begin{cases}
+  (\mu,\gamma_1 \disj \gamma_2) & \text{if $\mu = ((h_1,b_1) \bar{\fseq} (h_2,b_2)) \conj$} \\ 
+  &  \text{~~$(b_1 = \lnil \disj \gamma_2 = \bvf)$} \\ 
+  \bot & \text{otherwise}
+  \end{cases}
+\end{align*}
+Note that the above model-theoretic separation functions lift the memory-system-theoretic separation functions defined in Section~\ref{sec:locality}. In both cases, the buffer-completeness flag is set in the combined model iff it is set in either of the constituent models. Furthermore, the temporal function requires that the left-side buffer be empty whenever the right-side buffer-completeness flag is set, which corresponds to the informal requirement discussed above that writes which precede a buffer-complete state must be flushed. 
+
+
 The set of free variables of an assertion $P$, written $\fv{P}$, is defined as usual: \begin{align*}
     \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} & \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} \\ 
     \fv{\exists x \st P} \eqdef &\fv{P} \setminus \set{x} & \fv{\forall x \st P} \eqdef &\fv{P} \setminus \set{x} \\
-    \fv{\femp} \eqdef & \nil &  \fv{\fbaru} \eqdef & \nil \\
-    \fv{e \fwriteu e'} \eqdef & \fv{e} \cup \fv{e'} &
-    \fv{P \fhash P'} \eqdef & \fv{P} \cup \fv{P'} \\  
+    \fv{\femp} \eqdef & \nil &  \fv{e \fwriteu e'} \eqdef & \fv{e} \cup \fv{e'} \\
     \fv{P \fsep P'} \eqdef & \fv{P} \cup \fv{P'} & 
-    \fv{P \fseq P'} \eqdef & \fv{P} \cup \fv{P'} \\
-    % \fv{P \fsseq P'} \eqdef & \fv{P} \cup \fv{P'}
+    \fv{P \fseq P'} \eqdef & \fv{P} \cup \fv{P'} 
 \end{align*}
 
 The following lemma, analogous to Lemma~\ref{lem:exp-stcong}, relates the set of free variables of an assertion and the stack-component of the states that satisfy it:
 \begin{lemma}
 \label{lem:assertion-stcong}
-    If $s \stcong{\fv{P}} s'$ then $(s,\mu) \satisfies P$ iff $(s',\mu) \satisfies P$. 
+    If $s \stcong{\fv{P}} s'$ then $s,\amod \satisfies P$ iff $s',\amod \satisfies P$. 
 \end{lemma}
 \begin{proof}
 By induction on the structure of $P$, using Lemma~\ref{lem:exp-stcong} in the base cases. 
 \end{proof}
 
-We write $\pred{P}$ for the set of states that satisfies an assertion $P$,\[ \pred{P} \eqdef \setof{\sigma}{\sigma \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
+We write $\pred{P}$ for the set of models that satisfies an assertion $P$,\[ \pred{P} \eqdef \setof{m}{m \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
     P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
     P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
 
-Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor machine states. A central claim is that assertions denote predicates. 
+Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor models, and hence sets of uniprocessor machine states. A central claim is that assertions denote predicates. 
 
 \begin{lemma}
     \label{lem:assertions-denote-predicates}
@@ -824,6 +825,19 @@ The predicate requirement also explains why we have omitted negation (and implic
 Let us call the complement of a closed set an \emph{open} set. Open sets are rather curious. For example, an open set of memory systems that contains $(\ell \mapsto v,\nil)$ also contains every possible memory system that, when flushed, results in this memory system, e.g., $(\nil, \llit{(\ell,v)})$, $(\nil, \llit{(\ell,u),(\ell,v)})$, $(\nil, \llit{(\ell,w),(\ell,u),(\ell,v)})$, etc. Closed sets are thus not appropriate for describing individual writes. Sets that are both closed and open would yield a well behaved algebra, allowing full negation and implication, but it is not obvious that such an algebra would be useful for program reasoning. 
 
 Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{\fbaru \conj e \fwriteu e'} = \pred{\fbaru} \cap \pred{e \fwriteu e'} = \nil,\] and hence so too would be its flushing closure.  
+
+\subsection{Assertion Abbreviations}
+\label{sec:uniprocessor-abbreviations} 
+
+In this section we extend the language of assertions with additional constructs whose meaning can be defined in terms of the assertions already described. 
+
+The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \[
+    e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru \] And, as indicated at the end of Section~\ref{sec:sequential-temporal-separation}, we introduce a strong temporal separating conjunction as the (additive) conjunction of spatial and weak-temporal conjunctions: \[ P \fsseq P' \eqdef (P \fseq P') \conj (P \fsep P').\]
+
+Because the spatial separating conjunction $P \fsep Q$ is commutative, there is no need to define its converse operation. The temporal separating conjunction, however, is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseqc P$, and similarly for $P \fsseqc Q$: \begin{align*}
+  P \fseqc Q \eqdef & Q \fseq P \\ 
+  P \fsseqc Q \eqdef & Q \fsseq P \\ 
+\end{align*}
 
 \subsection{Sequential Algebra}
 \label{sec:sequential-algebra}
