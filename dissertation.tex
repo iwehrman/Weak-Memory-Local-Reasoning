@@ -786,7 +786,7 @@ The following lemma, analogous to Lemma~\ref{lem:exp-stcong}, relates the set of
 By induction on the structure of $P$, using Lemma~\ref{lem:exp-stcong} in the base cases. 
 \end{proof}
 
-We write $\pred{P}$ for the set of models that satisfies an assertion $P$,\[ \pred{P} \eqdef \setof{\amod}{\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
+We write $\pred{P}$ for the set of all stack-model pairs that satisfy an assertion $P$,\[ \pred{P} \eqdef \setof{s,\amod}{s,\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
     P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
     P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
@@ -832,12 +832,33 @@ Also note that it is important to define the satisfaction relation so that closu
 In this section we extend the language of assertions with additional constructs whose meaning can be defined in terms of the assertions already described. 
 
 The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \[
-    e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru \] And, as indicated at the end of Section~\ref{sec:sequential-temporal-separation}, we introduce a strong temporal separating conjunction as the (additive) conjunction of spatial and weak-temporal conjunctions: \[ P \fsseq P' \eqdef (P \fseq P') \conj (P \fsep P').\]
+    e \fpointsto e' \eqdef e \fwriteu e' \fseq \fbaru \] That is, we may describe the value of a location in memory by describing a buffered write to that location followed by a barrier assertion. 
+
+As indicated at the end of Section~\ref{sec:sequential-temporal-separation}, we also introduce a strong temporal separating conjunction as the (additive) conjunction of spatial and weak-temporal conjunctions: \[ P \fsseq P' \eqdef (P \fseq P') \conj (P \fsep P').\]
 
 Because the spatial separating conjunction $P \fsep Q$ is commutative, there is no need to define its converse operation. The temporal separating conjunction, however, is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseqc P$, and similarly for $P \fsseqc Q$: \begin{align*}
   P \fseqc Q \eqdef & Q \fseq P \\ 
   P \fsseqc Q \eqdef & Q \fsseq P \\ 
 \end{align*}
+
+\subsection{Separating Implications}
+\label{sec:seq-sep-imp}
+
+Although not required for the sequential logic, the concept of a \emph{separating implication} will be useful later. Thus, we shall introduce the concept first in the comparatively sequential setting to ease their discussion later.
+
+Separating implications are related to separating conjunctions in the same way that the additive implication ($P \onlyif Q$) is related to the additive conjunction ($P \conj Q$), namely: \[ (P \onlyif Q) \conj P \sentails Q.\] For example, the separating implication for spatial separation, written $P \fsepi Q$, describes states that, when spatially conjoined with another state that satisfies $P$, satisfy $Q$. Or, less formally, $P \fsepi Q$ describes $Q$ states with $P$-shaped holes. For example, if $Q$ describes a particular kind of record and $P$ a field in that record, then $P \fsepi Q$ describes records that lack the $P$ field. Consequently, adding such a field using the spatial separating conjunction, $(P \fsepi Q) \fsep P$, yields a $Q$ record: \[ (P \fsepi Q) \fsep P \sentails Q.\] The meaning of the spatial implication $P \fsepi Q$ is given as follows: \begin{align*} (s,\mu) \sentails P \fsepi Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu_0 \fsep \mu \onlyif  s,\mu_1 \sentails Q \end{align*} 
+
+Note that, if defined directly, the converse relation $P \fsep\!\!\!\relbar Q$ would be equivalent to $Q \fsepi P$ because spatial separation is commutative. Consequently, we simply define $P \fsepic Q$ to be shorthand for $Q \fsepi P$. On the other hand, temporal separation is not commutative, and so we may define \emph{two} notions of temporal implication: $P \fseqli Q$ and $P \fseqri Q$. The former describes states that, when temporally conjoined on the left side (i.e., the past) with a state that satisfies $P$, satisfies $Q$. The latter describes states that, when temporally conjoined on the right side (i.e., the future) with a state that satisfies $P$, satisfies $Q$. Formally: \begin{align*} (s,\mu) \sentails P \fseqli Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu_0 \fseq \mu \onlyif  s,\mu_1 \sentails Q \\
+(s,\mu) \sentails Q \fseqri P \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu \fseq \mu_0 \onlyif  s,\mu_1 \sentails Q \end{align*} The entailments that characterize the relationship between these implications and temporal conjunction are as follows: \begin{align*}
+  P \fseq (P \fseqli Q) \sentails & Q \\ 
+  (Q \fseqri P) \fseq P \sentails & Q \\ 
+\end{align*} As with spatial implication, we simply define the converse relations as shorthand: \begin{align*}
+  P \fseqlic Q \eqdef & Q \fseqli P \\
+  P \fseqric Q \eqdef & Q \fseqri P \\
+\end{align*}
+
+In conjunction with the revised semantics of $\fbaru$, the right-side temporal implication $Q \fseqri P$ is especially useful. In particular, the formula $Q \fseqri \fbaru$ describes states which, if flushed, would satisfy $Q$. For example, $x \fpointsto 1 \fseqric \fbaru$ describes states with any number of buffered writes to address $x$, with the final one having value 1. One consequence is that: \[(x \fwriteu 2) \fseq (x \fwriteu 1) \sentails (x \fpointsto 1) \fseqri \fbaru.\] The ability to express such sets of states will be of crucial importance to the program logic for concurrent programs described in the following chapter. 
+
 
 \subsection{Sequential Algebra}
 \label{sec:sequential-algebra}
@@ -854,7 +875,7 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
         (P \bullet P') \bullet P'' \sequiv & P \bullet (P' \bullet P'') \\
         P \fsep P' \sequiv & P' \fsep P \\ 
         \fbaru \bullet \fbaru \sequiv & \fbaru \\
-        (P \bullet P') \conj \fbaru \sequiv & (P \conj \fbaru) \bullet (P' \conj \fbaru)
+        (P \bullet P') \fseq \fbaru \sequiv & (P \fseq \fbaru) \bullet (P' \fseq \fbaru)
     \end{align*}
     \end{minipage}}
     \caption{\label{fig:sequential-equivalences}Semantic equivalences}
@@ -867,22 +888,22 @@ Each of the separating conjunctions is associative and has $\femp$ as a unit. Fu
     \resizebox{\columnwidth}{!}{
     \begin{minipage}{\columnwidth}
     \begin{align*}
+        \fbaru \sentails & \femp \\ 
+        P \bullet P' \sentails & P'' \bullet P' & \text{if $P \sentails P''$} \\
+        P \bullet P' \sentails & P \bullet P'' & \text{if $P' \sentails P''$}
+\\
         e \fpointsto e' \sentails & e \fwriteu e' \\
         P \fsseq P' \sentails & P \fsep P' \\ 
         P \fsseq P' \sentails & P \fseq P' \\ 
-        P \fsep P' \sentails & P \fhash P' \\ 
-        P \fseq P' \sentails & P \fhash P' \\ 
         P \bullet (P' \circ P'') \sentails & (P \bullet P') \circ P'' & \text{for $P \bullet P' \sentails P \circ P'$} \\
         (P \circ P') \bullet P'' \sentails & P \circ (P' \bullet P'') & \text{for $P \bullet P' \sentails P \circ P'$} \\
-        (P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''') \\
-        P \bullet P' \sentails & P'' \bullet P' & \text{if $P \sentails P''$} \\
-        P \bullet P' \sentails & P \bullet P'' & \text{if $P' \sentails P''$}
+        (P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''')
     \end{align*}
     \end{minipage}}
     \caption{\label{fig:sequential-entailments}Semantic entailments}
 \end{figure}
 
-The first three semantic entailments follow trivially from their respective abbreviation expansions---e.g., $e \fpointsto e' \sentails e \fwriteu e'$ because $e \fpointsto e' \eqdef e \fwriteu e'$ and $P \conj P' \sentails P$. The four separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., $P \fhash P'$ is not commutative.
+The first three entailments---that $\fbaru$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next three entailments follow from their respective abbreviation expansions and by monotonicity. The four separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., $P \fhash P'$ is not commutative.
 
 \section{Sequential Specifications}
 \label{sec:sequential-specifications}
@@ -910,17 +931,14 @@ We now present a proof theory for deriving true sequential program specification
         \infax[assign]{\triple{P\subst{e}{x}}{\cassign{x}{e}}{P}}
         \vspace{1em}
         
-        \infax[load-buf]{\triple{(e \fwriteu e') \fsseq P}{\cload{x}{e}}{((e \fwriteu e') \fsseq P)\conj x = e'}}
+        \infax[load]{\triple{(e \fwriteu e') \fsseq P}{\cload{x}{e}}{((e \fwriteu e') \fsseq P)\conj x = e'}}
         \vspace{1em}
         
-        \infax[load-mem]{\triple{(e \fpointsto e') \fsseq P}{\cload{x}{e}}{((e \fpointsto e') \fsseq P) \conj x = e'}}
+        \infax[store]{\triple{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e 
+        \fwriteu e'') \fsseq P) \fseq (e \fwriteu e')}}
         \vspace{1em}
         
-        \infax[store]{\triple{(e \fpointsto e'') \fseq P}{\cstore{e}{e'}}{(e 
-        \fpointsto e'') \fseq P \fseq (e \fwriteu e')}}
-        \vspace{1em}
-        
-        \infax[fence]{\triple{P}{\cfence}{P \conj \fbaru}}
+        \infax[fence]{\triple{\femp}{\cfence}{\fbaru}}
         \vspace{1em}
 
     \end{minipage}}
@@ -964,16 +982,13 @@ Finally, the axiom for $\cfence$ may be applied to any precondition $P$, and sim
         \infrule[all]{\triple{P}{c}{Q} \text{~~~} x \notin \fv{c,P}}{\triple{P}{c}{\forall x \st Q}}
         \vspace{1em}
 
-        \infrule[frame-wi]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fhash P}{c}{R \fhash Q}}
+        \infrule[frame-sp]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fsep P}{c}{R \fsep Q}}
         \vspace{1em}
 
-        \infrule[frame-si]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fsep P}{c}{R \fsep Q}}
+        \infrule[frame-tm]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fseq P}{c}{R \fseq Q}}
         \vspace{1em}
 
-        \infrule[frame-ws]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fseq P}{c}{R \fseq Q}}
-        \vspace{1em}
-
-        \infrule[frame-ss]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fsseq P}{c}{R \fsseq Q}}
+        \infrule[frame-stm]{\triple{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\triple{R \fsseq P}{c}{R \fsseq Q}}
         \vspace{1em}
 
         \infrule[cons]{P \sentails P' \text{~~~}\triple{P'}{c}{Q'} \text{~~~} Q' \sentails Q}{\triple{P}{c}{Q}}
@@ -1100,22 +1115,6 @@ The solution is to use the $\gamma$ flag in the semantics of $\fbaru$. In partic
 % \end{figure}
 
 Note that in this model, we have the following semantic entailment which did not hold in the previous model: \[ \fbaru \sentails \femp. \] Informally, the previous meaning of $\fbaru$ can be recovered by using temporal separation with the additive identity, $\bexpt \fseq \fbaru$, because $P \conj (\bexpt \fseq \fbaru)$ describes only those states of $P$ which are completely flushed. Additionally, as a result of the changes to the model, we redefine the abbreviation for points-to assertions as follows: \[ e \fpointsto f \eqdef e \fwriteu f \fseq \fbaru. \] 
-
-\subsection{Separating Implications}
-
-The new model also makes it useful to define \emph{separating implications} for each of the separating conjunctions. Separating implications are related to separating conjunctions in the same way that the additive implication $P \onlyif Q$ is related to the additive conjunction $P \conj Q$. For example, the separating implication for spatial separation, written $P \fsepi Q$, describes states that, when spatially conjoined with another state that satisfies $P$, satisfy $Q$. Or, less formally, $P \fsepi Q$ describes $Q$ states with $P$-shaped holes. For example, if $Q$ describes a particular kind of record and $P$ a field in that record, then $P \fsepi Q$ describes records that lack the $P$ field. Consequently, adding such a field using the spatial separating conjunction, $(P \fsepi Q) \fsep P$, yields a $Q$ record: \[ (P \fsepi Q) \fsep P \sequiv Q.\] The meaning of the spatial implication $P \fsepi Q$ is given as follows: \begin{align*} (s,\mu) \sentails P \fsepi Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu_0 \fsep \mu \onlyif  s,\mu_1 \sentails Q \end{align*} 
-
-Note that, if defined directly, the converse relation $P \fsep\!\!\!\relbar Q$ would be equivalent to $Q \fsepi P$ because spatial separation is commutative. Consequently, we simply define $P \fsepic Q$ to be shorthand for $Q \fsepi P$. On the other hand, temporal separation is not commutative, and so we may define \emph{two} notions of temporal implication: $P \fseqli Q$ and $P \fseqri Q$. The former describes states that, when temporally conjoined on the left side (i.e., the past) with a state that satisfies $P$, satisfies $Q$. The latter describes states that, when temporally conjoined on the right side (i.e., the future) with a state that satisfies $P$, satisfies $Q$. Formally: \begin{align*} (s,\mu) \sentails P \fseqli Q \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu_0 \fseq \mu \onlyif  s,\mu_1 \sentails Q \\
-(s,\mu) \sentails Q \fseqri P \iffdef & \forall \mu_0,\mu_1 \st s,\mu_0 \sentails P \conj \mu_1 = \mu \fseq \mu_0 \onlyif  s,\mu_1 \sentails Q \end{align*} The equivalences that characterize the relationship between these implications and temporal conjunction are as follows: \begin{align*}
-  P \fseq (P \fseqli Q) \sequiv & Q \\ 
-  (Q \fseqri P) \fseq P \sequiv & Q \\ 
-\end{align*} As with spatial implication, we simply define the converse relations as shorthand: \begin{align*}
-  P \fseqlic Q \eqdef & Q \fseqli P \\
-  P \fseqric Q \eqdef & Q \fseqri P \\
-\end{align*}
-
-In conjunction with the revised semantics of $\fbaru$, the right-side temporal implication $Q \fseqri P$ is especially useful. In particular, the formula $Q \fseqri \fbaru$ describes states which, if flushed, would satisfy $Q$. For example, $x \fpointsto 1 \fseqric \fbaru$ describes states with any number of buffered writes to address $x$, with the final one having value 1. One consequence is that: \[(x \fwriteu 2) \fseq (x \fwriteu 1) \sentails (x \fpointsto 1) \fseqri \fbaru.\] The ability to express such sets of states will be of crucial importance to the program logic for concurrent programs described in the following chapter. 
-
 
 \section{A Simplified Proof Theory}
 
