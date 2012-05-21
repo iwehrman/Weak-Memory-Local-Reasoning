@@ -368,7 +368,7 @@ In this chapter we describe a program logic for a sequential, single-processor, 
 
 A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously in \cite{wmsldetails}. 
 
-\section{A Sequential Example}
+\section{An Example Proof}
 
 Consider the following simple sequential program $c$, which stores the value 1 at an address $x$, flushes that value back to memory with a fence instruction, and then loads the value in memory from address $x$ into variable $y$: \[ c \eqdef \cseq{\cstore{x}{1}}{\cseq{\cfence}{\cload{y}{x}}}.\] This sequential program will fail with a memory error if the value of $x$ is not properly allocated memory address; any provable specification of this program must require that this holds of $x$ initially. If the value of $x$ is indeed an allocated address, then upon termination the write buffer will be empty and the value in memory at location $x$ will be equal to $y$, which is itself equal to 1. 
 
@@ -432,7 +432,7 @@ For the third specification, we can use an instance of the \textsc{load-mem} axi
 This completes the proof of the program specification of Equation~\ref{eq:seq-ex-spec}. In the following sections, the notions of program, assertion, specification, and proof are formally defined and discussed. 
 
 
-\section{Sequential Programs}
+\section{Programs}
 \label{sec:sequential-programs}
 
 In this chapter, programs are identified with \emph{sequential commands}, which consist of compositions of \emph{primitive commands} for testing, accessing and modifying state. 
@@ -603,58 +603,58 @@ In the example above, the state was separated by memory address. But in the prog
 
 In this section we carefully define a notion of separation for uniprocessor states analogous to the one described in the previous section, in which states are decomposed according by memory address. This is accomplished by defining a notion of separation for memory systems, and then lifting that function to states that have identical stacks: i.e., given a definition of $\mu \bullet \mu'$, the lifted partial function on states $(s,\mu) \bullet (s',\mu')$ is defined as follows \[ (s,\mu) \bullet (s',\mu') \eqdef (s,\mu \bullet \mu') \text{~if $s = s'$ and $\mu \bullet \mu'$ is defined.}\] In the sequel, we shall ignore the distinction between the function on memory systems and the lifted function on states. 
 
-States are typically separated by the resources they describe. In the heaps model of separation logic, the resource is a flat shared memory and the heaps are separated according to address: \[ h_0 \fsep h_1 \eqdef \begin{cases}
+States are typically separated by the resources they describe. In the heaps model of separation logic, the resource is a flat shared memory and the heaps are separated according to address: \[ h_0 \ssep h_1 \eqdef \begin{cases}
     h_0 \uplus h_1 & \text{if $\dom{h_0} \cap \dom{h_1} = \nil$} \\ 
     \bot & \text{otherwise.}
 \end{cases}\] Note that the partial function is defined only when the heaps have disjoint domains. It is also, very obviously, commutative. 
 
-We wish to define an analogous notion of separation for memory systems, which consist of a heap-write buffer pairs. As in the case of separation logic, we add heaps with disjoint domains. But how should we combine the write buffers? To ensure commutativity of the operation, a natural choice is to \emph{interleave} writes of the buffers: \[ (h_0,b_0) \fsep (h_1,b_1) \eqdef \bigcup_{b \in b_0 \merge b_1}
+We wish to define an analogous notion of separation for memory systems, which consist of a heap-write buffer pairs. As in the case of separation logic, we add heaps with disjoint domains. But how should we combine the write buffers? To ensure commutativity of the operation, a natural choice is to \emph{interleave} writes of the buffers: \[ (h_0,b_0) \ssep (h_1,b_1) \eqdef \bigcup_{b \in b_0 \merge b_1}
     \setof{(h_0 \uplus h_1, b)}{\dom{h_0,b_0} \cap \dom{h_1,b_1} = \nil}
-\] Above, we write $\dom{h,b}$ as shorthand for $\dom{h} \cup \dom{b}$. The set $\mu_0 \fsep \mu_1$ is called the \emph{spatial separation} of $\mu_0$ and $\mu_1$ because it requires disjointness of the constituent domains, and does not constrain the order of of the buffered writes. (In a later section, we will weaken the disjointness requirement to yield a weaker notion of separation.)
+\] Above, we write $\dom{h,b}$ as shorthand for $\dom{h} \cup \dom{b}$. The set $\mu_0 \ssep \mu_1$ is called the \emph{spatial separation} of $\mu_0$ and $\mu_1$ because it requires disjointness of the constituent domains, and does not constrain the order of of the buffered writes. (In a later section, we will weaken the disjointness requirement to yield a weaker notion of separation.)
 
-Interleaving the write buffers results in a notion of separation in which the relative ordering between the writes in the constituent buffers, which necessarily have distinct memory locations, is irrelevant. For example, for $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(m,u)})$, with $\ell \neq m$, we have both $(\nil,\llit{(\ell,v),(m,u)}) \in (\mu_0 \fsep \mu_1)$ and $(\nil,\llit{(m,u),(\ell,v)}) \in (\mu_0 \fsep \mu_1)$. 
+Interleaving the write buffers results in a notion of separation in which the relative ordering between the writes in the constituent buffers, which necessarily have distinct memory locations, is irrelevant. For example, for $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(m,u)})$, with $\ell \neq m$, we have both $(\nil,\llit{(\ell,v),(m,u)}) \in (\mu_0 \ssep \mu_1)$ and $(\nil,\llit{(m,u),(\ell,v)}) \in (\mu_0 \ssep \mu_1)$. 
 
-Unlike for the heap separation function, the heap-buffer separation function maps into the power-domain of memory systems: for compatible pairs of memory systems, the separation yields a memory system for each possible interleaving of the individual write buffers. The resulting set is non-empty if and only if the domains of the constituent memory systems are disjoint.\footnote{This is more convenient than defining a partial function into the power-domain. In that case, both $\bot$ and $\nil$ would apparently both indicate incompatibility.} This necessitates a slight change to the definition of a local command, as explained in Section~\ref{sec:locality}. Given a notion of separation that yields a set of memory systems, the safety monotonicity and frame properties must hold for each possible result: i.e., for every $\mu \in \mu_0 \fsep \mu_1$, if $c,\mu$ is safe then so is $c,\mu_1$; and if $c,\mu \rtstep \cskip,\mu'$ then there exists $\mu'_1$ such that $c,\mu_1 \rtstep \cskip,\mu'_1$ with $\mu' \in \mu_0 \fsep \mu'_1$. 
+Unlike for the heap separation function, the heap-buffer separation function maps into the power-domain of memory systems: for compatible pairs of memory systems, the separation yields a memory system for each possible interleaving of the individual write buffers. The resulting set is non-empty if and only if the domains of the constituent memory systems are disjoint.\footnote{This is more convenient than defining a partial function into the power-domain. In that case, both $\bot$ and $\nil$ would apparently both indicate incompatibility.} This necessitates a slight change to the definition of a local command, as explained in Section~\ref{sec:locality}. Given a notion of separation that yields a set of memory systems, the safety monotonicity and frame properties must hold for each possible result: i.e., for every $\mu \in \mu_0 \ssep \mu_1$, if $c,\mu$ is safe then so is $c,\mu_1$; and if $c,\mu \rtstep \cskip,\mu'$ then there exists $\mu'_1$ such that $c,\mu_1 \rtstep \cskip,\mu'_1$ with $\mu' \in \mu_0 \ssep \mu'_1$. 
 
-We can informally observe locality as follows. For safety monotonicity, note that the domain of the memory systems $(\mu_0 \fsep \mu_1)$ are supersets of the domain of $\mu_1$, and so if, e.g., a load command does not abort with a memory error in $\mu_1$ then neither will it in $(\mu_0 \fsep \mu_1)$. For the frame property, a load in $\mu_0 \fsep \mu_1$ does not change the memory system, and since we have assumed that it does not abort in $\mu_1$ alone, then it will have the same result in $\mu_1$ as in $(\mu_0 \bullet \mu_1)$. For example, with $\mu_0 = (\nil,\llit{(\ell,v)})$, $\mu_1 = (\nil,\llit{(m,u)})$ and the load command $c = \cload{x}{\ell}$, it is clear that, for any $\mu \in \mu_0 \fsep \mu_1$, if $c,(s,\mu) \rtstep \cskip,(s',\mu')$ then also $c,(s,\mu_1) \rtstep \cskip,(s',\mu_1)$.
+We can informally observe locality as follows. For safety monotonicity, note that the domain of the memory systems $(\mu_0 \ssep \mu_1)$ are supersets of the domain of $\mu_1$, and so if, e.g., a load command does not abort with a memory error in $\mu_1$ then neither will it in $(\mu_0 \ssep \mu_1)$. For the frame property, a load in $\mu_0 \ssep \mu_1$ does not change the memory system, and since we have assumed that it does not abort in $\mu_1$ alone, then it will have the same result in $\mu_1$ as in $(\mu_0 \bullet \mu_1)$. For example, with $\mu_0 = (\nil,\llit{(\ell,v)})$, $\mu_1 = (\nil,\llit{(m,u)})$ and the load command $c = \cload{x}{\ell}$, it is clear that, for any $\mu \in \mu_0 \ssep \mu_1$, if $c,(s,\mu) \rtstep \cskip,(s',\mu')$ then also $c,(s,\mu_1) \rtstep \cskip,(s',\mu_1)$.
 
-It is useful to to lift the definition of spatial separation from a partial function on states up to a total function on sets of states as follows: \[ S_0 \fsep S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \fsep \sigma_1}.\] By overloading notation in this way, this allows us to write, e.g., $\sigma_0 \fsep (\sigma_1 \fsep \sigma_2)$ as shorthand for $\bigcup \setof{\sigma_0 \fsep \sigma_{12}}{\sigma_{12} \in \sigma_1 \fsep \sigma_2}$. It also allows us to assert associativity of lifted function: \[ \sigma_0 \fsep (\sigma_1 \fsep \sigma_2) = (\sigma_0 \fsep \sigma_1) \fsep \sigma_2 \] Spatial separation as well as its lifting are also commutative, they have as a units $(\nil,\lnil)$ and $\set{(\nil,\lnil)}$, respectively. 
+It is useful to to lift the definition of spatial separation from a partial function on states up to a total function on sets of states as follows: \[ S_0 \ssep S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \ssep \sigma_1}.\] By overloading notation in this way, this allows us to write, e.g., $\sigma_0 \ssep (\sigma_1 \ssep \sigma_2)$ as shorthand for $\bigcup \setof{\sigma_0 \ssep \sigma_{12}}{\sigma_{12} \in \sigma_1 \ssep \sigma_2}$. It also allows us to assert associativity of lifted function: \[ \sigma_0 \ssep (\sigma_1 \ssep \sigma_2) = (\sigma_0 \ssep \sigma_1) \ssep \sigma_2 \] Spatial separation as well as its lifting are also commutative, they have as a units $(\nil,\lnil)$ and $\set{(\nil,\lnil)}$, respectively. 
 
 \subsection{Temporal Separation}
 \label{sec:sequential-temporal-separation}
 
-Spatial separation results in a set of states that encompasses all possible interleavings of the composed write buffers. Consequently, it is unsuitable for composing states with a particular interleaving in mind. Temporal separation does just this. Given memory systems $\mu_0$ and $\mu_1$, the \emph{strong temporal separation}, $\mu_0 \fsseq \mu_1$ is the element of the set $\mu_0 \fsep \mu_1$ in which the writes of $\mu_0$ all precede the writes of $\mu_1$. 
+Spatial separation results in a set of states that encompasses all possible interleavings of the composed write buffers. Consequently, it is unsuitable for composing states with a particular interleaving in mind. Temporal separation does just this. Given memory systems $\mu_0$ and $\mu_1$, the \emph{strong temporal separation}, $\mu_0 \ssseq \mu_1$ is the element of the set $\mu_0 \ssep \mu_1$ in which the writes of $\mu_0$ all precede the writes of $\mu_1$. 
 
-For example, for $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(m,u)})$, $\mu_0 \fsseq \mu_1 = (\nil,\llit{(\ell,v),(m,u)})$. Instead of interleaving the constituent write buffers as in spatial separation, they are \emph{concatenated} by temporal separation. For another example, let $\mu'_0 = (\ell \mapsto v, \lnil)$. Then $\mu'_0 \fsseq \mu_1 = (\ell \mapsto v, \llit{(m,u)})$. Again the writes of $\mu'_0$ (which are comitted) precede the writes to $\mu_1$ in the composed state $\mu'_0 \fsseq \mu_1$. As a final example, consider $\mu'_1 = (m \mapsto u, \lnil)$ and the temporal separation $\mu_0 \fsseq \mu'_1$. The presumed result of this composition is $(m \mapsto u, \llit{(\ell,v)})$. But this violates the property of having the writes of the left-hand side precede the writes of the right-hand side because, in the composition, the committed write $m \mapsto u$ implicitly precedes the buffered write $(\ell,v)$. Consequently, in the definition of $\fsseq$ we explicitly rule out this case by requiring either that the left-side buffer or right-side heap be empty. 
+For example, for $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(m,u)})$, $\mu_0 \ssseq \mu_1 = (\nil,\llit{(\ell,v),(m,u)})$. Instead of interleaving the constituent write buffers as in spatial separation, they are \emph{concatenated} by temporal separation. For another example, let $\mu'_0 = (\ell \mapsto v, \lnil)$. Then $\mu'_0 \ssseq \mu_1 = (\ell \mapsto v, \llit{(m,u)})$. Again the writes of $\mu'_0$ (which are comitted) precede the writes to $\mu_1$ in the composed state $\mu'_0 \ssseq \mu_1$. As a final example, consider $\mu'_1 = (m \mapsto u, \lnil)$ and the temporal separation $\mu_0 \ssseq \mu'_1$. The presumed result of this composition is $(m \mapsto u, \llit{(\ell,v)})$. But this violates the property of having the writes of the left-hand side precede the writes of the right-hand side because, in the composition, the committed write $m \mapsto u$ implicitly precedes the buffered write $(\ell,v)$. Consequently, in the definition of $\ssseq$ we explicitly rule out this case by requiring either that the left-side buffer or right-side heap be empty. 
 
-The complete definition of $\mu_0 \fsseq \mu_1$ is as follows: \[ (h,b) \fsseq (h',b') \eqdef \begin{cases}
+The complete definition of $\mu_0 \ssseq \mu_1$ is as follows: \[ (h,b) \ssseq (h',b') \eqdef \begin{cases}
   (h \uplus h', b \lapp b') & \text{if $\dom{h,b} \cap \dom{h',b'} = \nil$} \\ & \text{and $h' = \nil \vee b = \lnil$} \\
   \bot & \text{otherwise.}
-\end{cases}\] Clearly $\mu_0 \fsseq \mu_1$ is defined when $\mu_0 \fsep \mu_1$ is defined and, because $b \lapp b' \in (b \merge b')$, $\mu_0 \fsseq \mu_1 \in (\mu_0 \fsep \mu_1)$. The argument for locality w.r.t.\ temporal separation is consequently similar to that for spatial separation. 
+\end{cases}\] Clearly $\mu_0 \ssseq \mu_1$ is defined when $\mu_0 \ssep \mu_1$ is defined and, because $b \lapp b' \in (b \merge b')$, $\mu_0 \ssseq \mu_1 \in (\mu_0 \ssep \mu_1)$. The argument for locality w.r.t.\ temporal separation is consequently similar to that for spatial separation. 
 
-The requirement that the constituent domains of the temporal separation $\mu_0 \fsseq \mu_1$ be disjoint is rather strong, however, and it is possible to eliminate this condition entirely. We refer, in the sequel, to  $\mu_0 \fsseq \mu_1$ as the \emph{strong temporal separation} of $\mu_0$ and $\mu_1$, and now define a more relaxed operation $\mu_0 \fseq \mu_1$, which we call a \emph{weak temporal separation}. As before, we illustrate this separation with a few examples before showing the complete definition. 
+The requirement that the constituent domains of the temporal separation $\mu_0 \ssseq \mu_1$ be disjoint is rather strong, however, and it is possible to eliminate this condition entirely. We refer, in the sequel, to  $\mu_0 \ssseq \mu_1$ as the \emph{strong temporal separation} of $\mu_0$ and $\mu_1$, and now define a more relaxed operation $\mu_0 \sseq \mu_1$, which we call a \emph{weak temporal separation}. As before, we illustrate this separation with a few examples before showing the complete definition. 
 
-First, consider $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(\ell,u)})$. Their weak temporal separation $\mu_0 \fseq \mu_1$ simply concatenates the constituent write buffers, giving $(\nil,\llit{(\ell,v),(\ell,u)})$. Note that the semantics of load ensures that the result of loading $\ell$ in the context of $\mu_1$ is the same as for the context of $\mu_0 \fseq \mu_1$ because only the value of the most recent write to a particular location is returned. 
+First, consider $\mu_0 = (\nil,\llit{(\ell,v)})$ and $\mu_1 = (\nil,\llit{(\ell,u)})$. Their weak temporal separation $\mu_0 \sseq \mu_1$ simply concatenates the constituent write buffers, giving $(\nil,\llit{(\ell,v),(\ell,u)})$. Note that the semantics of load ensures that the result of loading $\ell$ in the context of $\mu_1$ is the same as for the context of $\mu_0 \sseq \mu_1$ because only the value of the most recent write to a particular location is returned. 
 
-Next consider also $\mu'_0 = (\ell \mapsto v,\lnil)$ and $\mu'_1 = (\ell \mapsto u, \nil)$. The weak temporal separation $\mu'_0 \fseq \mu_1$ is defined as for the strong variant: $(\ell \mapsto v, \llit{(\ell,u)})$. And the weak temporal separation $\mu_0 \fseq \mu'_1$ is undefined as for the strong variant because of the potential for the ostensibly more recent committed write from $\mu'_1$ preceding the buffered write of $\mu_0$. 
+Next consider also $\mu'_0 = (\ell \mapsto v,\lnil)$ and $\mu'_1 = (\ell \mapsto u, \nil)$. The weak temporal separation $\mu'_0 \sseq \mu_1$ is defined as for the strong variant: $(\ell \mapsto v, \llit{(\ell,u)})$. And the weak temporal separation $\mu_0 \sseq \mu'_1$ is undefined as for the strong variant because of the potential for the ostensibly more recent committed write from $\mu'_1$ preceding the buffered write of $\mu_0$. 
 
-Finally consider the weak temporal separation $\mu'_0 \fseq \mu'_1$. For the strong variant as well as for spatial separation this is, of course, undefined because the constituent domains are not disjoint. This is necessary because the result of adding the maps that represent heaps is  undefined in this case; for what would be the result of applying the hypothetical map $(\ell \mapsto v) \uplus (\ell \mapsto u)$ to $\ell$? Neither $u$ nor $v$ seem like suitable answers in general, but in the case of \emph{temporal} separation, we can answer confidently: the result should $u$, because the committed $u$ write is more recent than the committed $v$ write. Consequently we use the map overriding operation to combine heaps in the definition of weak temporal separation. 
-\[ (h,b) \fseq (h',b') \eqdef \begin{cases}
+Finally consider the weak temporal separation $\mu'_0 \sseq \mu'_1$. For the strong variant as well as for spatial separation this is, of course, undefined because the constituent domains are not disjoint. This is necessary because the result of adding the maps that represent heaps is  undefined in this case; for what would be the result of applying the hypothetical map $(\ell \mapsto v) \uplus (\ell \mapsto u)$ to $\ell$? Neither $u$ nor $v$ seem like suitable answers in general, but in the case of \emph{temporal} separation, we can answer confidently: the result should $u$, because the committed $u$ write is more recent than the committed $v$ write. Consequently we use the map overriding operation to combine heaps in the definition of weak temporal separation. 
+\[ (h,b) \sseq (h',b') \eqdef \begin{cases}
 (h \override h', b \lapp b') & \text{if $h' = \nil \disj b = \lnil$} \\
 \bot & \text{otherwise.}
 \end{cases}\]
 
 One way top understand the choice of the overriding operation on heaps is w.r.t.\ an alternative, more concrete state model in which the heap is represented by a list of writes $l$ instead of a partial function. The list is intended to capture the complete history of committed writes in the same way that the buffer captures the history of uncommitted writes. The model of state given in Section~\ref{sec:sequential-programs} uses a partial function $h$ instead of a list of committed writes because only the most recent committed write to a particular location is relevant to the operational semantics. We can think of this model of state as an abstraction of the more concrete model in which committed writes are represented by lists. The abstraction function $\alpha$ that maps a concrete memory system $(l,b)$ into an abstract memory system $\alpha(l,b)$ is defined as follows:  \[ \alpha(l,b) \eqdef (\funof{l},b),\] where $\funof{l}$ is the lookup function for list $l$, as defined in Section~\ref{sec:lists}. 
 
-Let us again consider the definition of weak temporal separation. In the context of concrete states, the definition is completely natural: \[ (l,b) \fseq_\gamma (l',b') \eqdef \begin{cases}
+Let us again consider the definition of weak temporal separation. In the context of concrete states, the definition is completely natural: \[ (l,b) \sseq_\gamma (l',b') \eqdef \begin{cases}
 (l \lapp l', b \lapp b') & \text{if $l' = \lnil \disj b = \lnil$} \\
 \bot & \text{otherwise.}
-\end{cases} \] This definition and the abstraction function given above provide a correctness criterion for a candidate definition of weak temporal separation on abstract states, namely that: \[ \alpha((l,b) \fseq_\gamma (l',b')) = \alpha(l,b) \fseq \alpha(l',b').\] It is easy to see that the definition given above for weak temporal separation for abstract states satisfies this criterion: 
+\end{cases} \] This definition and the abstraction function given above provide a correctness criterion for a candidate definition of weak temporal separation on abstract states, namely that: \[ \alpha((l,b) \sseq_\gamma (l',b')) = \alpha(l,b) \sseq \alpha(l',b').\] It is easy to see that the definition given above for weak temporal separation for abstract states satisfies this criterion: 
 \Calc{
     
-    $\alpha((l,b) \fseq_\gamma (l',b'))$
+    $\alpha((l,b) \sseq_\gamma (l',b'))$
 
-    \Conn{definition of $\fseq_\gamma$}
+    \Conn{definition of $\sseq_\gamma$}
 
     $\alpha(l \lapp l', b \lapp b')$
 
@@ -666,35 +666,35 @@ Let us again consider the definition of weak temporal separation. In the context
 
     $(\funof{l} \override \funof{l'}, b \lapp b')$
 
-    \Conn{definition of $\fseq$}
+    \Conn{definition of $\sseq$}
 
-    $(\funof{l}, b) \fseq (\funof{l'}, b')$
+    $(\funof{l}, b) \sseq (\funof{l'}, b')$
 
     \Conn{definition of $\alpha(-)$}
 
-    $\alpha(l, b) \fseq \alpha(l', b')$.
+    $\alpha(l, b) \sseq \alpha(l', b')$.
 }
 
 It is easy to see that both temporal separators are associative and, as for spatial separation, have $(\nil,\lnil)$ as a unit. Furthermore, the weak variant is defined whenever the strong variant is defined; and when both are defined, they are equal. We may also lift these functions up to the power domain, as we did with spatial separation: \begin{align*}
-    S_0 \fsseq S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \setof{\sigma_0 \fsseq \sigma_1}{\defined{\sigma_1 \fsseq \sigma_2}} \\ 
-    S_0 \fseq S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \setof{\sigma_0 \fseq \sigma_1}{\defined{\sigma_1 \fseq \sigma_2}}
+    S_0 \ssseq S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \setof{\sigma_0 \ssseq \sigma_1}{\defined{\sigma_1 \ssseq \sigma_2}} \\ 
+    S_0 \sseq S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \setof{\sigma_0 \sseq \sigma_1}{\defined{\sigma_1 \sseq \sigma_2}}
 \end{align*}
 
-Finally, we note the fact that the strong temporal separation can be defined in terms of spatial separation and weak temporal separation: \[ \mu_0 \fsseq \mu_1 = \mu \,\,\iff\,\, \mu_0 \fseq \mu_1 = \mu \conj \mu \in \mu_0 \fsep \mu_1.\] We will leverage this fact in the sequel to simplify the rest of the development. 
+Finally, we note the fact that the strong temporal separation can be defined in terms of spatial separation and weak temporal separation: \[ \mu_0 \ssseq \mu_1 = \mu \,\,\iff\,\, \mu_0 \sseq \mu_1 = \mu \conj \mu \in \mu_0 \ssep \mu_1.\] We will leverage this fact in the sequel to simplify the rest of the development. 
 
 \subsection{Spatiotemporal Separation}
 \label{sec:sequential-spatiotemporal-separation}
 
-Both spatial and temporal are restrictions of a more general, unifying notion of separation. We write $\mu_0 \fhash \mu_1$ for the \emph{spatiotemporal separation} of memory systems $\mu_1$ and $\mu_2$, defined as follows: \[ (h_0,b_0) \fhash (h_1,b_1) \eqdef \bigcup_{b \in b_0 \override b_1} \setof{(h_0 \override h_1, b)}{\dom{b_0} \cap \dom{h_1} = \nil}.\] 
+Both spatial and temporal are restrictions of a more general, unifying notion of separation. We write $\mu_0 \shash \mu_1$ for the \emph{spatiotemporal separation} of memory systems $\mu_1$ and $\mu_2$, defined as follows: \[ (h_0,b_0) \shash (h_1,b_1) \eqdef \bigcup_{b \in b_0 \override b_1} \setof{(h_0 \override h_1, b)}{\dom{b_0} \cap \dom{h_1} = \nil}.\] 
 
-Some examples of spatiotemporal separation are as follows. Let $\mu_0 = (\nil,\llit{(\ell,1),(m,2)})$ and $\mu_1 = (\nil,\llit{(\ell,3),(n,4)})$. Note that $\mu_0$ and $\mu_1$ are not strongly disjoint, and hence $\mu_0 \fsep \mu_1$ and $\mu_0 \fsseq \mu_1$ are undefined. The weak temporal separation $\mu_0 \fseq \mu_1$ is, on the other hand, defined and equal to $(\lnil,\llit{(\ell,1),(m,2),(\ell,3),(n,4)})$. The spatiotemporal separation $\mu_0 \fhash \mu_1$ includes additionally the following states: \begin{itemize} \item $(\lnil,\llit{(\ell,1),(\ell,3),(m,2),(n,4)})$
+Some examples of spatiotemporal separation are as follows. Let $\mu_0 = (\nil,\llit{(\ell,1),(m,2)})$ and $\mu_1 = (\nil,\llit{(\ell,3),(n,4)})$. Note that $\mu_0$ and $\mu_1$ are not strongly disjoint, and hence $\mu_0 \ssep \mu_1$ and $\mu_0 \ssseq \mu_1$ are undefined. The weak temporal separation $\mu_0 \sseq \mu_1$ is, on the other hand, defined and equal to $(\lnil,\llit{(\ell,1),(m,2),(\ell,3),(n,4)})$. The spatiotemporal separation $\mu_0 \shash \mu_1$ includes additionally the following states: \begin{itemize} \item $(\lnil,\llit{(\ell,1),(\ell,3),(m,2),(n,4)})$
   \item $(\lnil,\llit{(\ell,1),(\ell,3),(n,4),(m,2)})$
   \item $(\lnil,\llit{(\ell,1),(\ell,3),(m,2),(n,4)})$
-\end{itemize} Note in particular that the latter write to $\ell$ with value $3$ does not precede the earlier write to $\ell$ with value 1, but otherwise all other interleavings are included. This is crucial to a locality argument because it ensures that a load in state $\mu_1$, if safe, will have the same result as a load in the separated state $(\mu_0 \fhash \mu_1)$. 
+\end{itemize} Note in particular that the latter write to $\ell$ with value $3$ does not precede the earlier write to $\ell$ with value 1, but otherwise all other interleavings are included. This is crucial to a locality argument because it ensures that a load in state $\mu_1$, if safe, will have the same result as a load in the separated state $(\mu_0 \shash \mu_1)$. 
 
 It is easy to see that spatiotemporal separation generalizes both spatial and temporal separation. In the spatial case, the strongly disjoint definedness condition obviously implies the weakly disjoint definedness condition for spatiotemporal separation. And when the memory systems are strongly disjoint $h_0 \override h_1 = h_0 \uplus h_1$ by Lemma~\ref{lem:override} and $b_0 \override b_1 = b_0 \merge b_1$ by Lemma~\ref{lem:list-override}. For the strong temporal case, the definedness conditions are again obviously stronger, and $b_0 \lapp b_0 \in b_0 \override b_1$. In the weak case, $b_0 = \lnil \disj h_1 = \nil$ implies $\dom{b_0} \cap \dom{h_1} = \nil$, and again $b_0 \lapp b_0 \in b_0 \override b_1$. 
 
-As with spatial separation, we lift spatiotemporal separation up to a function on the power domain of memory systems (and states), and abuse notation to refer to whichever function is appropriate in context: \[ S_0 \fhash S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \fhash \sigma_1}.\] Spatiotemporal separation is associative and has $(\nil,\lnil)$ as a unit as for the other separators, but it is not commutative. 
+As with spatial separation, we lift spatiotemporal separation up to a function on the power domain of memory systems (and states), and abuse notation to refer to whichever function is appropriate in context: \[ S_0 \shash S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \shash \sigma_1}.\] Spatiotemporal separation is associative and has $(\nil,\lnil)$ as a unit as for the other separators, but it is not commutative. 
 
 
 \subsection{Uniprocessor Predicates}
@@ -712,15 +712,15 @@ In Section~\ref{sec:locality} we also described a particular strategy for showin
     \label{lem:separation-preserves-closure}    
     If $S_0$ and $S_1$ are predicates then: 
     \begin{enumerate}
-        \item $S_0 \fsep S_1$ is a predicate; 
-        \item $S_0 \fseq S_1$ is a predicate; and 
-        \item $S_0 \fhash S_1$ is a predicate.
+        \item $S_0 \ssep S_1$ is a predicate; 
+        \item $S_0 \sseq S_1$ is a predicate; and 
+        \item $S_0 \shash S_1$ is a predicate.
     \end{enumerate}
 \end{lemma}
 
 In each case, the proof follows from the fact that if $\mu \in \mu_0 \bullet \mu_1$ and $\mu' \taurefines \mu$ then there exists $\mu'_0$ and r$\mu'_1$ such that $\mu'_0 \taurefines \mu_0$, $\mu'_1 \taurefines \mu_1$ and $\mu' \in \mu'_0 \bullet \mu'_1$. 
 
-\section{Uniprocessor Assertions}
+\section{Assertions}
 \label{sec:uniprocessor-assertions}
 
 Uniprocessor assertions denote sets of uniprocessor machine states, and will later be used to express the pre- and post-conditions of commands in the specification logic. The language of uniprocessor assertions is given by the following grammar: \begin{align*}
@@ -728,10 +728,12 @@ Uniprocessor assertions denote sets of uniprocessor machine states, and will lat
 \end{align*} 
 The informal meaning of the assertions above are as follows. The lifting of a boolean expression ($\bexpt$, $\bexpf$, $x = y$, etc.)\ to an atomic formula, disjunction, conjunction and quantifiers have the same basic meaning as in first-order logic: models for which the boolean expression $b$ evaluates to 1; the models that satisfy either $P$ or $P'$, etc. The assertion $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $\fbaru$ describes empty states in which preceding writes must have been committed to memory. The assertion $(P \fsep P')$ describes spatial separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatial-separation}. The assertion $(P \fseq P')$ describes temporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-temporal-separation}. 
 
-\subsection{Uniprocessor Satisfaction}
+\subsection{Satisfaction}
 \label{sec:uniprocessor-satisfaction}
 
-The meaning of uniprocessor assertions is given by a satisfaction relation $s,\amod \satisfies P$, relating stacks $s$ and \emph{uniprocessor models} $\amod$ to uniprocessor assertions $P$. A model is a pair $(\mu,\gamma)$, in which $\mu$ is a uniprocessor memory system, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. 
+The meaning of uniprocessor assertions is given by a satisfaction relation $\amod \satisfies P$, relating \emph{uniprocessor models} $\amod$ to uniprocessor assertions $P$. A model is a triple $(s,\mu,\gamma)$, in which $(s,\mu)$ is a uniprocessor state, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. 
+
+We call to pairs $(\mu,\gamma)$ that are part of a uniprocessor model $\amod$ \emph{generalized uniprocessor memory systems}, and refer to them by the symbol $\nu$.
 
 \begin{figure}[ht]
     \centering
@@ -739,29 +741,29 @@ The meaning of uniprocessor assertions is given by a satisfaction relation $s,\a
     \begin{minipage}{\columnwidth}
     \[
     \begin{array}{lllll}
-        s,\amod & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
-        s,\amod & \sentails & P \disj Q & \iffdef & s,\amod \sentails P \disj s,\amod \sentails Q \\
-        s,\amod & \sentails & P \conj Q & \iffdef & s,\amod \sentails P \conj s,\amod \sentails Q \\
-        s,\amod & \sentails &  \exists x \st P & \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},\amod) \sentails P \\
-        s,\amod & \sentails &  \forall x \st P & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},\amod) \sentails P \\
-        s,\amod & \sentails & \femp & \iffdef & \amod = (\nil,\lnil,\bvf) \disj \amod = (\nil,\lnil,\bvt) \\
-        s,\amod & \sentails & \fbaru & \iffdef & \amod = (\nil,\lnil,\bvt) \\
-        s,\amod & \sentails & e \fwriteu e' & \iffdef & \amod = (\nil,\llit{(\ext{s}(e),\ext{s}(e'))},\bvf) \disj \\ 
-        & & & & \,\; \amod = (\nil,\llit{(\ext{s}(e),\ext{s}(e'))},\bvt) \disj \\ 
-        & & & & \,\; \amod = (\ext{s}(e) \mapsto \ext{s}(e'),\lnil,\bvt) \\
-        s,\amod & \sentails & P_1 \fsep P_2 & \iffdef & \exists \amod_1,\amod_2 \st \amod \in (\amod_1 \hat{\fsep} \amod_2) \conj \\ & & & & \;\;s,\amod_1 \sentails P_1 \conj s,\amod_2 \sentails P_1 \\
-        s,\amod & \sentails & P_1 \fseq P_2 & \iffdef & \exists \amod_1,\amod_2 \st \amod = (\amod_1 \hat{\fseq} \amod_2) \conj \\ & & & & \;\;s,\amod_1 \sentails P_1 \conj s,\amod_2 \sentails P_1
+        s,\nu & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
+        s,\nu & \sentails & P \disj Q & \iffdef & s,\nu \sentails P \disj s,\nu \sentails Q \\
+        s,\nu & \sentails & P \conj Q & \iffdef & s,\nu \sentails P \conj s,\nu \sentails Q \\
+        s,\nu & \sentails &  \exists x \st P & \iffdef & \exists v \in \setvalues \st (\funup{s}{\ptup{x}{v}},\nu) \sentails P \\
+        s,\nu & \sentails &  \forall x \st P & \iffdef & \forall v \in \setvalues \st (\funup{s}{\ptup{x}{v}},\nu) \sentails P \\
+        s,\nu & \sentails & \femp & \iffdef & \nu = (\nil,\lnil,\bvf) \disj \nu = (\nil,\lnil,\bvt) \\
+        s,\nu & \sentails & \fbaru & \iffdef & \nu = (\nil,\lnil,\bvt) \\
+        s,\nu & \sentails & e \fwriteu e' & \iffdef & \nu = (\nil,\llit{(\ext{s}(e),\ext{s}(e'))},\bvf) \disj \\ 
+        & & & & \,\; \nu = (\nil,\llit{(\ext{s}(e),\ext{s}(e'))},\bvt) \disj \\ 
+        & & & & \,\; \nu = (\ext{s}(e) \mapsto \ext{s}(e'),\lnil,\bvt) \\
+        s,\nu & \sentails & P_1 \fsep P_2 & \iffdef & \exists \nu_1,\nu_2 \st \nu \in (\nu_1 \msep \nu_2) \conj \\ & & & & \;\;s,\nu_1 \sentails P_1 \conj s,\nu_2 \sentails P_1 \\
+        s,\nu & \sentails & P_1 \fseq P_2 & \iffdef & \exists \nu_1,\nu_2 \st \nu = (\nu_1 \mseq \nu_2) \conj \\ & & & & \;\;s,\nu_1 \sentails P_1 \conj s,\nu_2 \sentails P_1
     \end{array}
     \]
 \end{minipage}}
     \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
 \end{figure}
 
-The satisfaction relation is defined by recursion on the structure of $P$ in Figure~\ref{fig:uniprocessor-satisfaction-relation}. The meaning of the standard first-order logic formulas is as usual. A model $(s,\mu,\gamma)$satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
+The satisfaction relation is defined by recursion on the structure of $P$ in Figure~\ref{fig:uniprocessor-satisfaction-relation}. The meaning of the standard first-order logic formulas is as usual. A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
 \begin{align*}
-  (h_1,b_1,\gamma_1) \hat{\fsep} (h_2,b_2,\gamma_2) \eqdef & \setof{(\mu,\gamma_1 \disj \gamma_2)}{\mu \in (h_1,b_1) \bar{\fsep} (h_2,b_2)} \\ 
-  (h_1,b_1,\gamma_1) \hat{\fseq} (h_2,b_2,\gamma_2) \eqdef & \begin{cases}
-  (\mu,\gamma_1 \disj \gamma_2) & \text{if $\mu = ((h_1,b_1) \bar{\fseq} (h_2,b_2)) \conj$} \\ 
+  (h_1,b_1,\gamma_1) \msep (h_2,b_2,\gamma_2) \eqdef & \setof{(\mu,\gamma_1 \disj \gamma_2)}{\mu \in (h_1,b_1) \ssep (h_2,b_2)} \\ 
+  (h_1,b_1,\gamma_1) \mseq (h_2,b_2,\gamma_2) \eqdef & \begin{cases}
+  (\mu,\gamma_1 \disj \gamma_2) & \text{if $\mu = ((h_1,b_1) \sseq (h_2,b_2)) \conj$} \\ 
   &  \text{~~$(b_1 = \lnil \disj \gamma_2 = \bvf)$} \\ 
   \bot & \text{otherwise}
   \end{cases}
@@ -770,7 +772,7 @@ Note that the above model-theoretic separation functions lift the memory-system-
 
 
 The set of free variables of an assertion $P$, written $\fv{P}$, is defined as usual: \begin{align*}
-    \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} & \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} \\ 
+    \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} & \fv{P \conj P} \eqdef & \fv{P} \cup \fv{P'} \\ 
     \fv{\exists x \st P} \eqdef &\fv{P} \setminus \set{x} & \fv{\forall x \st P} \eqdef &\fv{P} \setminus \set{x} \\
     \fv{\femp} \eqdef & \nil &  \fv{e \fwriteu e'} \eqdef & \fv{e} \cup \fv{e'} \\
     \fv{P \fsep P'} \eqdef & \fv{P} \cup \fv{P'} & 
@@ -860,7 +862,7 @@ Note that, if defined directly, the converse relation $P \fsep\!\!\!\relbar Q$ w
 In conjunction with the revised semantics of $\fbaru$, the right-side temporal implication $Q \fseqri P$ is especially useful. In particular, the formula $Q \fseqri \fbaru$ describes states which, if flushed, would satisfy $Q$. For example, $x \fpointsto 1 \fseqric \fbaru$ describes states with any number of buffered writes to address $x$, with the final one having value 1. One consequence is that: \[(x \fwriteu 2) \fseq (x \fwriteu 1) \sentails (x \fpointsto 1) \fseqri \fbaru.\] The ability to express such sets of states will be of crucial importance to the program logic for concurrent programs described in the following chapter. 
 
 
-\subsection{Sequential Algebra}
+\subsection{Algebra}
 \label{sec:sequential-algebra}
 
 A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:sequential-equivalences} and~\ref{fig:sequential-entailments}, respectively. If a formula contains instances of $\bullet$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the four separating conjunctions. 
@@ -905,12 +907,12 @@ Each of the separating conjunctions is associative and has $\femp$ as a unit. Fu
 
 The first three entailments---that $\fbaru$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next three entailments follow from their respective abbreviation expansions and by monotonicity. The four separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., $P \fhash P'$ is not commutative.
 
-\section{Sequential Specifications}
+\section{Specifications}
 \label{sec:sequential-specifications}
 
 A \emph{sequential program specification} is a three-tuple, written as follows: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. The specifications considered here assert \emph{partial correctness} of a command, which means that any specification of a nonterminating command is true. Their informal meaning is roughly analogous to that of separation logic: if $c$ is evaluated in a state that satisfies $P$ then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
 
-\subsection{Sequential Proof Theory}
+\subsection{Proof Theory}
 \label{sec:sequential-proof-theory}
 
 We now present a proof theory for deriving true sequential program specifications. The axioms and inference rules are strongly inspired by Separation Logic; the axioms and inference rules of Hoare Logic are included verbatim. 
@@ -951,20 +953,14 @@ The axioms for both the assume and assert commands ensure that the property $P$ 
 
 The assignment axiom, as in Hoare logic, effectively transforms a formula with occurrences of the expression to be assigned into one with that expression replace by the variable to which that the expression was assigned. For example, $\triple{y \leq x+1}{\cassign{x}{x+1}}{y \leq x}$ can be derived from the assignment axiom by instantiating $P$ by $y \leq x$, given that $(y \leq x)\subst{x}{x+1} = y \leq x+1$. 
 
-There are two axioms for load, depending on whether the write to be loaded has necessarily been flushed to memory (\textsc{load-mem}) or not (\textsc{load-buf}). If not, then the precondition requires specifying the value of the buffered write $e \fwriteu e'$ along with any other buffered writes $P$ that temporally succeed it. Of course, these additional buffered writes must be to locations other than $e$, for otherwise the specified write $e \fwriteu e'$ would not be the most recent write. Consequently, we use the strong temporal separating conjunction to partition these additional writes in both space and time: $e \fwriteu e' \fsseq P$. Note that if $P$ \emph{does} assert the existence of succeeding writes to location $e$, then the precondition is inconsistent and the specification becomes vacuously true. Evaluating the load command does not explicitly change the heap or buffer of the current state, just the value of the variable into which the value is loaded. Consequently, the postcondition is just the additive conjunction of the precondition and an equality $x = e'$ relating the loaded variable and the value of the most recent write. 
+The axiom for load requires, in the precondition, that the value of the most recent write $e \fwriteu e'$ be specified, along with any other writes $P$ that temporally succeed it. These additional writes must be to locations other than $e$, for otherwise the specified write $e \fwriteu e'$ would not be the most recent write. Consequently, we use the strong temporal separating conjunction to partition these additional writes in both space and time: $e \fwriteu e' \fsseq P$. Note that if $P$ \emph{does} assert the existence of succeeding writes to location $e$, then the precondition is inconsistent and the specification becomes vacuously true. Evaluating the load command does not explicitly change the heap or buffer of the current state, just the value of the variable into which the value is loaded. Consequently, the postcondition is just the additive conjunction of the precondition and an equality $x = e'$ relating the loaded variable and the value of the most recent write. 
 
-The ostensibly buffered write to be loaded could, however, flush to memory before or after the load has completed. But, again, because assertions denote predicates, the soundness of the rule is preserved. In case the write is known to be flushed in the precondition, then of course it remains in memory after executing the load. This is what is described by the \textsc{load-mem} axiom, in which the $e \fwriteu e'$ atomic formula used in the \textsc{load-buf} rule is replaced by $e \fpointsto e'$. (Recall from Section~\ref{sec:uniprocessor-assertions} that $e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru$.) 
+The write described in the pre and postconditions of the load axiom is specified with the leads-to assertion. This assertion is used to describe writes that may or may not be buffered. If the write is buffered, it could flush to memory before or after the load has completed. But, again, because assertions denote sets of states that are closed w.r.t.\ flushing, the soundness of the rule is preserved. 
 
-The store command requires that the address to be updated is already allocated. In this model, this simply means that there is an existing write to that address, either buffered or flushed. The precondition for the store axiom thus requires a witness to the allocation status of the address to be updated in the form of a flushed write $e \fpointsto e'$. Of course, there may be other, more recent, buffered writes, which do not affect the behavior of the store command. These are described by the assertion $P$, and are combined temporally with the witness: $(e \fpointsto e') \fseq P$. Because $e$ is asserted by the precondition to be an allocated address, the store command is safe, and as a result simply appends a new write after all others: $(e \fpointsto e') \fseq P \fseq (e \fwriteu e'')$. 
+Like the load command, the store command similarly requires that the address to be updated is already allocated. In this model, this simply means that there is an existing write to that address, either buffered or flushed. The precondition for the store axiom requires, as a witness to the allocation status of the address to be updated, specification of the most recent write $e \fpointsto e'$. Of course, there may be other, more recent, buffered writes, which do not affect the behavior of the store command. These are described by the assertion $P$, and are combined using the strong temporal separating conjunction with the witness: $(e \fpointsto e') \fsseq P$. Because $e$ is asserted by the precondition to be an allocated address, the store command is safe, and as a result simply appends a new write after all others: $((e \fpointsto e') \fsseq P) \fseq (e \fwriteu e'')$. 
 
-There are other possible axioms for the store command, e.g.: 
-    \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwriteu e'') \fsseq P) \fseq e \fwriteu e'}}
 
-    \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}}{((e \fpointsto e'') \fsseq P) \fseq e \fwriteu e'}}
-These reflect the two cases distinguished by the load axioms; namely, whether or not the \emph{most recent} write to the location to be updated is necessarily flushed to memory or not. 
-
-Finally, the axiom for $\cfence$ may be applied to any precondition $P$, and simply filters away states in which there are buffered writes by conjoining the $\fbaru$ assertion. Consider, e.g., $\triple{x \fwriteu 1}{\cfence}{x \fpointsto 1}$. If write in the starting state is buffered, then the $\cfence$ command will not evaluate. Instead, it blocks until the nondeterministic flushing has completed. The $\cfence$ command then evaluates to $\cskip$, leaving a state with an empty buffer that satisfies $x \fpointsto 1 \eqdef x \fwriteu 1 \conj \fbaru$.  
-
+Finally, the axiom for $\cfence$ specifies an empty precondition, because the fence command may execute without any particular assumptions about the state. The result of the fence command, as specified by the postcondition, is simply to introduce the $\fbaru$ assertion. This is specification is particularly useful when used in conjunction with a frame rule for a temporal separating conjunction, described below. 
 
 \begin{figure}[p]
     \centering
@@ -1020,18 +1016,29 @@ The remaining structural rules are exactly as in Hoare Logic. The rule for the s
 \subsubsection{Derived Rules}
 
 
+In case the write is known to be flushed initially, then of course it remains in memory after executing the load. This is what is described by the \textsc{load-mem} axiom, in which the $e \fwriteu e'$ atomic formula used in the \textsc{load-buf} rule is replaced by $e \fpointsto e'$. (Recall from Section~\ref{sec:uniprocessor-assertions} that $e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru$.) 
+
 The specifications akin to the previous instantiation of the \textsc{load-mem} and \textsc{fence} rules can be easily derived in this generalized logic.  The former by instantiating the placeholder formula $P$ with an additional barrier assertion: \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}}{\infer[\textsc{load}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cload{x}{e}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \conj x = e'}}{}}\]
+
+
+Consider, e.g., $\triple{x \fwriteu 1}{\cfence}{x \fpointsto 1}$. If write in the starting state is buffered, then the $\cfence$ command will not evaluate. Instead, it blocks until the nondeterministic flushing has completed. The $\cfence$ command then evaluates to $\cskip$, leaving a state with an empty buffer that satisfies $x \fpointsto 1 \eqdef x \fwriteu 1 \conj \fbaru$.  
 
 \subsubsection{Alternative Rules}
 
+There are other possible axioms for the store command, e.g.: 
+    \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwriteu e'') \fsseq P) \fseq e \fwriteu e'}}
+
+    \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}}{((e \fpointsto e'') \fsseq P) \fseq e \fwriteu e'}}
+These reflect the two cases distinguished by the load axioms; namely, whether or not the \emph{most recent} write to the location to be updated is necessarily flushed to memory or not. 
+
 We can also use the sequential separating implication to give an alternative axiom for the fence command for backwards reasoning: \[ \infer[\textsc{backwards-fence}]{\triple{P \fseqri \fbaru}{\cfence}{P}}{} \] This axiom describes a sufficiently weak\footnote{It seems likely that $P \fseqri \fbaru$ is in fact the weakest precondition, but I have not proved this.} precondition for the operation of the $\cfence$ command in terms of an arbitrary postcondition $P$.
 
-\subsection{Semantics of Sequential Specifications}
+\subsection{Semantics of Specifications}
 
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu,\bvt \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
 
 The formal definition of $\safe{n}{c,s,\mu,Q}$ is given by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
-    \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
+    \item If $c = \cskip$ then $(s,\mu,\bvt) \sentails Q$.
 
     \item For all $\mu_0,\mu_F$ such that $\mu_0 \in (\mu_F \fhash \mu)$ it is the case that $c,(s,\mu_0) \nostep \abort$.
 
