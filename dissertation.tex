@@ -731,9 +731,17 @@ The informal meaning of the assertions above are as follows. The lifting of a bo
 \subsection{Satisfaction}
 \label{sec:uniprocessor-satisfaction}
 
-The meaning of uniprocessor assertions is given by a satisfaction relation $\amod \satisfies P$, relating \emph{uniprocessor models} $\amod$ to uniprocessor assertions $P$. A model is a triple $(s,\mu,\gamma)$, in which $(s,\mu)$ is a uniprocessor state, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. 
+The meaning of uniprocessor assertions is given by a satisfaction relation $\amod \satisfies P$, relating \emph{uniprocessor models} $\amod$ to uniprocessor assertions $P$. A model is a triple $(s,\mu,\gamma)$, in which $(s,\mu)$ is a uniprocessor state, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. We call to pairs $(\mu,\gamma)$ that are part of a uniprocessor model $\amod$ \emph{generalized uniprocessor memory systems}, and refer to them by the symbol $\nu$.
 
-We call to pairs $(\mu,\gamma)$ that are part of a uniprocessor model $\amod$ \emph{generalized uniprocessor memory systems}, and refer to them by the symbol $\nu$.
+\begin{definition}
+  A \emph{generalized uniprocessor memory system} is a triple $(h, b, \gamma)$, where \begin{itemize}
+    \item $(h,b)$ is a uniprocessor memory system; and
+    \item $\gamma$ is a boolean buffer-completeness flag; 
+  \end{itemize} such that $\gamma = \bvf \disj h = \nil$. 
+\end{definition}
+
+
+The satisfaction relation is defined by recursion on the structure of $P$ in Figure~\ref{fig:uniprocessor-satisfaction-relation}. 
 
 \begin{figure}[ht]
     \centering
@@ -759,7 +767,7 @@ We call to pairs $(\mu,\gamma)$ that are part of a uniprocessor model $\amod$ \e
     \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
 \end{figure}
 
-The satisfaction relation is defined by recursion on the structure of $P$ in Figure~\ref{fig:uniprocessor-satisfaction-relation}. The meaning of the standard first-order logic formulas is as usual. A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
+The meaning of the standard first-order logic formulas is as usual. A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
 \begin{align*}
   (h_1,b_1,\gamma_1) \msep (h_2,b_2,\gamma_2) \eqdef & \setof{(\mu,\gamma_1 \disj \gamma_2)}{\mu \in (h_1,b_1) \ssep (h_2,b_2)} \\ 
   (h_1,b_1,\gamma_1) \mseq (h_2,b_2,\gamma_2) \eqdef & \begin{cases}
@@ -782,40 +790,69 @@ The set of free variables of an assertion $P$, written $\fv{P}$, is defined as u
 The following lemma, analogous to Lemma~\ref{lem:exp-stcong}, relates the set of free variables of an assertion and the stack-component of the states that satisfy it:
 \begin{lemma}
 \label{lem:assertion-stcong}
-    If $s \stcong{\fv{P}} s'$ then $s,\amod \satisfies P$ iff $s',\amod \satisfies P$. 
+    If $s \stcong{\fv{P}} s'$ then $s,\nu \satisfies P$ iff $s',\nu \satisfies P$. 
 \end{lemma}
 \begin{proof}
 By induction on the structure of $P$, using Lemma~\ref{lem:exp-stcong} in the base cases. 
 \end{proof}
 
-We write $\pred{P}$ for the set of all stack-model pairs that satisfy an assertion $P$,\[ \pred{P} \eqdef \setof{s,\amod}{s,\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
+We write $\pred{P}$ for the set of all models that satisfy an assertion $P$,\[ \pred{P} \eqdef \setof{\amod}{\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
     P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
     P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
 
-Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor models, and hence sets of uniprocessor machine states. A central claim is that assertions denote predicates. 
+Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor models, and hence sets of uniprocessor machine states. We now generalize the ordering on memory systems described in Section~\ref{sec:uniprocessor-predicates} to generalized memory systems: 
+\begin{definition}
+  For generalized memory systems $\nu_1 = (\mu_1,\gamma_1)$ and $\nu_2 = (\mu_2,\gamma_2)$, \[ \nu_1 \modrefines \nu_2 \iffdef (\mu_1 = \mu_2 \conj (\gamma_2 \onlyif \gamma_1)) \disj (\mu_1 \taurefines \mu_2 \conj \gamma_1).\]
+\end{definition}
 
 \begin{lemma}
     \label{lem:assertions-denote-predicates}
-    For any assertion $P$, $\pred{P}$ is a predicate. 
+    % For any assertion $P$, $\pred{P}$ is a predicate. 
+    If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
 \end{lemma}
 
-An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+\begin{corollary}
+  If $s,\mu,\gamma \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu',\bvt \sentails P$. 
+\end{corollary}
+
+\begin{proof}
+$(\mu',\bvt) \modrefines (\mu,\gamma)$ because $\mu' \taurefines \mu \conj \bvt$; then Lemma~\ref{lem:assertions-denote-predicates}. 
+\end{proof}
+
+An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory} because they denote all possible memory systems that may result from such flushing. Intuitively, assertions may be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
 
 Consider, as a significant example, the set of states that satisfy the atomic formula $e \fwriteu e'$. These states may be classified as follows: \begin{enumerate}
     \item states that describe a single buffered write, and 
     \item states in which that write has been committed to memory. 
 \end{enumerate} Consider, as a less trivial example, the states that satisfy the compound assertion $1 \fwriteu 3 \fseq 1 \fwriteu 4$. The intuitive ``initial'' state is one with two successive buffered writes to location $1$. The states of the earlier left-side write assertion include ones in which the buffered write has and has not committed, and similarly for the later right-side write assertion. When these two classes of states are combined with the sequential separation function, three classes of states result: those in which neither write has flushed, those in which only the earlier write has flushed, and those in which both have flushed. Crucially, the definition of weak sequential separation rules out the case in which the later write has flushed the later but not the earlier write. This is summarized in Figure~\ref{fig:leads-to-seq-example}. This results in a set of states that is closed w.r.t.~the flushing relation. 
  
+% \begin{figure}[ht]
+%     \centering
+%     \begin{tabular}{c|c|c}
+%         $1 \fwriteu 3$ &  $1 \fwriteu 4$ & $1 \fwriteu 3 \fseq 1 \fwriteu 4$\\ \hline
+%         $(\nil,\llit{(1,3)},\bvf)$ & $(\nil,\llit{(1,4)},\bvf)$ & $(\nil,\llit{(1,3),(1,4)},\bvf)$\\ 
+%         $(1 \mapsto 3,\lnil,\bvt)$ & $(\nil,\llit{(1,4)},\bvf)$ & $(1 \mapsto 3,\llit{(1,4)},\bvt)$\\ 
+%         $(\nil,\llit{(1,3)},\bvf)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $\bot$ \\
+%         $(1 \mapsto 3,\lnil,\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$\\ 
+%     \end{tabular}
+%     \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
+% \end{figure}
+
 \begin{figure}[ht]
     \centering
     \begin{tabular}{c|c|c}
         $1 \fwriteu 3$ &  $1 \fwriteu 4$ & $1 \fwriteu 3 \fseq 1 \fwriteu 4$\\ \hline
-        $(\nil,\llit{(1,3)})$ & $(\nil,\llit{(1,4)})$ & $(\nil,\llit{(1,3),(1,4)})$\\ 
-        $(1 \mapsto 3,\lnil)$ & $(\nil,\llit{(1,4)})$ & $(1 \mapsto 3,\llit{(1,4)})$\\ 
-        $(\nil,\llit{(1,3)})$ & $(1 \mapsto 4,\lnil)$ & $\bot$ \\
-        $(1 \mapsto 3,\lnil)$ & $(1 \mapsto 4,\lnil)$ & $(1 \mapsto 4,\lnil)$\\ 
+        $(\nil,\llit{(1,3)},\bvf)$ & $(\nil,\llit{(1,4)},\bvf)$ & $(\nil,\llit{(1,3),(1,4)},\bvf)$\\ 
+        $(\nil,\llit{(1,3)},\bvt)$ & $(\nil,\llit{(1,4)},\bvf)$ & $(\nil,\llit{(1,3),(1,4)},\bvt)$\\ 
+        $(1 \mapsto 3,\lnil,\bvt)$ & $(\nil,\llit{(1,4)},\bvf)$ & $(1 \mapsto 3,\llit{(1,4)},\bvt)$\\ 
+        $(\nil,\llit{(1,3)},\bvf)$ & $(\nil,\llit{(1,4)},\bvt)$ & $\bot$\\ 
+        $(\nil,\llit{(1,3)},\bvt)$ & $(\nil,\llit{(1,4)},\bvt)$ & $\bot$\\ 
+        $(1 \mapsto 3,\lnil,\bvt)$ & $(\nil,\llit{(1,4)},\bvt)$ & $(1 \mapsto 3,\llit{(1,4)},\bvt)$\\ 
+        $(\nil,\llit{(1,3)},\bvf)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $\bot$ \\
+        $(\nil,\llit{(1,3)},\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $\bot$ \\
+        $(1 \mapsto 3,\lnil,\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$\\ 
     \end{tabular}
     \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
 \end{figure}
@@ -1006,30 +1043,18 @@ Finally, the axiom for $\cfence$ specifies an empty precondition, because the fe
 
 The inference rules of the sequential logic are given in Figure~\ref{fig:sequential-inference-rules}. The logical rules \textsc{disj} and \textsc{ex} allow the precondition to be weakened. Dually, the logical rules \textsc{conj} and \textsc{all} allow the postcondition to be strengthened. 
 
-The next four inference rules are variants of the frame rule of separation logic for each of the four separating conjunctions. Note that, although the strong temporal conjunction is \emph{defined} as the additive conjunction of spatial and temporal conjunctions, its frame rule is not derivable from the other rules. The spatial separating conjunction is commutative, but the others---which have a temporal aspect---are not. We have left-side frame rules only for these conjunctions. 
+The next three inference rules are variants of the frame rule of separation logic; one for each of the three separating conjunctions: spatial, temporal and strong temporal. Note that, although the strong temporal conjunction is \emph{defined} as the additive conjunction of spatial and temporal conjunctions, its frame rule is not derivable from the other rules, which  justifies the rule's inclusion. The spatial separating conjunction is commutative, but the others---which have a temporal aspect---are not. We have left-side frame rules only for these conjunctions. 
 
-The rule of consequence, as in Hoare Logic, allows arbitrary strengthening of the precondition and weakening of the postcondition. Typically the side conditions, which ensure that the precondition is strengthened and
- the postcondition is weakened, are described using syntactic entailment among assertions. But because in this project we have not developed a proof system for syntactic entailment---though some rules can be gleaned from Section~\ref{sec:sequential-algebra}---we describe these conditions using semantic entailment instead. 
+The rule of consequence, as in Hoare Logic, allows arbitrary strengthening of the precondition and weakening of the postcondition. Typically the side conditions, which ensure that the precondition is strengthened and 
+the postcondition is weakened, are described using syntactic entailment among assertions. But because in this project we have not developed a proof system for syntactic entailment---though some rules can be gleaned from Section~\ref{sec:sequential-algebra}---we describe these conditions using semantic entailment instead. 
 
 The remaining structural rules are exactly as in Hoare Logic. The rule for the sequential composition $\cseq{c}{c'}$ requires identifying an intermediate assertion used as a postcondition for former command and a precondition for the latter. A specification can be proved of the nondeterministic choice $\cchoice{c}{c'}$ if it the same specification can be proved of both commands individually. Finally, an invariant specification holds for a loop if the body the loop maintains the invariant. 
 
-\subsubsection{Derived Rules}
+\subsubsection{Derived and Alternative Rules}
 
+Some other useful rules may be derived from the set given in Figure~\ref{fig:sequential-inference-rules}. For example, it is possible to derive modified load and store axioms that describe flushed writes, with the points-to assertion, in the pre and postcondition. Because the points-to assertion $e \fpointsto e'$ is defined as $e \fwriteu e' \fseq \fbaru$, we may instantiate the placeholder formula $P$ in either axiom schemas with a leading barrier assertion. Here is a derived \textsc{load-mem} axiom schema \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}}{\infer[\textsc{load}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cload{x}{e}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \conj x = e'}}{}}\] And a derived \textsc{store-mem} axiom schema: \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cstore{e}{f}}{(e \fpointsto e' \fsseq P) \fseq e \fwriteu f}}{\infer[\textsc{store}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cstore{e}{f}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \fseq e \fwriteu f}}{}}\]The rule of consequence is applied properly above because the strong temporal conjunction is associative, and because $e \fwriteu u \fseq \fbaru \sequiv e \fwriteu \fsseq \fbaru$. 
 
-In case the write is known to be flushed initially, then of course it remains in memory after executing the load. This is what is described by the \textsc{load-mem} axiom, in which the $e \fwriteu e'$ atomic formula used in the \textsc{load-buf} rule is replaced by $e \fpointsto e'$. (Recall from Section~\ref{sec:uniprocessor-assertions} that $e \fpointsto e' \eqdef e \fwriteu e' \conj \fbaru$.) 
-
-The specifications akin to the previous instantiation of the \textsc{load-mem} and \textsc{fence} rules can be easily derived in this generalized logic.  The former by instantiating the placeholder formula $P$ with an additional barrier assertion: \[ \infer[\textsc{cons}]{\triple{e \fpointsto e' \fsseq P}{\cload{x}{e}}{(e \fpointsto e' \fsseq P) \conj x = e'}}{\infer[\textsc{load}]{\triple{e \fwriteu e' \fsseq (\fbaru \fsseq P)}{\cload{x}{e}}{(e \fwriteu e' \fsseq (\fbaru \fsseq P)) \conj x = e'}}{}}\]
-
-
-Consider, e.g., $\triple{x \fwriteu 1}{\cfence}{x \fpointsto 1}$. If write in the starting state is buffered, then the $\cfence$ command will not evaluate. Instead, it blocks until the nondeterministic flushing has completed. The $\cfence$ command then evaluates to $\cskip$, leaving a state with an empty buffer that satisfies $x \fpointsto 1 \eqdef x \fwriteu 1 \conj \fbaru$.  
-
-\subsubsection{Alternative Rules}
-
-There are other possible axioms for the store command, e.g.: 
-    \infax[store-buf]{\spec{J}{(e \fwriteu e'') \fsseq P}{\cstore{e}{e'}}{((e \fwriteu e'') \fsseq P) \fseq e \fwriteu e'}}
-
-    \infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}}{((e \fpointsto e'') \fsseq P) \fseq e \fwriteu e'}}
-These reflect the two cases distinguished by the load axioms; namely, whether or not the \emph{most recent} write to the location to be updated is necessarily flushed to memory or not. 
+Another example of a useful derived rule is a ``global'' $\cfence$ axiom, which describes the result of a of fence operation on a potentially completely system state description: \[ \infer[\textsc{cons}]{ \triple{P}{\cfence}{P \fseq \fbaru} }{ \infer[\textsc{tm-frame}]{\triple{P \fseq \femp}{\cfence}{P \fseq \fbaru}}{ \infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{} } }\] 
 
 We can also use the sequential separating implication to give an alternative axiom for the fence command for backwards reasoning: \[ \infer[\textsc{backwards-fence}]{\triple{P \fseqri \fbaru}{\cfence}{P}}{} \] This axiom describes a sufficiently weak\footnote{It seems likely that $P \fseqri \fbaru$ is in fact the weakest precondition, but I have not proved this.} precondition for the operation of the $\cfence$ command in terms of an arbitrary postcondition $P$.
 
