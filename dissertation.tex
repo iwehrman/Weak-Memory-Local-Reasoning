@@ -697,24 +697,24 @@ It is easy to see that spatiotemporal separation generalizes both spatial and te
 As with spatial separation, we lift spatiotemporal separation up to a function on the power domain of memory systems (and states), and abuse notation to refer to whichever function is appropriate in context: \[ S_0 \shash S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \shash \sigma_1}.\] Spatiotemporal separation is associative and has $(\nil,\lnil)$ as a unit as for the other separators, but it is not commutative. 
 
 
-\subsection{Uniprocessor Predicates}
+\subsection{Flushing Closure}
 \label{sec:uniprocessor-predicates}
 
 In Section~\ref{sec:locality} we considered the task of showing, for some configuration $C$ and set of states $S$, that $C$ is safe and, if it evaluates to a configuration $\cskip,\sigma$ then $\sigma \in S$. The second part of this task is equivalently restated as requiring that $\range{C} \subseteq S$. The set $\range{C}$ has a special structure worth noting: namely, it is \emph{down-closed w.r.t.\ the flushing order}. That is, if $\sigma \in \range{C}$ and $\sigma \taustep \sigma'$ then $\sigma' \in \range{C}$ as well. This is a consequence of the fact that the nondeterministic flushing of buffered writes is incorporated in the evaluation semantics of programs; from \textsc{c-tau}, if $\sigma \taustep \sigma'$ then $c,\sigma \step c,\sigma'$. Hence, if $C \rtstep \cskip,\sigma$ (by assumption that $\sigma \in \range{C}$) and $\sigma \taustep \sigma'$, then \[ C \rtstep \cskip,\sigma \step \cskip,\sigma'.\] By transitivity, $C \rtstep \cskip,\sigma'$ and so by definition of the range of a configuration, $\sigma' \in \range{C}$. 
   
-We call sets of states that are down-closed w.r.t.\ the flushing order \emph{predicates}. For example, the set $S_0 \eqdef \setof{(s,\nil,\llit{(\ell,v)})}{s \in \setstacks}$, which consists of states that have a single buffered write, is not a predicate because that write, according to the definition of the flushing relation $\taustep$ in Section~\ref{sec:sequential-programs}, may nondeterministically commit to memory as follows: \[(\nil,\llit{(\ell,v)}) \taustep (\ell \mapsto v,\lnil),\] but there is no stack $s$ such that $(s, \ell \mapsto v, \lnil) \in S_0$. On the other hand, the set $S_1 \eqdef \setof{(s,\ell \mapsto v,\lnil)}{s \in \setstacks}$ is a predicate because each include state is completely flushed, and so none of the included states may take additional flushing steps beyond the bounds of $S_1$. The set $S_0 \cup S_1$ is also a predicate because the elements of $S_0$ may step to elements of $S_1$. Furthermore, it is easy to see that both the empty set and the set of all states are predicates, and that closure is preserved by union and intersection. 
+% We call sets of states that are down-closed w.r.t.\ the flushing order \emph{predicates}. 
+For example, the set $S_0 \eqdef \setof{(s,\nil,\llit{(\ell,v)})}{s \in \setstacks}$, which consists of states that have a single buffered write, is not closed because that write, according to the definition of the flushing relation $\taustep$ in Section~\ref{sec:sequential-programs}, may nondeterministically commit to memory as follows: \[(\nil,\llit{(\ell,v)}) \taustep (\ell \mapsto v,\lnil),\] but there is no stack $s$ such that $(s, \ell \mapsto v, \lnil) \in S_0$. On the other hand, the set $S_1 \eqdef \setof{(s,\ell \mapsto v,\lnil)}{s \in \setstacks}$ is closed because each include state is completely flushed, and so none of the included states may take additional flushing steps beyond the bounds of $S_1$. The set $S_0 \cup S_1$ is also closed because the elements of $S_0$ may step to elements of $S_1$. Furthermore, it is easy to see that both the empty set and the set of all states are closed, and that closure is preserved by union and intersection. 
 
-Because the sets $\range{C}$ are predicates, we may focus our attention on showing the correctness of $C$ w.r.t.\ sets $S$ that are also predicates. For if $S$ does not have this special structure, then either it will not be the case that $\range{C} \subseteq S$ (if, e.g., $C \rtstep \cskip,\sigma \step \cskip,\sigma'$ with $\sigma \in S$ but $\sigma' \notin S$), or it will be possible to demonstrate a stronger property of the configuration; namely that $\range{C} \subset S'$, for some predicate $S' \subseteq S$. 
+Because the sets $\range{C}$ are closed, we may focus our attention on showing the correctness of $C$ w.r.t.\ sets $S$ that are also closed. For if $S$ does not have this special structure, then either it will not be the case that $\range{C} \subseteq S$ (if, e.g., $C \rtstep \cskip,\sigma \step \cskip,\sigma'$ with $\sigma \in S$ but $\sigma' \notin S$), or it will be possible to demonstrate a stronger property of the configuration; namely that $\range{C} \subset S'$, for some closed set of states $S' \subseteq S$. 
 
-In Section~\ref{sec:locality} we also described a particular strategy for showing that $\range{C} \subseteq S$, which we called local reasoning. That relied on the ability to consider the set $S$ as a composition of sets $S_0$ and $S_1$; i.e., for some notion of separation $\bullet$, it must be the case that $S = S_0 \bullet S_1$. Because we choose to restrict our attention to predicates, it should be the case that the notion of separation preserves the property of being being a predicate: if $S_0$ and $S_1$ are down-closed w.r.t.\ the flushing order, then $S$ ought to be as well. And, in fact, for the three notions of separation introduced in Sections~\ref{sec:sequential-spatial-separation},~\ref{sec:sequential-temporal-separation}~and~\ref{sec:sequential-spatiotemporal-separation}, this turns out to be the case. 
-
+In Section~\ref{sec:locality} we also described a particular strategy for showing that $\range{C} \subseteq S$, which we called local reasoning. That relied on the ability to consider the set $S$ as a composition of sets $S_0$ and $S_1$; i.e., for some notion of separation $\bullet$, it must be the case that $S = S_0 \bullet S_1$. Because we choose to restrict our attention to closed sets, it should be the case that the notion of separation preserves the property of being being a closed: if $S_0$ and $S_1$ are down-closed w.r.t.\ the flushing order, then $S$ ought to be as well. And, in fact, for the three notions of separation introduced in Sections~\ref{sec:sequential-spatial-separation},~\ref{sec:sequential-temporal-separation}~and~\ref{sec:sequential-spatiotemporal-separation}, this turns out to be the case. 
 \begin{lemma}
     \label{lem:separation-preserves-closure}    
-    If $S_0$ and $S_1$ are predicates then: 
+    If $S_0$ and $S_1$ are closed w.r.t.\ the flushing order, then so are: 
     \begin{enumerate}
-        \item $S_0 \ssep S_1$ is a predicate; 
-        \item $S_0 \sseq S_1$ is a predicate; and 
-        \item $S_0 \shash S_1$ is a predicate.
+        \item $S_0 \ssep S_1$; 
+        \item $S_0 \sseq S_1$; and 
+        \item $S_0 \shash S_1$.
     \end{enumerate}
 \end{lemma}
 
@@ -738,10 +738,9 @@ The meaning of uniprocessor assertions is given by a satisfaction relation $\amo
     \item $(h,b)$ is a uniprocessor memory system; and
     \item $\gamma$ is a boolean buffer-completeness flag; 
   \end{itemize} such that $\gamma = \bvf \disj h = \nil$. 
-\end{definition}
+\end{definition} 
 
-
-The satisfaction relation is defined by recursion on the structure of $P$ in Figure~\ref{fig:uniprocessor-satisfaction-relation}. 
+The set of all models is abbreviated $\setmodels$, and the satisfaction relation between models and assertions $P$ is defined by recursion on the structure of $P$, as shown in Figure~\ref{fig:uniprocessor-satisfaction-relation}. 
 
 \begin{figure}[ht]
     \centering
@@ -767,7 +766,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ in Fig
     \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
 \end{figure}
 
-The meaning of the standard first-order logic formulas is as usual. A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
+The meaning of the standard first-order logic formulas is as usual (i.e., classical). A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}e')$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The the two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into that satisfy the constituent conjunctions. 
 \begin{align*}
   (h_1,b_1,\gamma_1) \msep (h_2,b_2,\gamma_2) \eqdef & \setof{(\mu,\gamma_1 \disj \gamma_2)}{\mu \in (h_1,b_1) \ssep (h_2,b_2)} \\ 
   (h_1,b_1,\gamma_1) \mseq (h_2,b_2,\gamma_2) \eqdef & \begin{cases}
@@ -801,17 +800,18 @@ We write $\pred{P}$ for the set of all models that satisfy an assertion $P$,\[ \
     P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
-
-Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor models, and hence sets of uniprocessor machine states. We now generalize the ordering on memory systems described in Section~\ref{sec:uniprocessor-predicates} to generalized memory systems: 
+Assertions can thus be thought of as syntactic constructs that denote sets of uniprocessor models, and hence sets of uniprocessor machine states. We now extend the flushing order on memory systems described in Section~\ref{sec:uniprocessor-predicates} to generalized memory systems: 
 \begin{definition}
   For generalized memory systems $\nu_1 = (\mu_1,\gamma_1)$ and $\nu_2 = (\mu_2,\gamma_2)$, \[ \nu_1 \modrefines \nu_2 \iffdef (\mu_1 = \mu_2 \conj (\gamma_2 \onlyif \gamma_1)) \disj (\mu_1 \taurefines \mu_2 \conj \gamma_1).\]
-\end{definition}
+\end{definition} It is easy to see that this defines a partial order on generalized memory systems. Furthermore, the set of models denoted by assertions is closed with respect to this order. 
 
 \begin{lemma}
     \label{lem:assertions-denote-predicates}
     % For any assertion $P$, $\pred{P}$ is a predicate. 
     If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
 \end{lemma}
+
+A corollary of this lemma is that the set of states denoted by an assertions is closed w.r.t.\ the flushing order.  
 
 \begin{corollary}
   If $s,\mu,\gamma \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu',\bvt \sentails P$. 
@@ -857,13 +857,13 @@ Consider, as a significant example, the set of states that satisfy the atomic fo
     \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
 \end{figure}
 
-The predicate requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe empty buffers, $\fbaru$, as well as empty heaps and empty buffers, $\femp$. An alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
+The requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe an empty buffer, $\fbaru$, as well as an empty heap and empty buffer, $\femp$. A conceivable alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
 
-The predicate requirement also explains why we have omitted negation (and implication) from the assertion language. In a naive semantics, a state satisfies $\neg P$ if and only if it does not satisfy $P$; i.e., as a complement: \[ \pred{\neg P} \eqdef \setstates \setminus \pred{P}. \] But the complement of a down-closed set is not generally closed itself, which would violate the predicate requirement. 
+The closure requirement also explains why we have omitted negation (and implication) from the assertion language. In a naive semantics, a state might be said to satisfy $\neg P$ if and only if it does not satisfy $P$; i.e., as a complement: \[ \pred{\neg P} \eqdef \setmodels \setminus \pred{P}. \] But the complement of a down-closed set is not generally closed itself, which would violate the predicate requirement. 
 
-Let us call the complement of a closed set an \emph{open} set. Open sets are rather curious. For example, an open set of memory systems that contains $(\ell \mapsto v,\nil)$ also contains every possible memory system that, when flushed, results in this memory system, e.g., $(\nil, \llit{(\ell,v)})$, $(\nil, \llit{(\ell,u),(\ell,v)})$, $(\nil, \llit{(\ell,w),(\ell,u),(\ell,v)})$, etc. Closed sets are thus not appropriate for describing individual writes. Sets that are both closed and open would yield a well behaved algebra, allowing full negation and implication, but it is not obvious that such an algebra would be useful for program reasoning. 
+Let us call the complement of a closed set an \emph{open} set. Open sets are rather curious; for example, an open set of memory systems that contains $(1 \mapsto 2,\nil,\bvt)$ also contains every possible memory system that, when flushed, results in this memory system, e.g., $(\nil, \llit{(1,2)})$, $(\nil, \llit{(1,3),(1,2)})$, $(\nil, \llit{(1,4),(1,3),(1,2)})$, etc. Open sets are thus not appropriate for describing individual writes. Sets that are both closed and open would might well yield an elegant algebra, allowing full negation and implication, but it is not obvious that such an algebra would be useful for program reasoning. 
 
-Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{\fbaru \conj e \fwriteu e'} = \pred{\fbaru} \cap \pred{e \fwriteu e'} = \nil,\] and hence so too would be its flushing closure.  
+Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{e \fwriteu e' \fseq \fbaru} = \pred{e \fwriteu e'} \mseq \pred{\fbaru} = \nil,\] and hence so too would be its flushing closure.  
 
 \subsection{Assertion Abbreviations}
 \label{sec:uniprocessor-abbreviations} 
@@ -942,7 +942,8 @@ Each of the separating conjunctions is associative and has $\femp$ as a unit. Fu
     \caption{\label{fig:sequential-entailments}Semantic entailments}
 \end{figure}
 
-The first three entailments---that $\fbaru$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next three entailments follow from their respective abbreviation expansions and by monotonicity. The four separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., $P \fhash P'$ is not commutative.
+The first three entailments---that $\fbaru$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next three entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
+
 
 \section{Specifications}
 \label{sec:sequential-specifications}
@@ -1061,17 +1062,19 @@ We can also use the sequential separating implication to give an alternative axi
 \subsection{Semantics of Specifications}
 
 Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu,\bvt \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
+Note that we only consider models that satisfy the precondition with complete write buffers---i.e., with $\gamma = \bvt$. 
+
 
 The formal definition of $\safe{n}{c,s,\mu,Q}$ is given by natural number induction on $n$. $\safe{0}{c,s,\mu,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,Q}$ holds iff the following conditions are true: \begin{enumerate}
     \item If $c = \cskip$ then $(s,\mu,\bvt) \sentails Q$.
 
-    \item For all $\mu_0,\mu_F$ such that $\mu_0 \in (\mu_F \fhash \mu)$ it is the case that $c,(s,\mu_0) \nostep \abort$.
+    \item For all $\mu_0,\mu_F$ such that $\mu_0 \in (\mu_F \shash \mu)$ it is the case that $c,(s,\mu_0) \nostep \abort$.
 
     \item For all $\mu_0,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
-        \item $\mu_0 \in (\mu_F \fhash \mu)$,
+        \item $\mu_0 \in (\mu_F \shash \mu)$,
         \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
     \end{enumerate} there exists $\mu'_F,\mu'$ such that \begin{enumerate}
-        \item $\mu_1 \in (\mu'_F \fhash \mu')$,
+        \item $\mu_1 \in (\mu'_F \shash \mu')$,
         \item $\mu'_F \taurefines \mu_F$, and
         \item $\safe{n}{c',s',\mu',Q}$.
     \end{enumerate}
@@ -1080,7 +1083,7 @@ The formal definition of $\safe{n}{c,s,\mu,Q}$ is given by natural number induct
 
 The first part ensures that if a command is fully evaluated (i.e., is $\cskip$) after $n+1$ steps of evaluation, then the state satisfies the postcondition. The second part ensures that the command, when evaluated in any more completely described state---as defined by the spatiotemporal notion of separation---does not abort after $n+1$ steps of evaluation. The third part ensures that the command, if safely evaluated for $n$ steps, preserves safety for one additional step. The definition of the predicate above differs significantly from Vafeiadis' in that the frame state $\mu_F$ is allowed to change from one step of evaluation to the next, but only by making silent transitions. This represents the fact that the flushing of buffered writes is nondeterministic and not controlled by the command. If the frame memory system $\mu_F$ contains buffered writes, they may well flush to memory during evaluation; and if those writes succeed buffered writes described by the local memory system $\mu$, then those writes too must have been flushed. 
 
-Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \fhash \mu$. The second part requires that the command not abort in $\mu_F \fhash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition.
+Note that the two conditions for locality---the safety monotonicity and and frame properties, as described in Section~\ref{sec:locality}---are implicit in this definition. Safety monotonicity requires that if the command does not abort in a memory system $\mu$ then it also does not abort in a more completely defined memory system $\mu_F \shash \mu$. The second part requires that the command not abort in $\mu_F \shash \mu$ for any memory system $\mu_F$. If the command did abort in memory system $\mu$, the specification would simply not be true. Otherwise, the second part ensures that it also does not abort in any more completely defined memory system. The third part is actually somewhat weaker than the frame property, requiring only that if the command can take a step in a more complete state then the command remains safe for the local state, instead of the stronger requirement that the command may take an analogous step from the local state. But this condition is sufficient to show the soundness of the spatiotemporal frame rule. It is also important to note that we use only the spatiotemporal notion of separation in the definition of the safety predicate. The soundness of the frame rules for the stronger (spatial and temporal) conjunctions will later be shown to follow from this more general definition.
 
 \chapter{A Concurrent Program Logic}
 \label{ch:multiprocessor}
