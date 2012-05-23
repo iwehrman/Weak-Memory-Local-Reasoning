@@ -370,30 +370,32 @@ A detailed description and soundness proof of a single-processor, weak-memory pr
 
 \section{An Example Proof}
 
-Consider the following simple sequential program $c$, which stores the value 1 at an address $x$, flushes that value back to memory with a fence instruction, and then loads the value in memory from address $x$ into variable $y$: \[ c \eqdef \cseq{\cstore{x}{1}}{\cseq{\cfence}{\cload{y}{x}}}.\] This sequential program will fail with a memory error if the value of $x$ is not properly allocated memory address; any provable specification of this program must require that this holds of $x$ initially. If the value of $x$ is indeed an allocated address, then upon termination the write buffer will be empty and the value in memory at location $x$ will be equal to $y$, which is itself equal to 1. 
+Consider the following simple sequential program $c$, which loads the value at an address $x$ into variable $t$, writes the value $t+1$ into address $y$, and then flushes that write back to memory with a fence instruction: \[ c \eqdef \cload{t}{x} \opseq \cstore{y}{t+1} \opseq \cfence.\] This sequential program will fail with a memory error unless the value of $x$, from which the program loads, is a properly allocated memory address, as well as the value $y$, to which the program writes. Any provable specification of this program must require this of $x$ and $y$ initially. If the value of $x$ and $y$ are indeed allocated addresses, and the value in memory at address $x$ is initially some value $v$, then upon termination the write buffer will be empty and the value in memory at location $y$ will be $v+1$. 
 
-In the program logic developed in this chapter, we express this informal specification of $c$ with the following formal specification: \begin{align}\label{eq:seq-ex-spec} \triple{x \fpointsto -}{c}{x \fpointsto y}.\end{align}
-We write $x \fpointsto y$ in the postcondition to indicate that the value of $x$ is an allocated memory address, and that the value of memory at that address is equal to the value of $y$. In the precondition, the particular value of memory at $x$ is unimportant, so write $x \fpointsto -$.  
+In the program logic we develop throughout this chapter, we express this informal specification of $c$ with the following formal specification: \begin{align}\label{eq:seq-ex-spec} \triple{(x \fpointsto z) \fsep (y \fpointsto -)}{c}{(x \fpointsto z) \fsep (y \fpointsto (z + 1))}.\end{align}
+We write $e \fpointsto f$ to mean that the value in memory at the address given by the integer-valued expression $e$ is equal to the value given by expression $f$---or $e \fpointsto -$ if the value in memory at $e$ is irrelevant. We also write $e \fpointsto f \fsep e' \fpointsto f'$ to mean that $e$ and $e'$ are distinct, allocated memory addresses, with values in memory given by $f$ and $f'$ respectively. Hence, the precondition on the left asserts that $x$ and $y$ are allocated memory locations, the former with value $z$, and the postcondition on the right asserts that, upon executing the command $c$, the value at $x$ remains $z$ and the value at $y$ has been set to $z+1$. 
+
+Note that the specification above would not be true in case $x$ and $y$ were \emph{aliased} (i.e., if $x$ and $y$ denoted the same memory address) because then the store to $y$ would change the value in memory at $y$ as well as at $x$. Also note that the specification would not be true without trailing $\cfence$ command because the buffered write will not necessarily have committed to memory at the moment the commands have completed their execution. 
 
 A \emph{proof sketch} of the program specification in Equation~\ref{eq:seq-ex-spec} is as follows:
 \Calc{
   
-  \conn{}{$x \fpointsto -$}
+  \conn{}{$(x \fpointsto z) \fsep (y \fpointsto -)$}
 
-  $\cstore{x}{1}$
+  $\cload{t}{x}$
 
-  \conn{}{$x \fpointsto - \fseq x \fwriteu 1$}
+  \conn{}{$(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)$}
+
+  $\cstore{y}{t+1}$
+
+  \conn{}{$(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1))) $}
 
   $\cfence$
 
-  \conn{}{$x \fpointsto 1$}
-
-  $\cload{y}{x}$
-
-  \conn{}{$x \fpointsto y$}
+  \conn{}{$(x \fpointsto z) \fsep (y \fpointsto (z+1))$}
 
 }
-As the name indicates, a proof sketch provides a skeleton of a complete proof of a program specification. For a program $c_1 \opseq c_2$, a proof sketch: \Calc{
+As the name indicates, a proof sketch provides a skeleton of a complete proof of a program specification. For a program $c_1 \opseq c_2$, a proof sketch may take the form: \Calc{
 
   \conn{}{$P$}
 
@@ -405,15 +407,15 @@ As the name indicates, a proof sketch provides a skeleton of a complete proof of
 
   \conn{}{$Q$}
 
-} indicates that a complete proof will include proofs of the sub-specifications $\triple{P}{c_1}{R}$ and $\triple{R}{c_2}{Q}$, which will be combined in the last step using a rule of inference (\textsc{seq}) for composing specifications of sequentially combined commands: 
+} which indicates that a complete proof will include proofs of the sub-specifications $\triple{P}{c_1}{R}$ and $\triple{R}{c_2}{Q}$, which will be combined in the last step using a rule of inference (\textsc{seq}) for composing specifications of sequentially combined commands: 
 \[ \infer[{\textsc{seq}}]{\triple{P}{c_1 \opseq c_2}{Q}}{\infer{\triple{P}{c_1}{R}}{\vdots} & \infer{\triple{R}{c_2}{Q}}{\vdots}}\] where the vertical dots represent the remaining proofs to be supplied. 
 
 Returning to the proof sketch of the program specification in Equation~\ref{eq:seq-ex-spec}, we see that to complete the proof we must derive three sub-specifications, one for each primitive command: \begin{enumerate}
-  \item $\triple{x \fpointsto -}{\cstore{x}{1}}{x \fpointsto - \fseq x \fwriteu 1}$
-  \item $\triple{x \fpointsto - \fseq x \fwriteu 1}{\cfence}{x \fpointsto 1}$
-  \item $\triple{x \fpointsto 1}{\cload{y}{x}}{x \fpointsto y}$
+  \item $\triple{(x \fpointsto z) \fsep (y \fpointsto -)}{\cload{t}{x}}{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}$
+  \item $\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}{\cstore{y}{t+1}}{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}$
+  \item $\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}{\cfence}{(x \fpointsto z) \fsep (y \fpointsto (z+1))}$
 \end{enumerate}
-The first specification asserts that the result of storing the value 1 to the valid address $x$ results in the addition of a buffered write, which may later commit to memory and overwrite the current value, which remains unspecified. The second specification asserts that the result of explicitly flushing the write to memory with a fence command overwrites the existing value with the new value $1$. The third specification asserts that, as a result of loading the value in memory at address $x$ into variable $y$, the value in memory at address $x$ becomes equal to $y$. 
+The first specification asserts that the result loading the value $z$ in memory at address $x$ into variable $t$ result in a state that is otherwise unchanged except that $t = z$. The second specification asserts that the result of storing the value $t+1$ to the address $y$ results in the addition of a new buffered write to the state, which may later commit to memory and overwrite the current, unspecified value. The third specification asserts that the result of explicitly flushing this write to memory with a fence command overwrites the existing value in memory at $y$ with the value $z+1$. 
 
 We shall now derive these three specifications. For the first specification, note that store command $\cstore{x}{1}$ \emph{buffers} a new write, which may be flushed to memory later. We write $x \fwriteu 1$ to indicate a buffered write to memory address $x$ with value 1, and $x \fpointsto - \fseq x \fwriteu 1$ to describe the \emph{temporal composition} of the shared memory value $x \fpointsto -$ and the buffered write $x \fwriteu 1$, where the left-hand side precedes the right-hand side. The first specification can be derived directly from the axiom for the store command: 
 \[ 
