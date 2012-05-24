@@ -1216,26 +1216,25 @@ This completes the proof of the concurrent program specification of Equation~\re
 
 In this section we describe a simplified C-like structured programming language with concurrency. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not an assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
 
-The concurrent language differs from the sequential language described in Section~\ref{sec:sequential-programs} in two ways. First, commands may be composed in parallel, which indicates that there are no program-order dependencies between the primitives of the constituent commands. Second, each primitive must be annotated with an expression that indicates the processor on which the primitive will be executed. As is discussed below, this will allow us to express both concurrent and interleaving parallelism uniformly.
+The concurrent language differs from the sequential language described in Section~\ref{sec:sequential-programs} in two ways. First, commands may be composed in ``parallel'', which indicates that there are no program-order dependencies between the primitives of the constituent commands. Second, each primitive must be annotated with an expression that indicates the processor on which the primitive will be executed. As is discussed below, this will allow us to express both concurrent and interleaving parallelism uniformly.
 
-In this setting, programs are identified with \emph{commands}, which consist of compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{I have no particular to reason to think that they will add significant complication though, and were also considered in earlier iterations of this project \cite{wmsldetails,lola11}.}
+In this setting, programs are identified with \emph{commands}, which consist of various compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{I have no particular to reason to think that they will add significant complication though, and were also considered in earlier iterations of this project \cite{wmsldetails,lola11}.}
 
-The primitive commands for the concurrent language are a superset of those for the sequential language, as described in Section~\ref{sec:sequential-programs}: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
+The primitive commands for the concurrent language are, roughly, a superset of those for the sequential language, as described in Section~\ref{sec:sequential-programs}: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
 	& \cstore{e}{e'} \bnfbar \cfence \bnfbar \clock \bnfbar \cunlock 	
-\end{align*} Compared to the primitives in the sequential language, the $\clock$ and $\cunlock$ commands are new to the parallel language, and serve to manipulate a single, global lock, which can either be free (available) or busy (held by a particular processor). 
+\end{align*} Compared to the primitives in the sequential language, the $\clock$ and $\cunlock$ commands are new to the concurrent language, and serve to manipulate a single, global lock, which can either be free (available) or busy (held by a particular processor). 
 
-The formal semantics of the successful execution of a primitive command $p$ is given as a transition relation between machine states $\sigma,\sigma'$ labeled by a processor identifier $i$ \[ p : \sigma \pstep{i} \sigma'. \] The informal meaning of such a quadruple is that that when primitive $p$ is executed on processor $i$ state $\sigma$ it may evaluate to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) This differs from the relation used to describe the semantics of the primitives in the sequential language from Section~\ref{sec:sequential-programs} by requiring that processor on which on which the primitive should execute by specified explicitly. 
+The formal semantics of a successful execution step by a primitive command $p$ is given as a transition relation, parametrized by a processor identifier $i$, between some machine states $\sigma$ and $\sigma'$: \[ p : \sigma \pstep{i} \sigma'. \] Such a quadruple may be informally interpreted to mean that when primitive $p$ is executed on processor $i$ in machine state $\sigma$, it may evaluate in a single, atomic step to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) This differs from the relation used to describe the semantics of the primitives in the sequential language, described in Section~\ref{sec:sequential-programs}, by requiring that the processor on which the primitive is to execute be specified explicitly. 
 
-A primitive command may alternatively abort upon execution: \[ p : \sigma \pstep{i} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
+A primitive command, in state $\sigma$ on processor $i$, may alternatively abort upon execution. This is indicated as follows \[ p : \sigma \pstep{i} \abort. \] For example, an assertion may fail or a process may attempt to access an unallocated (from the process's perspective) memory address. 
 
-To define this relation formally, we must first define the notions of memory system and machine state. 
+To define the combined primitive evaluation relation formally, we must first define the notions of \emph{memory system} and \emph{machine state}. 
 \begin{definition}
-A memory system is a quadruple $(h,B,k,\Gamma)$, where: \begin{itemize}
+A \emph{memory system} is a quadruple $(h,B,K)$, where: \begin{itemize}
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
-	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; 
-	\item $k : \powerset{\setprocessors}$ is a set of blocked processors; and
-  \item $\Gamma: \powerset{\setprocessors}$ is a set of bottom-complete processors. 
-\end{itemize} Furthermore, we require that $h = \nil$ whenever $\Gamma = \nil$.
+	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; and
+	\item $K : \powerset{\setprocessors}$ is a set of blocked processors.
+\end{itemize} 
 \end{definition} 
 The set of uniprocessor memory systems is abbreviated as $\setmemorysystems$.
 
