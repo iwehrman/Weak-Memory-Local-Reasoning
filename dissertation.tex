@@ -1230,7 +1230,7 @@ A primitive command, in state $\sigma$ on processor $i$, may alternatively abort
 
 To define the combined primitive evaluation relation formally, we must first define the notions of \emph{memory system} and \emph{machine state}. 
 \begin{definition}
-A \emph{memory system} is a quadruple $(h,B,K)$, where: \begin{itemize}
+A \emph{multiprocessor memory system} is a quadruple $(h,B,K)$, where: \begin{itemize}
 	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
 	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; and
 	\item $K : \powerset{\setprocessors}$ is a set of blocked processors.
@@ -1238,7 +1238,7 @@ A \emph{memory system} is a quadruple $(h,B,K)$, where: \begin{itemize}
 \end{definition} 
 The set of uniprocessor memory systems is abbreviated as $\setmemorysystems$.
 
-A pair that consists of a stack $s$, as defined in Section~\ref{sec:expressions}, which assigns values to identifiers, and a memory system $\mu$ is called a \emph{machine state}, typically abbreviated by $\sigma$. The collection of states is written $\setstates$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
+A pair that consists of a stack $s$, as defined in Section~\ref{sec:expressions}, which assigns values to identifiers, and a memory system $\mu$ is called a \emph{multiprocessor machine state}, typically abbreviated by $\sigma$. The collection of states is written $\setstates$. We often abuse notation by interchanging memory systems and states in definitions for which the stack is irrelevant. 
 
 The notion of machine state given here differs in a number of ways from the structure used to define the memory model, as described in Section~\ref{sec:memory-model}, in the following ways. First, names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to a particular processor. This is for convenience only, and is not an important technical restriction. The specification logic we describe later will be restricted to those programs for which the names are partitioned among processes, except for those that are never modified. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the above healthiness condition on programs directly into the model of the language and logic, but it has the disadvantage of perhaps describing access to shared values (stored, e.g., in the heap) and local names (which must be parametrized by a processor name) slightly more awkward
 
@@ -1415,12 +1415,59 @@ A state is called \emph{coherent} if each location has writes buffered by at mos
 
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}_z} = \set{x,y,z}$ and $\mod{\cload{x}{y+1}_z} = \set{x}$.  
 
-\section{Locality and Separation}
+\section{Multiprocessor Models and Separation}
 
-We now digress to define a series of functions on states, which will later be used to define the predicates for each of the four separating conjunctions. With these definitions in hand, the predicate definitions will be straightforward.
+In this section we define a series of notions of separation, analogous to those defined in Chapter~\ref{ch:uniprocessor}, but for multiprocessor states. As in the sequential, uniprocessor case, the goal for these notions of separation is to allow for local reasoning, by modeling separating conjunctions that have sound frame rules. 
 
-\subsection{Weak Interleaving Separation}
-\label{sec:weak-interleaving}
+Unlike in the previous chapter, however, in which we defined separation in terms of memory systems and then later lifted those definitions to generalized memory systems, here we wish to define the notions of separation directly in terms of \emph{generalized multiprocessor memory systems}, which are defined as follows. 
+
+\begin{definition}
+  A \emph{generalized multiprocessor memory system} is a four-tuple $(h,B,K,\Gamma)$, where: 
+  \begin{itemize}
+    \item $(h,B,K)$ is a multiprocessor memory system; and 
+    \item $\Gamma : \powerset{\setprocessors}$ is a \emph{buffer-completeness} set. 
+  \end{itemize} We furthermore require if $\Gamma = \nil$ then so is $h = \nil$. 
+\end{definition}
+
+Generalized multiprocessor memory systems are related to multiprocessor memory systems, which model parallel programs, in the same way that generalized sequential memory systems are related to uniprocessor memory systems, which model purely sequential programs. In particular, the buffer-completeness set $\Gamma$ in the generalized multiprocessor memory system plays a role analogous to the buffer-completeness flag $\gamma$ in the generalized uniprocessor memory system: inclusion of a processor identifier $i$ in the set $\Gamma$ means that the $i$th buffer is complete, and therefore there may exist no previous \emph{buffered} writes on the $i$th write buffer; they must instead of flushed to memory. 
+
+In the uniprocessor case, we required that if $\gamma = \bvf$ then $h = \nil$, because flushing can only occur when the buffer is complete. In the multiprocessor case, we require that $h = \nil$ only when \emph{none} of the buffers are complete. Alternately, the heap may be non-empty as long as at least some of the buffers are complete. 
+
+We call a generalized multiprocessor memory system $(h,B,K,\Gamma)$ \emph{buffer-complete} when $\Gamma = \setprocessors$; i.e., when each buffer is complete. The semantics of assertions (given later in Section~\ref{sec:multiprocessor-assertions}) shall be described in terms of generalized multiprocessor memory systems which are not necessarily buffer-complete, but the specifications (given later in Section~\ref{sec:multiprocessor-specifications}) shall be described in terms of only buffer-complete generalized multiprocessor memory systems.
+
+\subsection{Spatial Separation}
+\label{sec:spatial-separation}
+
+The strong interleaving separation of states, written $\sigma \fsep \sigma'$, is like the weak interleaving separation, but in which the domains of memory addresses are required to be completely disjoint. Later, this separation will be useful for describing the relationship between local and shared state, which we will require to be disjoint regardless of the status of the lock, and for describing concurrent composition of commands.
+
+ The definedness condition for $\sigma \fsep \sigma'$ (besides agreement on stacks and locks) is as follows: \[ \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) = \nil, \] and the value of $\sigma \fsep \sigma'$ is as follows: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\fhash h',B\fhash B',l).\] 
+
+Because the domains the heaps and buffers are disjoint, this is equivalent to the following definition that makes use of the simpler additive union in place of the TSO union: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\uplus h',B\uplus B',l).\] 
+
+Observe that if $\sigma \fsep \sigma'$ is defined then $\sigma \fhash \sigma'$ is defined and identical the former state. 
+
+\subsection{Temporal Separation}
+\label{sec:temporal-separation}
+
+The weak sequential separation of states, written $\sigma \fseq \sigma'$, is like the weak interleaving separation, but in which all the additional writes in $\sigma$ precede writes already present in $\sigma'$. With weak interleaving separation, the additional writes were only required to precede those already present with the same address. 
+
+The value, when defined, of $\sigma \fseq \sigma'$ is like $\sigma \fhash \sigma'$ but uses pomset concatenation instead of the TSO union: \[ (s,h,B,l) \fseq (s,h',B',l) \eqdef (s,h \lapp h',B \lapp B',l),\] where $B \lapp B'$ is shorthand for $\lambda i . B_i \lapp B'_i$. 
+
+We must also strengthen the definedness conditions for $\sigma \fseq \sigma'$ from that of $\sigma \fhash \sigma'$ to reflect the desire that all writes of $\sigma$ precede those of $\sigma'$. With the given definition and the definedness conditions from weak interleaving separation, the only scenario in which this condition can be violated is in the case of already present committed writes (in $h'$) conflicting with (i.e., preceding) additional buffered writes (in $B$). In the definition above, all the writes of $h \lapp h'$ implicitly precede all the writes of $B \lapp B'$, and so in particular the writes of $h'$ implicitly precede those of $B$; this is just what we rule out with the following additional definedness condition: \[ B = \nil \disj h' = \lnil \] This strong condition ensures that if any writes have committed in $\sigma'$, then $\sigma \fseq \sigma'$ is only defined if all writes have committed in $\sigma$. 
+
+Observe that if $\sigma \fseq \sigma'$ is defined then $\sigma \fhash \sigma'$ is defined and is refined by the former state (because the concatenation of pomsets is a refinement of the TSO union of pomsets). 
+
+\subsubsection{Strong Temporal Separation}
+
+The strong sequential separation of states, written $\sigma \fsseq \sigma'$ combines the ideas behind the previous two notions of separation: it requires disjointness of the additional memory addresses, and also requires that all additional writes precede those already present. When defined, its value is the same as for weak sequential separation: \[ (s,h,B,l) \fsseq (s,h',B',l) \eqdef (s,h \lapp h', B \lapp B',l).\] The definedness conditions are as follows: \begin{align*}
+  \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) & = \nil \\ 
+  B = \nil \disj h' & = \lnil.
+\end{align*}
+
+Observe that if $\sigma \fsseq \sigma'$ then $\sigma \fseq \sigma'$ is defined and identical, $\sigma \fsep \sigma'$ is defined and refined by the former state, and $\sigma \fhash \sigma'$ is also defined and refined by the former state.
+
+\subsection{Spatiotemporal Separation}
+\label{sec:spatiotemporal-separation}
 
 We begin by defining a semantic function on memory systems called \emph{weak interleaving separation}, so-called because it does not require strict disjointness of the memory locations described by its arguments (otherwise it would be \emph{strong}), and because the buffered writes described by its arguments are, approximately, interleaved (as opposed to, say, concatenated). 
 We write $\mu \fhash \mu'$ for the weak interleaving separation of $\sigma$ and $\sigma'$. The range of the function is a \emph{set} of memory systems because interleaving write buffers results in a set of possible interleaved write buffers. This separation function is intended to be as weak as possible, describing a wide variety of memory systems, while still maintaining locality w.r.t.\ the concurrent programming language. This weakness reduces the expressive power of the function, but in later sections we will define stronger, more expressive functions by strengthening this function in a variety of ways. 
@@ -1525,37 +1572,12 @@ It is possible to imagine strengthening this conjunction in two ways: \begin{enu
 
 The next three subsections describe separating conjunctions that embrace one or both of these additional properties. 
 
-\subsection{Strong Interleaving Separation}
 
-The strong interleaving separation of states, written $\sigma \fsep \sigma'$, is like the weak interleaving separation, but in which the domains of memory addresses are required to be completely disjoint. Later, this separation will be useful for describing the relationship between local and shared state, which we will require to be disjoint regardless of the status of the lock, and for describing concurrent composition of commands.
 
- The definedness condition for $\sigma \fsep \sigma'$ (besides agreement on stacks and locks) is as follows: \[ \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) = \nil, \] and the value of $\sigma \fsep \sigma'$ is as follows: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\fhash h',B\fhash B',l).\] 
-
-Because the domains the heaps and buffers are disjoint, this is equivalent to the following definition that makes use of the simpler additive union in place of the TSO union: \[ (s,h,B,l) \fsep (s,h',B',l) \eqdef (s,h\uplus h',B\uplus B',l).\] 
-
-Observe that if $\sigma \fsep \sigma'$ is defined then $\sigma \fhash \sigma'$ is defined and identical the former state. 
-
-\subsection{Weak Sequential Separation}
-
-The weak sequential separation of states, written $\sigma \fseq \sigma'$, is like the weak interleaving separation, but in which all the additional writes in $\sigma$ precede writes already present in $\sigma'$. With weak interleaving separation, the additional writes were only required to precede those already present with the same address. 
-
-The value, when defined, of $\sigma \fseq \sigma'$ is like $\sigma \fhash \sigma'$ but uses pomset concatenation instead of the TSO union: \[ (s,h,B,l) \fseq (s,h',B',l) \eqdef (s,h \lapp h',B \lapp B',l),\] where $B \lapp B'$ is shorthand for $\lambda i . B_i \lapp B'_i$. 
-
-We must also strengthen the definedness conditions for $\sigma \fseq \sigma'$ from that of $\sigma \fhash \sigma'$ to reflect the desire that all writes of $\sigma$ precede those of $\sigma'$. With the given definition and the definedness conditions from weak interleaving separation, the only scenario in which this condition can be violated is in the case of already present committed writes (in $h'$) conflicting with (i.e., preceding) additional buffered writes (in $B$). In the definition above, all the writes of $h \lapp h'$ implicitly precede all the writes of $B \lapp B'$, and so in particular the writes of $h'$ implicitly precede those of $B$; this is just what we rule out with the following additional definedness condition: \[ B = \nil \disj h' = \lnil \] This strong condition ensures that if any writes have committed in $\sigma'$, then $\sigma \fseq \sigma'$ is only defined if all writes have committed in $\sigma$. 
-
-Observe that if $\sigma \fseq \sigma'$ is defined then $\sigma \fhash \sigma'$ is defined and is refined by the former state (because the concatenation of pomsets is a refinement of the TSO union of pomsets). 
-
-\subsection{Strong Sequential Separation}
-
-The strong sequential separation of states, written $\sigma \fsseq \sigma'$ combines the ideas behind the previous two notions of separation: it requires disjointness of the additional memory addresses, and also requires that all additional writes precede those already present. When defined, its value is the same as for weak sequential separation: \[ (s,h,B,l) \fsseq (s,h',B',l) \eqdef (s,h \lapp h', B \lapp B',l).\] The definedness conditions are as follows: \begin{align*}
-  \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) & = \nil \\ 
-  B = \nil \disj h' & = \lnil.
-\end{align*}
-
-Observe that if $\sigma \fsseq \sigma'$ then $\sigma \fseq \sigma'$ is defined and identical, $\sigma \fsep \sigma'$ is defined and refined by the former state, and $\sigma \fhash \sigma'$ is also defined and refined by the former state.
 
 \section{Assertions}
 \label{sec:assertions}
+\label{sec:multiprocessor-assertions}
 
 Assertions denote sets of machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
 	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
@@ -1672,6 +1694,7 @@ We note that the four separating conjunctions naturally form a sort of lattice, 
 
 \section{Concurrent Specifications}
 \label{sec:specifications}
+\label{sec:multiprocessor-specifications}
 
 The language of specifications is given by the following schema: \[ \spec{J}{P}{c}{Q}, \] where $c$ is a command and $J,P,Q$ are assertions, referred to as the \emph{invariant}, \emph{precondition} and \emph{postcondition}, respectively. 
 
