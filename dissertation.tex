@@ -1461,7 +1461,7 @@ As in the sequential, uniprocessor case, we also define a temporal notion of sep
   \bot & \text{otherwise}
 \end{cases}\] where the compatibility relation $\compat_\vartriangleleft$ is defined as follows: \begin{align*}
 \nu_0 \compat_\seqsym \nu_0 \iffdef & K_0 \cap K_1 = \nil \conj \\ 
-  & \forall i \in \Gamma_1 \st B_0(i) = \lnil \\ 
+  & \forall i \in \Gamma_1 \st B_0(i) = \lnil \conj \\ 
   & \forall i \in \setprocessors \setminus (K_0 \cup K_1) \st \dom{B_0(i)} \cap \dom{h_1} = \nil \conj \\  
   & \forall i,j \in \setprocessors \setminus (K_0 \cup K_1) \st i \neq j \onlyif \dom{B_0(i)} \cap \dom{B_1(j)}. 
 \end{align*} The first conjunct above requires, as in the case of spatial separation, disjointness of the blocking sets. The second conjunct requires, for the buffer-complete processors $i$ of $\nu_1$, that any preceding writes described on buffer $i$ (in $\nu_0$) be flushed to memory (i.e., not buffered). The third and fourth conjuncts describe the weak disjointness requirements required for soundness of the temporal frame rule. Specifically, the third requires that there be no preceding buffered writes to locations defined in the given memory, unless the buffers on which those writes exist are blocked. Similarly, the fourth conjunct requires that there be no preceding buffered writes to locations for which there currently pending writes, unless either those earlier pending writes are on the same buffer, or those earlier pending writes are on blocked buffers. 
