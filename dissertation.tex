@@ -239,12 +239,12 @@ For any set $A$, we write $\ident{A}$ for the identity relation on $A$. For a bi
 \subsection{Functions}
 \label{sec:functions}
 
-For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \lambda x . \begin{cases}
+For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \fun{x} \begin{cases}
 	b & \text{if $x = a$} \\
 	f(x) & \text{otherwise.}
 \end{cases}\] 
 
-We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$,i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \lambda x . \begin{cases}
+We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$,i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \fun{x}\begin{cases}
     f(x) & \text{if $x \in \dom{f}$} \\
     g(x) & \text{else if $x \in \dom{g}$} \\
     \bot & \text{otherwise.}
@@ -252,7 +252,7 @@ We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$,i
 
  When convenient, we also write $f_a$ as shorthand for $f(a)$. $a \mapsto b$ is shorthand for the unique partial function $f$ such that $f(a) = b$ and is undefined otherwise. For $A' \subseteq A$, $\restrict{f}{A'}$ is the restriction of $f$ to domain $A'$. 
 
-For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \lambda x . \begin{cases}
+For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \fun{x} \begin{cases}
 	g(x) & \text{if $x \in \dom{g}$} \\
 	f(x) & \text{otherwise.}
 \end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Some additional properties follow in Lemma~\ref{lem:override}. 
@@ -273,7 +273,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
 
 The empty list is denoted by $\lnil$, the literal list by $\llit{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
 
-For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \lambda x .\begin{cases}
+For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \fun{x} \begin{cases}
 	b &\text{ if $l = l' \lapp \llit{(x,b)}$}\\
 	\funof{l'}(x) &\text{ if $l = l' \lapp \llit{(y,b)}$ with $x \neq y$}\\
 	\bot & \text{otherwise.}
@@ -286,7 +286,7 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 	a \lcons m' \merge b \lcons n' & = a \lcons (m' \merge (b\lcons n')) \uplus b \lcons ((a \lcons m') \merge n').
 \end{align*}
 
-We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \lambda x . \funof{l}(x),\] for arbitrary $l \in m \override n$. 
+We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \fun{x} \funof{l}(x),\] for arbitrary $l \in m \override n$. 
 
 As for function overriding, list overriding has the basic property that, if $a \in \dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
 \begin{lemma}
@@ -1450,7 +1450,7 @@ It is easy to check that $\nu_0 \msep \nu_1$ yields a set of generalized multipr
 
 The blocking sets and buffer-completeness sets in the separation are defined by union because, intuitively, the properties they describe can only accumulate with increasingly complete descriptions of memory systems. If a processor is blocked in some memory system, then it ought also to be blocked in a more complete description of a memory system---along with, perhaps, the requirement that some additional processors be blocked. Similarly, if a processor buffer-complete in some partial description of a memory system, then it ought also to be buffer-complete in a more thorough description of that memory system. The requirement blocking sets be disjoint is later used to give especially ``small'' axioms for the for the lock manipulation primitives. 
 
-Let us consider a small example. In the sequel, let $\arnil \eqdef \lambda x . \lnil$, the array of empty write buffers. Let $\nu_0 = (1 \mapsto 1, \funup{\arnil}{\ptup{0}{\llit{(1,2)}}},\nil,\set{0})$ and $\nu_1 = (2 \mapsto 1, \funup{1}{(2,2)},\nil,\set{1})$ be generalized multiprocessor memory systems. Here, $\nu_0$ consists of a single-point heap describing the memory address 1 with value 1; a write buffer array that is everywhere empty except for processor 0, which has a single write to address 1 with value 2; no blocked processors; and with processor 0 declared to be buffer-complete. Similarly, $\nu_1$ consists of a single-point heap describing the memory address 2 with value 1; a write buffer array that is everywhere empty except for processor 1, which has a single write to address 2 with value 2; no blocked processors; and with processor 1 declared to be buffer-complete. Note that $\nu_0 \compat_\ast \nu_1$ holds because the domains of the memory systems are disjoint, as well as the blocked sets. Consequently, the set $\nu_0 \msep \nu_1$ is non-empty; indeed, it is a singleton: \[ \nu_0 \fsep \nu_1 = \set{1 \mapsto 1 \uplus 2 \mapsto 1, \funup{\arnil}{\ptup{0}{\llit{(1,2)}}, \ptup{1}{\llit{(2,2)}}},\nil,\set{0,1}},\] in which the only resulting memory system has a two-point heap with addresses 1 and 2 defined; a buffer array that is empty everywhere except for processors 0 and 1; an empty blocking set; and in which processors 0 and 1 are buffer-complete. The set $\nu_0 \msep \nu_1$ is a singleton because there is only a single possible interleaving of the memory systems' respective buffer arrays: \[\funup{\arnil}{\ptup{0}{\llit{(1,2)}}} \merge \funup{\arnil}{\ptup{1}{\llit{(2,2)}}} = \set{ \funup{\arnil}{\ptup{0}{\llit{(1,2)}}, \ptup{1}{\llit{(2,2)}}}.}\] Note that the result of a load in memory system $\nu_1$ is the same as in any of the more completely defined memory systems of $\nu_0 \msep \nu_1$. Note also that neither $\nu_0 \compat_\ast \nu_0$ nor $\nu_1 \compat_\ast \nu_1$ hold because in each case the domains overlap, and so $\nu_0 \msep \nu_0 = \nu_1 \msep \nu_1 = \nil$. 
+Let us consider a small example. In the sequel, let $\arnil \eqdef \fun{x} \lnil$, the array of empty write buffers. Let $\nu_0 = (1 \mapsto 1, \funup{\arnil}{\ptup{0}{\llit{(1,2)}}},\nil,\set{0})$ and $\nu_1 = (2 \mapsto 1, \funup{1}{(2,2)},\nil,\set{1})$ be generalized multiprocessor memory systems. Here, $\nu_0$ consists of a single-point heap describing the memory address 1 with value 1; a write buffer array that is everywhere empty except for processor 0, which has a single write to address 1 with value 2; no blocked processors; and with processor 0 declared to be buffer-complete. Similarly, $\nu_1$ consists of a single-point heap describing the memory address 2 with value 1; a write buffer array that is everywhere empty except for processor 1, which has a single write to address 2 with value 2; no blocked processors; and with processor 1 declared to be buffer-complete. Note that $\nu_0 \compat_\ast \nu_1$ holds because the domains of the memory systems are disjoint, as well as the blocked sets. Consequently, the set $\nu_0 \msep \nu_1$ is non-empty; indeed, it is a singleton: \[ \nu_0 \fsep \nu_1 = \set{1 \mapsto 1 \uplus 2 \mapsto 1, \funup{\arnil}{\ptup{0}{\llit{(1,2)}}, \ptup{1}{\llit{(2,2)}}},\nil,\set{0,1}},\] in which the only resulting memory system has a two-point heap with addresses 1 and 2 defined; a buffer array that is empty everywhere except for processors 0 and 1; an empty blocking set; and in which processors 0 and 1 are buffer-complete. The set $\nu_0 \msep \nu_1$ is a singleton because there is only a single possible interleaving of the memory systems' respective buffer arrays: \[\funup{\arnil}{\ptup{0}{\llit{(1,2)}}} \merge \funup{\arnil}{\ptup{1}{\llit{(2,2)}}} = \set{ \funup{\arnil}{\ptup{0}{\llit{(1,2)}}, \ptup{1}{\llit{(2,2)}}}}.\] Note that the result of a load in memory system $\nu_1$ is the same as in any of the more completely defined memory systems of $\nu_0 \msep \nu_1$. Note also that neither $\nu_0 \compat_\ast \nu_0$ nor $\nu_1 \compat_\ast \nu_1$ hold because in each case the domains overlap, and so $\nu_0 \msep \nu_0 = \nu_1 \msep \nu_1 = \nil$. 
 
 \subsection{Temporal Separation}
 \label{sec:temporal-separation}
@@ -1459,15 +1459,20 @@ As in the sequential, uniprocessor case, we also define a temporal notion of sep
 \[ \nu_0 \mseq \nu_1 \eqdef \begin{cases}
   (h_0 \override h_1, B_0 \lapp B_1, K_0 \cup K_1, \Gamma_0 \cup \Gamma_1) & \text{if $\nu_0 \compat_\seqsym \nu_1$} \\ 
   \bot & \text{otherwise}
-\end{cases}\] where the compatibility relation $\compat_\vartriangleleft$ is defined as follows: \begin{align*}
-\nu_0 \compat_\seqsym \nu_0 \iffdef & K_0 \cap K_1 = \nil \conj \\ 
+\end{cases}\] where the compatibility relation $\compat_\seqsym$ is defined below. In $\nu_0 \mseq \nu_1$, the heap values defined in later memory system override those in the earlier memory system, and the writes in each buffer of the earlier memory system are prepended to those in the later memory system. Above, we lift list concatenation to functions into lists as follows: \[ B_0 \lapp B_1 = \fun{x} B_0(x) \lapp B_1(x).\]
+The compatibility relation $\compat_\seqsym$ is defined as follows: 
+\begin{align*}
+\nu_0 \compat_\seqsym \nu_1 \iffdef & K_0 \cap K_1 = \nil \conj \\ 
   & \forall i \in \Gamma_1 \st B_0(i) = \lnil \conj \\ 
   & \forall i \in \setprocessors \setminus (K_0 \cup K_1) \st \dom{B_0(i)} \cap \dom{h_1} = \nil \conj \\  
   & \forall i,j \in \setprocessors \setminus (K_0 \cup K_1) \st i \neq j \onlyif \dom{B_0(i)} \cap \dom{B_1(j)}. 
 \end{align*} The first conjunct above requires, as in the case of spatial separation, disjointness of the blocking sets. The second conjunct requires, for the buffer-complete processors $i$ of $\nu_1$, that any preceding writes described on buffer $i$ (in $\nu_0$) be flushed to memory (i.e., not buffered). The third and fourth conjuncts describe the weak disjointness requirements required for soundness of the temporal frame rule. Specifically, the third requires that there be no preceding buffered writes to locations defined in the given memory, unless the buffers on which those writes exist are blocked. Similarly, the fourth conjunct requires that there be no preceding buffered writes to locations for which there currently pending writes, unless either those earlier pending writes are on the same buffer, or those earlier pending writes are on blocked buffers. 
 
-The necessity of the third and fourth conjuncts above can be demonstrated with a few small examples. First, consider $\nu_1 = (1 \mapsto 2, \arnil, \nil, \set{1})$. A load of address 1 in this memory system clearly results in the value 2. Next consider $\nu_0 = ()$... 
+The necessity of the third and fourth conjuncts above can be demonstrated with a few small examples. First, consider $\nu_1 = (1 \mapsto 2, \arnil, \nil, \set{1})$. A load by processor 1 of address 1 in this memory system clearly results in the value 2. Next consider $\nu_0 = (\nil,\funup{\arnil}{\ptup{2}{\llit{(1,3)}}},\nil,\set{2})$, which includes a buffered write on processor 2 to the same memory address 1. The memory system $\nu_0$ is not compatible with $\nu_1$ due to the third conjunct above, because processor 2 is not blocked in $\nu_0$, but contains a buffered write to a location defined in the heap of $\nu_1$. If this condition were omitted, then the value of $\nu_0 \mseq \nu_1$ would be as follows: \[ \nu_0 \mseq \nu_1 = (1 \mapsto 2, \funup{\arnil}{\ptup{2}{\llit{(1,3)}}}, \nil, \set{1,2}).\] Although in the memory system $\nu_0 \mseq \nu_1$ defined above it remains the case that a load by processor 1 of address 1 again results in the value 2, this is not a \emph{stable} load: the write buffered on processor 2 may flush to memory before the load completes, resulting in the state $(1 \mapsto 3, \arnil, \nil, \set{1,2})$, from which a load by processor 1 certainly would not result in the value 2. This is a situation we wish to avoid, and so we rule out temporal conjunctions of memory systems like $\nu_0$. 
 
+On the other hand, the temporal conjunction $\nu'_0 \mseq \nu_1$, with memory system $\nu'_0 = (\nil,\funup{\arnil}{\ptup{2}{\llit{(1,3)}}},\set{2},\set{2})$, is perfectly safe because the 2nd processor, on which the offending write is buffered, is blocked, and so there is no concern that it will flush to memory, becoming visible to other processors, and causing instability. Hence, the third conjunction above only rules out writes to conflicting locations on non-blocked write buffers. 
+
+The role of the fourth conjunct is similar: to rule out temporal conjunctions that lead to instability. Consider now $\nu'_1 = (\nil,\funup{\arnil}{\ptup{1}{\llit{(1,2)}}}, \nil, \set{2})$, which is differs $\nu_1$ above in that the write that was flushed is here still pending in the first buffer. 
 
 
 \subsubsection{Strong Temporal Separation}
@@ -1615,12 +1620,12 @@ Assertions denote particular sets of machine states, which we refer to as predic
 The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
 
 The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}, which makes use of the following auxiliary definitions: \begin{align*}
-  \mathit{emp} \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\lambda x.\lnil) \conj k = \nil} \\ 
+  \mathit{emp} \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\fun{x}\lnil) \conj k = \nil} \\ 
   \mathit{bar}(i) \eqdef & \setof{(h,B,k)}{B(i) = \lnil} \\ 
-  \mathit{lock}(i) \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\lambda x.\lnil) \conj k = \setprocessors \setminus \set{i}} \\ 
-  \mathit{trim}(h,B,k) \eqdef & (h,(\lambda x .\lnil),k)\\  
-  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,k)}{h = \nil \conj B = \funup{(\lambda x.\lnil)}{\ptup{i}{\llit{(\ell,v)}}} \conj k \subseteq \set{i}} \\ 
-  \mathit{flushed}(\ell,v) \eqdef & \setof{(h,B,k)}{h = \ell \mapsto v \conj B = (\lambda x .\lnil) \conj k = \nil} 
+  \mathit{lock}(i) \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\fun{x}\lnil) \conj k = \setprocessors \setminus \set{i}} \\ 
+  \mathit{trim}(h,B,k) \eqdef & (h,(\fun{x}\lnil),k)\\  
+  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,k)}{h = \nil \conj B = \funup{(\fun{x}\lnil)}{\ptup{i}{\llit{(\ell,v)}}} \conj k \subseteq \set{i}} \\ 
+  \mathit{flushed}(\ell,v) \eqdef & \setof{(h,B,k)}{h = \ell \mapsto v \conj B = (\fun{x}\lnil) \conj k = \nil} 
 \end{align*}
 
 \begin{figure}[ht]
@@ -1889,7 +1894,7 @@ A more pleasing axiom would use the $\fbar{e}$ assertion in a more local way. Be
 
 In the application of the rule of consequence in the derivation above, it assumed that $x \fwrite{0} 1 \fseq \fbar{0} \sentails x \fwrite{0} 1$. With semantics of $\fbar{e}$ as given in Chapter~\ref{ch:multiprocessor}, this is of course not the case; for the same reason that $\bexpt \fsep P$ does not semantically entail $P$. One possible adjustment to the semantics of $\fbar{e}$ to allow for such an entailment is to augment the model of memory systems with an array of flags---one for each processor---that indicates whether or not the corresponding processor has flushed its writes. The meaning of the temporal separating conjunction would then be changed such that the composition $\mu_0 \fseq \mu_1$ is defined only when the buffers of $\mu_0$ for which the corresponding flag is set in $\mu_1$ are empty. An alternative way to think about this is that the flags indicate that the part of the write buffer described by the state includes the bottom-most part of the buffer; and if the state is extended with any additional writes, then those writes must necessarily not be in the buffer but instead flushed to memory. 
 
-More formally, let a memory system be a four-tuple $(h,B,k,L)$, where $L : \setprocessors \tfun \setbooleans$. The temporal separating conjunction $(h,B,k,L) \fseq (h',B',k',L')$ would then require the following additional definedness condition: \[ \forall i \in \setprocessors \st L'(i) \onlyif B(i) = \lnil.\] When the separation is defined, these maps are combined with a functional join operation: \[ L \sqcup L' \eqdef \lambda x \st L(i) \disj L'(i).\]
+More formally, let a memory system be a four-tuple $(h,B,k,L)$, where $L : \setprocessors \tfun \setbooleans$. The temporal separating conjunction $(h,B,k,L) \fseq (h',B',k',L')$ would then require the following additional definedness condition: \[ \forall i \in \setprocessors \st L'(i) \onlyif B(i) = \lnil.\] When the separation is defined, these maps are combined with a functional join operation: \[ L \sqcup L' \eqdef \fun{x} L(x) \disj L'(x).\]
 
 A consequence of this model is that it is no longer the case that $x \fwrite{0} 1 \fseq \fbar{0} \sequiv x \fwrite{1} 1 \fseq \fbar{1}$, for the states that satisfy the left-side assertion have $L(0) = \bvt$ and $L(1) = \bvf$, while the opposite true for the right-side assertion. Similarly, it no longer makes sense to define the points-to assertion $x \fpointsto 1$ as being definitionally equal, as in Chapter~\ref{ch:multiprocessor}, to the composite assertion $\exists i \st (x \fwrite{i} 1 \fseq \fbar{i})$. Instead, models of the points-to assertion should have the flag set on all processors, so that $x \fwrite{y} 1 \fseq \fbar{y} \sentails x \fpointsto 1$, for any $y$. The converse entailment does not hold, however, but that is not important to the example derivation above. 
 
@@ -2110,7 +2115,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 
         In the case of \textsc{c-tau}, $c' = (\cstore{e}{f}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))}$. 
 
-        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and $\mu_1 = \mu_0 \fseq (\nil,\beta,\nil)$, where $\beta$ defined by: \[ \beta \eqdef \lambda x . \begin{cases}
+        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and $\mu_1 = \mu_0 \fseq (\nil,\beta,\nil)$, where $\beta$ defined by: \[ \beta \eqdef \fun{x} \begin{cases}
           \ext{s}(f) & \text{if $x = \ext{s}(e)$} \\ 
           \lnil & \text{otherwise.}
         \end{cases}\] From $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$ we have:        
