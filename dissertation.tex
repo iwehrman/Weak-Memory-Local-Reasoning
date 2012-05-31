@@ -1610,11 +1610,6 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 	e \fpointsto e' \eqdef & \exists x \st e \fwrite{x} e' \conj \fbar{x}\\
 \end{align*} (We will note later that $(e \fwrite{x} e' \conj \fbar{x})\sequiv e \fwrite{y} e' \conj \fbar{y}$, which justifies this notation.) 
 
-\subsection{Predicates}
-\label{sec:predicates}
-
-Assertions denote particular sets of machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
-
 \subsection{Satisfaction}
 
 The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
@@ -1659,12 +1654,44 @@ We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef 
 	P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
-As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+\subsection{Flushing Closure}
+\label{sec:predicates}
+
+Assertions denote particular sets of machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
+
+
+
+
+Assertions can thus be thought of as syntactic constructs that denote sets of multiprocessor models, and hence sets of multiprocessor machine states. We now extend the flushing order on memory systems described in Section~\ref{sec:uniprocessor-predicates} to generalized memory systems: 
+\begin{definition}
+  For generalized multiprocessor memory systems $\nu_1 = (\mu_1,\Gamma_1)$ and $\nu_2 = (\mu_2,\Gamma_2)$, \begin{align*}
+    \nu_2 \taustep_\Gamma \nu_1 \iffdef & \exists i \in \Gamma_1 \st \mu_1 \taustep_i \mu_2 \\ 
+    \nu_1 \modrefines \nu_2 \iffdef & \nu_2 \rtcl{\left(\taustep_\Gamma\right)} \nu_1
+  \end{align*}
+
+  \[ \nu_1 \modrefines \nu_2 \iffdef (\mu_1 = \mu_2 \conj (\gamma_2 \onlyif \gamma_1)) \disj (\mu_1 \taurefines \mu_2 \conj \Gamma_1 = \setprocessors).\]
+\end{definition} It is easy to see that this defines a partial order on generalized memory systems. Furthermore, the set of models denoted by assertions is closed with respect to this order. 
+
+\begin{lemma}
+    \label{lem:assertions-denote-predicates2}
+    % For any assertion $P$, $\pred{P}$ is a predicate. 
+    If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
+\end{lemma}
 
 \begin{lemma}[Flushing closure]
-	\label{lem:flushing-closure}
-	If $s,\mu \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu' \sentails P$. 
+  \label{lem:flushing-closure}
+  If $s,\mu \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu' \sentails P$. 
 \end{lemma}
+
+As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
+
+\begin{corollary}
+  If $s,\mu,\gamma \sentails P$ and $\mu' \taurefines \mu$ then $s,\mu',\bvt \sentails P$. 
+\end{corollary}
+
+\begin{proof}
+$(\mu',\bvt) \modrefines (\mu,\gamma)$ because $\mu' \taurefines \mu \conj \bvt$; then Lemma~\ref{lem:assertions-denote-predicates}. 
+\end{proof}
 
 \subsection{Algebra}
 \label{sec:algebra}
