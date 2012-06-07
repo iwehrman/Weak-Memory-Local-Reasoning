@@ -18,8 +18,8 @@
 \include{notation}
 \include{definitions}
 
-\setcounter{secnumdepth}{3}
-\setcounter{tocdepth}{3}
+% \setcounter{secnumdepth}{3}
+% \setcounter{tocdepth}{3}
 
 \begin{document} 
 
@@ -1482,7 +1482,7 @@ Note that writes committed to the memory are combined by the temporal separator 
 
 \subsubsection{Strong Temporal Separation}
 
-As in the sequential case, we may define a strong variant of temporal separation---that requires both spatial and temporal separation---as the intersection of spatial and temporal separators. For $\nu_0 = (h_0,B_0,K_0,\Gamma_0)$ and $\nu_1 = (h_1,B_1,K_1,\Gamma_1)$, the strong temporal separation $\nu_0 \msseq \nu_1$ is defined by: \[ \nu_0 \msseq \nu_1 \eqdef \begin{cases}
+As in the sequential case, we may define a strong variant of temporal separation---that requires both spatial and temporal separation---as the intersection of spatial and temporal separators. For $\nu_0 = (h_0,B_0,K_0,\Gamma_0)$ and $\nu_1 = (h_1,B_1,K_1,\Gamma_1)$, the strong temporal separation $\nu_0 \msseq \nu_1$ is defined as follows: \[ \nu_0 \msseq \nu_1 \eqdef \begin{cases}
   \nu_0 \mseq \nu_1 & \text{if $\nu_0 \compat_\seqsym \nu_1$ and $\nu_0 \compat_\sepsym \nu_1$} \\ 
   \bot & \text{otherwise.}
 \end{cases}\] Observe that if $\nu_0 \msseq \nu_1$ is defined then $\nu_0 \mseq \nu_1$ is defined and is identical, and $\nu_0 \msep \nu_1$ is defined with $\nu_0 \msseq \nu_1 \in \nu_0 \msep \nu_1$.
@@ -1490,18 +1490,16 @@ As in the sequential case, we may define a strong variant of temporal separation
 \subsection{Spatiotemporal Separation}
 \label{sec:spatiotemporal-separation}
 
-We begin by defining a semantic function on memory systems called \emph{weak interleaving separation}, so-called because it does not require strict disjointness of the memory locations described by its arguments (otherwise it would be \emph{strong}), and because the buffered writes described by its arguments are, approximately, interleaved (as opposed to, say, concatenated). 
-We write $\mu \fhash \mu'$ for the weak interleaving separation of $\sigma$ and $\sigma'$. The range of the function is a \emph{set} of memory systems because interleaving write buffers results in a set of possible interleaved write buffers. This separation function is intended to be as weak as possible, describing a wide variety of memory systems, while still maintaining locality w.r.t.\ the concurrent programming language. This weakness reduces the expressive power of the function, but in later sections we will define stronger, more expressive functions by strengthening this function in a variety of ways. 
+Finally, we again define a \emph{spatiotemporal} separation function on memory, so-called because subsumes both spatial and temporal separation. We write $\nu_0 \mhash \nu_1$ for the spatiotemporal separation of generalized multiprocessor memory systems $\nu_0$ and $\nu_1$. Spatiotemporal separation subsumes spatial and temporal separation in the sense that, if $\nu_0 \mseq \nu_1$ is defined, then $\nu_0 \mseq \nu_1 \in \nu_0 \mhash \nu_1$ and, similarly, $\nu_0 \msep \nu_1 \subseteq \nu_0 \mhash \nu_1$. This separation function is intended to be as weak as possible, describing a wide variety of memory systems while still maintaining locality w.r.t.\ the concurrent programming language. This weakness reduces the expressive power of the function, which limits its usefulness for describing particular sets of states like pre and postconditions (i.e., for modeling assertions). The weakness of spatiotemporal separation shall later (in Section~\ref{sec:specification-semantics}) be extremely useful, though, for giving a semantics to specifications by outlining liberal conditions for sound frame rules. That is, specifications will later be true when they soundly admit spatiotemporal frames; and because spatiotemporal separation subsumes both spatial and temporal separation, specifications will also be shown to soundly admit spatial frames and temporal frames. 
 
-We begin by lifting the \emph{overriding} operation---as in the overriding of functions (Section~\ref{sec:functions}) and lists (Section~\ref{sec:lists})---to states. First, we lift list overriding to functions into lists: \[ B \in B_1 \override B_2 \iffdef \forall i \in \dom{B} \st B(i) \in B_1(i) \override B_2(i). \] Overriding $\sigma_1 = (s,h_1,B_1,k_1)$ by $\sigma = (s_2,h_2,B_2,k_2)$, is then given by $\sigma_1 \override \sigma_2$: \[ \sigma_1 \fhash \sigma_2 \eqdef \setof{(s,h_1 \override h_2, B,k_1 \uplus k_2)}{B \in B_1 \override B_2},\] The \emph{weak interleaving separation} of states is defined as the overriding of compatible states: \[ \sigma_1 \fhash \sigma_2 \eqdef \begin{cases}
-  \sigma_1 \override \sigma_2 & \text{if $\sigma_1 \compat \sigma_2$} \\ 
-  \nil & \text{otherwise,} \end{cases} \] where the compatibility relation $\sigma_1 \compat \sigma_2$ is defined as the conjunction of the following conditions: \begin{enumerate}
-  \item $k_1 \cap k_2 = \nil$,
-  \item $\forall i \in \setprocessors \setminus (k_1 \cup k_2) \st \dom{B_1(i)} \cap \dom{h_2} = \nil$, 
-  \item $\forall i,j \in \setprocessors \setminus (k_1 \cup k_2) \st i \neq j \onlyif \dom{B_1(i)} \cap \dom{B_2(j)}$. 
-\end{enumerate}
+For $\nu_0 = (h_0,B_0,K_0,\Gamma_0)$ and $\nu_1 = (h_1,B_1,K_1,\Gamma_1)$, the spatiotemporal separation $\nu_0 \mhash \nu_1$ is defined as follows: \[ \setof{(h_0 \override h_1, B, K_0 \cup K_1, \Gamma_0 \cup \Gamma_1)}{B \in B_0 \override B_1 \conj \nu_0 \compat_\hashsym \nu_1},\] in which the overriding operation on lists $b_0 \override b_1$ is lifted to functions into lists $B_0 \override B_1$ pointwise: \[ B \in B_0 \override B_1 \iffdef \forall i \in \setprocessors \st B(i) \in B_0(i) \override B_1(i),\] and the spatiotemporal compatibility relation $\nu_0 \compat_\hashsym \nu_1$ is defined as follows: 
+\begin{align*}
+\nu_0 \compat_\hashsym \nu_1 \iffdef & K_0 \cap K_1 = \nil \conj \\ 
+  & \forall i \in \setprocessors \setminus (K_0 \cup K_1) \st \dom{B_0(i)} \cap \dom{h_1} = \nil \conj \\  
+  & \forall i,j \in \setprocessors \setminus (K_0 \cup K_1) \st i \neq j \onlyif \dom{B_0(i)} \cap \dom{B_1(j)}. 
+\end{align*}
 
-For convenience, we overload the symbol $\fhash$ to indicate the pointwise lifting of this function to sets of states: \[ S_1 \fhash S_2 \eqdef \cup \setof{s_1 \fhash s_2}{s_1 \in S_1 \conj s_2 \in S_2 \conj s_1 \compat s_2}.\] We use these functions interchangeably when the intended meaning is clear from context, e.g.: \[ s_1 \fhash (s_2 \fhash s_3) = \cup \setof{s_1 \fhash s_{23}}{s_{23} \in s_2 \fhash s_3}.\]
+As with spatial separation, we overload for convenience the symbol $\mhash$ to indicate the pointwise lifting of this function to sets of memory systems: \[ S_1 \mhash S_2 \eqdef \cup \setof{\nu_1 \mhash \nu_2}{\nu_1 \in S_1 \conj \nu_2 \in S_2 \conj \nu_1 \compat_\hashsym \nu_2}.\] We use these functions interchangeably when the intended meaning is clear from context, e.g.: \[ \nu_1 \mhash (\nu_2 \mhash \nu_3) = \cup \setof{\nu_1 \mhash \nu_{23}}{\nu_{23} \in \nu_2 \mhash \nu_3}.\] 
 
 
 \subsection{Spatiotemporal Separation Old}
