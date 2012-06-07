@@ -3,7 +3,6 @@
 \usepackage[bookmarks=true,bookmarksopen=true]{hyperref}
 \usepackage{url}
 \usepackage{datetime}
-\usepackage{proof}
 \usepackage{enumerate}
 \usepackage{graphicx}
 \usepackage{proof}
@@ -1140,7 +1139,7 @@ To aid this description, it can help to augment the commands with auxiliary prog
 c'_s \eqdef & \clock_0 \opseq \cstore{d}{1}_0 \opseq \cassign{s}{1}_0 \opseq \cunlock_0
 \end{align*}
 
-We can now provide an invariant that is maintained by both the augmented sender $c'_s$ and the given receiver $c_r$. Informally, the evolution of the value and ownership of the memory at address $d$ can be described as follows: the memory at address $d$ is shared between the threads and has value $s$ until the value of $x$ becomes 1, when the receiver takes sole ownership of $d$. And, crucially, it is impossible for $x = 1$ and $s = 0$ simultaneously because the receiver will only take ownership if the sender has set the flag. So, more formally, either the receiver has not taken ownership and $d$ is shared with value $s$---i.e., $x = 0 \fsep d \fpointsto s$---or the receiver takes sole ownership with $x = 1$ and $s = 1$ and the address is no longer shared---i.e., $x = 1 \conj \femp$. Hence, we define the invariant $I$ as follows: \[ I \eqdef (x = 0 \conj d \fpointsto s) \disj (x = 1 \conj s = 1 \conj \femp).\]
+We can now provide an invariant that is maintained by both the augmented sender $c'_s$ and the given receiver $c_r$. Informally, the evolution of the value and ownership of the memory at address $d$ can be described as follows: the memory at address $d$ is shared between the threads and has value $s$ until the value of $x$ becomes 1, when the receiver takes sole ownership of $d$. And, crucially, it is impossible for $x = 1$ and $s = 0$ simultaneously because the receiver will only take ownership if the sender has set the flag. So, more formally, either the receiver has not taken ownership and $d$ is shared with value $s$---i.e., $x = 0 \conj d \fpointsto s$---or the receiver takes sole ownership with $x = 1$ and $s = 1$ and the address is no longer shared---i.e., $x = 1 \conj \femp$. Hence, we define the invariant $I$ as follows: \[ I \eqdef (x = 0 \conj d \fpointsto s) \disj (x = 1 \conj s = 1 \conj \femp).\]
 
 We may then try to prove the following constituent specifications, which maintain the invariant $I$: \begin{align*}
   &\spec{I}{s = 0 \conj \femp}{c'_s}{s = 1 \conj \femp} \\
@@ -1478,14 +1477,15 @@ On the other hand, the temporal conjunction $\nu'_0 \mseq \nu_1$, with memory sy
 
 The role of the fourth conjunct is similar: to rule out temporal conjunctions that lead to instability. Consider now $\nu'_1 = (\nil,\funup{\arnil}{\ptup{1}{\llit{(1,2)}}}, \nil, \set{1})$, which is differs from $\nu_1$ above in that the write that was flushed there is here still pending in the first buffer. Again, $\nu_0$ is incompatible, by the fourth conjunct, with $\nu'_1$ because the buffered write on processor 0 in $\nu_0$ conflicts with the buffered write on processor 1 in $\nu'_1$. If, however, these memory systems were temporally compatible---i.e., if the fourth conjunct above were omitted in the temporal compatibility relation---then the value of $\nu_0 \mseq \nu'_1$ would be as follows: \[ \nu_0 \mseq \nu'_1 = (\nil, \funup{\arnil}{\ptup{0}{\llit{(1,3)}}, \ptup{1}{\llit{(1,2)}}}, \nil, \set{0,1}).\] The address 1 in this memory system is, again, unstable w.r.t.\ processor 1: if the write on buffer 1 flushes to memory, followed by the write on buffer 0 flushing to memory, a load on processor 1 might result in value 3 instead of 2. However, $\nu'_0 \mseq \nu'_1$ is well defined because the buffered write on processor 0 in memory system $\nu'_0$ is blocked, and so it is impossible for processor 1 to observe that write. 
 
+Note that writes committed to the memory are combined by the temporal separator using heap overriding (first defined in Section~\ref{sec:functions}). This reflects the fact that previous committed writes are subsumed by more recent flushed writes. For example, consider $\nu_0 = (1 \mapsto 2,\arnil,\nil,\set{0})$ and $\nu_1 = (1 \mapsto 3, \arnil, \nil, \set{0})$. In the temporal separation $\nu_0 \mseq \nu_1$, the later write overrides the earlier write because $(1 \mapsto 2) \override (1\mapsto 3) = 1 \mapsto 3$: \[ \nu_0 \mseq \nu_1 = (1 \mapsto 3, \arnil, \nil, \set{0}).\] Also note that, because there can be no ordering among writes on distinct buffers, none is created by temporal separation of such memory systems. For example, because $\nu'_0 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,3)}}},\nil,\nil)$ and $\nu'_1 = (\nil,\funup{\arnil}{\ptup{1}{\llit{(2,4)}}},\nil,\nil)$ have writes only on distinct buffers, their temporal separation is symmetric: \[ \nu'_0 \mseq \nu'_1 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,3)}},\ptup{1}{\llit{(2,4)}}},\nil,\nil) = \nu'_1 \mseq \nu'_0.\]
+
 
 \subsubsection{Strong Temporal Separation}
 
-The strong sequential separation of states, written $\sigma \fsseq \sigma'$ combines the ideas behind the previous two notions of separation: it requires disjointness of the additional memory addresses, and also requires that all additional writes precede those already present. When defined, its value is the same as for weak sequential separation: \[ (s,h,B,l) \fsseq (s,h',B',l) \eqdef (s,h \lapp h', B \lapp B',l).\] The definedness conditions are as follows: \begin{align*}
-  \left(\dom{h} \cup \bigcup_{i \in \setprocessors} \dom{B_i} \right) \cap \left( \dom{h'} \cup \bigcup_{i \in \setprocessors} \dom{B'_i}\right) & = \nil \\ B = \nil \disj h' & = \lnil.
-\end{align*}
-
-Observe that if $\sigma \fsseq \sigma'$ then $\sigma \fseq \sigma'$ is defined and identical, $\sigma \fsep \sigma'$ is defined and refined by the former state, and $\sigma \fhash \sigma'$ is also defined and refined by the former state.
+As in the sequential case, we may define a strong variant of temporal separation---that requires both spatial and temporal separation---as the intersection of spatial and temporal separators. For $\nu_0 = (h_0,B_0,K_0,\Gamma_0)$ and $\nu_1 = (h_1,B_1,K_1,\Gamma_1)$, the strong temporal separation $\nu_0 \msseq \nu_1$ is defined by: \[ \nu_0 \msseq \nu_1 \eqdef \begin{cases}
+  \nu_0 \mseq \nu_1 & \text{if $\nu_0 \compat_\seqsym \nu_1$ and $\nu_0 \compat_\sepsym \nu_1$} \\ 
+  \bot & \text{otherwise.}
+\end{cases}\] Observe that if $\nu_0 \msseq \nu_1$ is defined then $\nu_0 \mseq \nu_1$ is defined and is identical, and $\nu_0 \msep \nu_1$ is defined with $\nu_0 \msseq \nu_1 \in \nu_0 \msep \nu_1$.
 
 \subsection{Spatiotemporal Separation}
 \label{sec:spatiotemporal-separation}
