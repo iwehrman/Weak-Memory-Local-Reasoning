@@ -296,6 +296,7 @@ As for function overriding, list overriding has the basic property that, if $a \
         \item $l \override (m \override n) = (l \override m) \override n$. 
         \item $\dom{\funof{m \override n}} = \dom{\funof{m}} \cup \dom{\funof{n}}$. 
         \item If $\dom{\funof{m}} \cap \dom{\funof{n}} = \nil$ then $m \override n = m \merge n$, and hence $m \override n = n \override m$. 
+        \item $(m \lapp n) \in (m \override n) \subseteq (m \merge n)$.
     \end{enumerate}
 \end{lemma}
 
@@ -1501,98 +1502,41 @@ For $\nu_0 = (h_0,B_0,K_0,\Gamma_0)$ and $\nu_1 = (h_1,B_1,K_1,\Gamma_1)$, the s
 
 As with spatial separation, we overload for convenience the symbol $\mhash$ to indicate the pointwise lifting of this function to sets of memory systems: \[ S_1 \mhash S_2 \eqdef \cup \setof{\nu_1 \mhash \nu_2}{\nu_1 \in S_1 \conj \nu_2 \in S_2 \conj \nu_1 \compat_\hashsym \nu_2}.\] We use these functions interchangeably when the intended meaning is clear from context, e.g.: \[ \nu_1 \mhash (\nu_2 \mhash \nu_3) = \cup \setof{\nu_1 \mhash \nu_{23}}{\nu_{23} \in \nu_2 \mhash \nu_3}.\] 
 
+It is easy to see that if $\nu_0 \mseq \nu_1$ is defined then so is $\nu_0 \mseq \nu_1 \in \nu_0 \mhash \nu_1$ because all the definedness conditions of the latter are required of the former. And, when defined, $\nu_0 \mseq \nu_1 \in \nu_0 \mhash \nu_1$ because $B_0 \lapp B_1$ is a member of the overriding $B_0 \override B_1$ (by Lemma~\ref{lem:list-override}). Similarly, if $\nu_0 \msep \nu_1$ is defined then so is $\nu_0 \mhash \nu_1$, because the strong disjointness requirements of the former imply the definedness conditions of the latter. And generally $\nu_0 \msep \nu_1 \subseteq \nu_0 \mhash \nu_1$ because, when $\nu_0 \compat_\sepsym \nu_1$, $h_0 \uplus h_1 = h_0 \override h_1$ (by Lemma~\ref{lem:override}) and $B_0 \override B_1 = B_0 \merge B_1$ (by Lemma~\ref{lem:list-override}). 
 
-\subsection{Spatiotemporal Separation Old}
+As an example, consider $\nu_0 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,2)}}},\nil,\nil)$ and $\nu_1 = (3 \mapsto 4,\funup{\arnil}{\ptup{0}{\llit{(1,3)}}},\set{0},\nil)$. Note that $\nu_0 \mseq \nu_1$ is undefined because the buffer 0 is complete in $\nu_1$, but the buffer 0 is not empty in $\nu_0$. And $\nu_0 \msep \nu_1$ is empty as well because of failed disjointness conditions, with $1 \in \dom{B_0}(0) \cap B_1(0)$. But $\nu_0 \mhash \nu_1$ is nonempty because $\nu_0 \compat_\hashsym \nu_1$, with: \[ (3 \mapsto 4,\funup{\arnil}{\ptup{0}{\llit{(1,2),(1,3)}}},\set{0},\nil) \in \nu_0 \mhash \nu_1.\] Note that the result of a load of either location $1$ or $3$ on processor 0 in memory system $\nu_1$ above is preserved in the expanded memory system $\nu_0 \mhash nu_1$. This is important because, as mentioned above, we wish for commands to be local w.r.t.\ spatiotemporal separation so that conjunctions derived from it may have sound corresponding frame rule. 
 
-We begin by defining a partial semantic function for the most general separating conjunction, written $\sigma \fhash \sigma'$, from which the others are derived. This operation will be particularly useful for giving meaning to program specifications, while the other, stronger conjunctions will be more useful for expressing the axioms for commands in the specification logic. 
-
-We wish for commands to be local w.r.t.~this conjunction so that it may have a corresponding frame rule. By way of example, consider a load $\cload{x}{\ell}$ on processor $i$ in a state $\sigma$. Let us consider the manners in which the state $\sigma$ can be extended while preserving the essential behavior of the command---viz.~the resultant value of the load. \begin{enumerate}
-  \item We \emph{may} augment $\sigma$ with additional buffered writes to address $\ell$ on buffer $i$ if those writes occur before the most recent writes to $\ell$ on $i$. The load command only returns the most recent buffered write, so additional earlier buffered writes will not affect the result. 
+As further explanation of the definition of spatiotemporal separation, consider a load of location $\ell$ on processor $i$ in an arbitrary memory system $\nu_1$ for which $\ell$ is defined. Let us consider the manners in which the memory system can be extended while preserving the resultant value of the load. \begin{enumerate}
+  \item We \emph{may} augment $\nu_1$ with additional buffered writes to address $\ell$ on buffer $i$ if those writes occur before the most recent writes to $\ell$ on $i$. The load command only returns the most recent buffered write, so additional earlier buffered writes will not affect the result. 
   
-  \item We \emph{may not} augment $\sigma$ with additional buffered writes to address $\ell$ on $i$ that are more recent than the those already present, for these additional writes certainly will affect the outcome of the load. 
+  \item We \emph{may not} augment $\nu_1$ with additional buffered writes to address $\ell$ on $i$ that are more recent than the those already present, for these additional writes certainly will affect the outcome of the load. 
   
-  \item We \emph{may} augment $\sigma$ with additional committed writes to address $\ell$ if those writes again precede previously committed writes to $\ell$ in $\sigma$. (Because committed writes implicitly precede all buffered writes, this is consistent with the first scenario in which the $i$th buffer is safely augmented with earlier writes.)
+  \item We \emph{may} augment $\nu_1$ with additional committed writes to address $\ell$ if those writes again precede previously committed writes to $\ell$ in $\nu_1$. (Because committed writes implicitly precede all buffered writes, this is consistent with the first scenario in which the $i$th buffer is safely augmented with earlier writes.)
   
-  \item We \emph{may} augment $\sigma$ with additional writes to locations distinct from $\ell$, either committed to memory or buffered on $i$, regardless of their ordering with respect to writes to $\ell$ already present. The resultant value of the load command is not affected by writes to the locations not being loaded.  
+  \item We \emph{may} augment $\nu_1$ with additional writes to locations distinct from $\ell$, either committed to memory or buffered on $i$, regardless of their ordering with respect to writes to $\ell$ already present. The resultant value of the load command is not affected by writes to the locations not being loaded.  
   
-  \item We \emph{may} augment $\sigma$ with additional writes to locations distinct from $\ell$ on other buffers as well. Although those writes may commit before or after the $\ell$-writes being loaded by $i$, they do not affect the result. 
+  \item We \emph{may} augment $\nu_1$ with additional writes to locations distinct from $\ell$ on other buffers as well. Although those writes may commit before or after the $\ell$-writes being loaded by $i$, they do not affect the result. 
   
   \item Finally, consider writes to address $\ell$ on buffer $j$ with $j \neq i$. In general, this may adversely affect the load on $i$ because we are unable to predict the order in which the writes buffered by $j$ will commit to memory. It is possible that they will commit after buffered writes on $i$ have committed but before the load has completed, thus affecting the result of the load. So it would seem that such writes must be disallowed. 
   
-  There is however a case in which it is safe to augment $\sigma$ in this way: namely, when buffer $j$ is blocked. For in this case writes buffered by $j$ will not be committed to memory, and so there is no risk that these writes will be made visible to the load on $i$. Hence, we \emph{may} augment other buffers with writes to $\ell$ when $j$ is blocked. 
+  There is however a case in which it is safe to augment $\nu_1$ in this way: namely, when buffer $j$ is blocked. For in this case writes buffered by $j$ will not be committed to memory, and so there is no risk that these writes will be made visible to the load on $i$. Hence, we \emph{may} augment other buffers with writes to $\ell$ when $j$ is blocked. 
 
   Furthermore, it is safe to augment the state with $\ell$-writes to other buffers when the lock is held by \emph{any} processor, and not just by $i$. For if $j$, with $j \neq i$, holds the lock, then a load on processor $i$ cannot proceed! And so, from a partial correctness standpoint, the writes on other processors are quite irrelevant.
 \end{enumerate}
 
-We now define a function motivated by these scenarios, which maps pairs of states into a set of states. This is accomplished by specifying with which states $\sigma_0$ a given state $\sigma$ may be augmented, and by defining the possible results of this augmentation as the set of states $\sigma_0 \fhash \sigma$. Note that because some of the preceding scenarios are asymmetric---e.g., we may augment $\sigma$ with earlier writes to a particular location, but not later writes---the resulting operation will not be commutative. This is, of course, in contrast to the semantic function for the separating conjunction of traditional separation logic. 
-
-We begin by proposing a definition for $\sigma \fhash \sigma'$, and afterward determine compatibility between states. $\sigma \fhash \sigma'$ is defined approximately as the product of operations; one of that combines the heaps of $\sigma$ and $\sigma'$, and one that combines the individual buffers of $\sigma$ and $\sigma'$. These operations shall only constrain the order among the writes in $\sigma$ and $\sigma'$ when necessary.  Furthermore, both operations are essentially the same: the \emph{overriding} of heaps and buffers, as defined in Sections~\ref{sec:functions} and~\ref{sec:lists}, respectively. From the scenarios above, we see that the only additional ordering constraints required are between writes to the same address, which is exactly what is provided by the overriding operations. 
-
-The proposed definition is as follows: 
-\[ (s,h_1,B_1,k_1) \fhash (s,h_2,B_2,k_2) \eqdef \bigcup_{B \in B_1 \override B_2} \set{(s,h_1 \override h_2, B,k_1 \uplus k_2)},\] where $B_1 \override B_2$ indicates list overriding lifted pointwise to functions: \[ B \in B_1 \override B_2 \iffdef \forall i \in \dom{B} \st B(i) \in B_1(i) \override B_2(i). \]
-
-Let us check to see whether this definition is consistent with the scenarios above: \begin{enumerate}
+We can now check the proposed definition of $\nu_0 \mhash \nu_1$ for consistency with the scenarios above: \begin{enumerate}
   \item Buffered $\ell$-writes on buffer $i$ necessarily precede any $\ell$-writes already present on buffer $i$ by definition of buffer overriding, $B_i \override B'_i$, consistent with the corresponding scenario above. 
   
-  \item Buffered writes to other locations on buffer $i$ are unordered w.r.t.~existing writes by definition of buffer overriding, $B_i \override B'_i$, consistent with the corresponding scenario above.
+  \item Buffered writes to locations other than $\ell$ on buffer $i$ are unordered w.r.t.\ existing writes by definition of buffer overriding, $B_i \override B'_i$, consistent with the corresponding scenario above.
   
   \item Committed $\ell$-writes necessarily precede any $\ell$-writes already present in the heap by definition of heap overriding, $h \override h'$, consistent with the corresponding scenario above. 
   
   \item Committed writes to other locations are unordered w.r.t.~writes already present in the heap by definition of heap overriding $h \override h'$, consistent with the corresponding scenario above. 
   
-  \item There are no ordering constraints among buffered writes on different write buffers by definition of overriding write buffer arrays, $B \fhash B'$. So in case the additional writes are to locations different from the already present writes, the definition is consistent with the corresponding scenario above. 
+  \item There are no ordering constraints among buffered writes on different write buffers by definition of overriding write buffer arrays, $B \override B'$. So in case the additional writes are to locations different from the already present writes, the definition is consistent with the corresponding scenario above. 
   
-  \item Unfortunately, in the case the additional buffered writes are to locations already present on in other buffers, the definition is \emph{not} consistent with the corresponding scenario above, because $\ell$ writes may added to buffer $j$ even when $\ell$ writes already exist in buffer $i$. 
+  \item Finally, in the case the additional buffered writes are to locations already present on in other buffers or in the heap, the definition is consistent with the corresponding scenario above only by the definedness conditions, which ensure that buffer $j$ is blocked when $\ell$ writes are added if $\ell$ writes already exist in buffer $i$, or in the heap. 
 \end{enumerate}
-
-We begin by defining \emph{compatibility} between states, written $\sigma \compat \sigma'$. For $\sigma = (s,h,B,k)$ and $\sigma' (s',h',B',k')$, the following four conditions must be satisfied for compatibility: \begin{enumerate}
-  \item $s = s'$,
-  \item $k \cap k' = \nil$,
-  \item $\forall j \in \setprocessors \setminus (k \cup k') \st \dom{B_j} \cap \dom{h'} = \nil$, 
-  \item $\forall i,j \in \setprocessors \setminus (k \cup k') \st i \neq j \onlyif \dom{B_j} \cap \dom{B_i}$. 
-\end{enumerate}
-
-To recover consistency, we must rule out the case in which the additional buffered writes to location $\ell$ on processor $i$ are ruled out if when writes to $\ell$ are already present in the heap, or already present in a buffer other than $i$. But, if $i$ is not live, then we need not rule out such additional writes. And we need only concern ourselves with conflicts between additional writes on $i$ and already present writes on another processor $j$ if both $i$ and $j$ are live; i.e., if the lock is available. These two conditions---ruling out conflicts among additional buffered writes with \emph{1)} the existing heap, and \emph{2)} the existing buffered writes---can be described as follows: \begin{align*}
-  \forall j \in  \live{l} \st \dom{B_j} \cap \dom{h'} & = \nil \\
-  \forall j \in  \live{l} \st \forall i \in \live{l} \st i \neq j \onlyif \dom{B_j} \cap \dom{B'_i} & = \nil. \\
-\end{align*} Or, more succinctly, as a single condition: \[ \forall j \in \live{l} \st \dom{B_j} \cap \left( \dom{h'} \cup \bigcup_{i \in \live{l} \st i \neq j} \dom{B'_i}\right) = \nil. \] 
-This, along with the requirement that the stacks and locks of the two states agree, is the definedness condition for $\sigma \fhash \sigma'$.
-
-We refer to this as \emph{weak interleaving separation}, because only minimal ordering is created among the writes in the conjoined states (and unordered writes represent their various interleavings), and because memory addresses are not partitioned, but instead only weakly separated. 
-
-\begin{lemma}
-  \label{lem:separation-tau}
-  If $\sigma \in \sigma_1 \fhash \sigma_2$ and $\sigma \taustep \sigma'$, then either there exists $\sigma'_1$ such that $\sigma' \in \sigma'_1 \fhash \sigma_2$, or there exists $\sigma'_2$ such that $\sigma' \in \sigma_1 \fhash \sigma'_2$.
-\end{lemma}
-
-\begin{proof}
-  Without loss of generality, assume $\sigma = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\sigma' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\sigma_1 = (s,h_1,B_1,k_1)$ and $\sigma_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
-
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\sigma'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\sigma_1 \taustep \sigma'_1$. By definedness of $\sigma_1 \fhash \sigma_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\sigma' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \sigma'_1 \fhash \sigma_2$. 
-
-  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\sigma'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\sigma_2 \taustep \sigma'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\sigma' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \sigma_1 \fhash \sigma_2$. 
-\end{proof}
-
-\begin{lemma}
-  \label{lem:separation-refinement}
-  If $\sigma \in \sigma_1 \fhash \sigma_2$ and $\sigma' \taurefines \sigma$ then there exists $\sigma'_1,\sigma'_2$ such that $\sigma'_1 \taurefines \sigma_1$, $\sigma'_2 \taurefines \sigma_2$ and $\sigma' \in \sigma'_1 \fhash \sigma'_2$. 
-\end{lemma}
-
-\begin{proof}
-  By induction on the number of $\tau$ steps from $\sigma$ to $\sigma'$. The base case is trivial. Otherwise, assume that $\sigma'' \taurefines \sigma$ and $\sigma'' \taustep \sigma'$, and by the induction hypothesis that there exists $\sigma''_1,\sigma''_2$ such that $\sigma''_1 \taurefines \sigma_1$, $\sigma''_2 \taurefines \sigma_2$ and $\sigma'' \in \sigma''_1 \fhash \sigma''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
-\end{proof}
-
-
-It is possible to imagine strengthening this conjunction in two ways: \begin{enumerate}
-  \item With stronger disjointness requirements, barring \emph{any} overlap in the addresses to which there are writes between the conjuncts, regardless of the lock status and the presence of ``covering'' writes in the present state.  
-  
-  \item With stronger ordering properties, yielding a state in which all writes added precede all existing writes, instead of one in which only ordering between writes to the same address is created. Weak interleaving separation is unable to express ordering constraints among writes to the same location on a single buffer. 
-\end{enumerate}
-
-The next three subsections describe separating conjunctions that embrace one or both of these additional properties. 
-
-
-
 
 \section{Assertions}
 \label{sec:assertions}
@@ -1661,9 +1605,6 @@ We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef 
 
 Assertions denote particular sets of machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
 
-
-
-
 Assertions can thus be thought of as syntactic constructs that denote sets of multiprocessor models, and hence sets of multiprocessor machine states. We now extend the flushing order on memory systems described in Section~\ref{sec:uniprocessor-predicates} to generalized memory systems: 
 \begin{definition}
   For generalized multiprocessor memory systems $\nu_1 = (\mu_1,\Gamma_1)$ and $\nu_2 = (\mu_2,\Gamma_2)$, \begin{align*}
@@ -1673,6 +1614,31 @@ Assertions can thus be thought of as syntactic constructs that denote sets of mu
   \end{align*}
 
 \end{definition} It is easy to see that this defines a partial order on generalized memory systems. Furthermore, the set of models denoted by assertions is closed with respect to this order. 
+
+The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
+
+\begin{lemma}
+  \label{lem:separation-tau}
+  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu \modstep \nu'$, then either there exists $\nu'_1$ such that $\nu' \in \nu'_1 \fhash \nu_2$, or there exists $\nu'_2$ such that $\nu' \in \nu_1 \fhash \nu'_2$.
+\end{lemma}
+
+\begin{proof}
+  Without loss of generality, assume $\nu = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\nu' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\nu_1 = (s,h_1,B_1,k_1)$ and $\nu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\nu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\nu_1 \modstep \nu'_1$. By definedness of $\nu_1 \fhash \nu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\nu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \nu'_1 \fhash \nu_2$. 
+
+  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\nu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\nu_2 \modstep \nu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\nu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \nu_1 \fhash \nu_2$. 
+\end{proof}
+
+\begin{lemma}
+  \label{lem:separation-refinement}
+  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu' \taurefines \nu$ then there exists $\nu'_1,\nu'_2$ such that $\nu'_1 \taurefines \nu_1$, $\nu'_2 \taurefines \nu_2$ and $\nu' \in \nu'_1 \fhash \nu'_2$. 
+\end{lemma}
+
+\begin{proof}
+  By induction on the number of $\tau$ steps from $\nu$ to $\nu'$. The base case is trivial. Otherwise, assume that $\nu'' \taurefines \nu$ and $\nu'' \taustep \nu'$, and by the induction hypothesis that there exists $\nu''_1,\nu''_2$ such that $\nu''_1 \taurefines \nu_1$, $\nu''_2 \taurefines \nu_2$ and $\nu'' \in \nu''_1 \fhash \nu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
+\end{proof}
+
 
 \begin{lemma}
     \label{lem:assertions-denote-predicates2}
