@@ -911,7 +911,7 @@ Because the spatial separating conjunction $P \fsep Q$ is commutative, there is 
 \end{align*}
 
 \subsection{Separating Implications}
-\label{sec:seq-sep-imp}
+\label{sec:separating-implications}
 
 Although not required for the sequential logic, the concept of a \emph{separating implication} will be useful later. Thus, we shall introduce the concept first in the comparatively sequential setting to ease their discussion later.
 
@@ -1544,13 +1544,13 @@ We can now check the proposed definition of $\nu_0 \mhash \nu_1$ for consistency
 
 Assertions denote sets of machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
 	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
-	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar  \fexp{P} \bnfbar \\ 
-	& (P \fhash P') \bnfbar (P \fsep P') \bnfbar (P \fseq P') \bnfbar (P \fsseq P')
+	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar (P \fsep P') \bnfbar (P \fsepi P')  \bnfbar \\ 
+	&  (P \fseq P') \bnfbar (P \fseqli P') \bnfbar (P \fseqri P')
 \end{align*} 
 
-The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar{e}$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. $\fexp{P}$ describes the heap expansion of $P$; i.e., states in which the heap-part of the memory system satisfies $P$. $(P \fseq P')$ describes per-write buffer concatenation of writes. $(P \fsseq P')$ is like $(P \fseq P')$, but in which disjointness of allocated locations is required. $(P \fsep P')$ also requires disjointness, but interleaves the described writes on each write buffer instead of concatenating them. Finally, $(P \fhash P')$ is weaker than the three other separating conjunctions, and provides the ``most general'' frame rule. 
+The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar{e}$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. The temporal separating conjunction $(P \fseq P')$ describes per-write buffer concatenation of writes. The spatial separating conjunction $(P \fsep P')$ requires disjointness of the locations described by $P$ and $P'$, and interleaves the described writes on each write buffer instead of concatenating them. The spatial separating implication $(P \fsepi P')$ and the left and right temporal separating implications $(P \fseqli P')$ and $(P \fseqri P')$ are analogous to the separating implications defined earlier in Section~\ref{sec:separating-implications}. 
 
-The set of free variables of an assertion, written $\fv{P}$, is defined as usual. 
+The set of free variables of an assertion, written $\fv{P}$, is defined as usual. For example, $\fv{\exists z \st x \fwrite{z} y \fseq \fbar{z}} = (\fv{x \fwrite{z} y} \cup \fv{\fbar{z}}) \setminus \set{z} = (\set{x,y,z} \cup \set{z}) \setminus \set{z} = \set{x,y}$. 
 
 \paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \begin{align*}
 	e \fpointsto e' \eqdef & \exists x \st e \fwrite{x} e' \conj \fbar{x}\\
@@ -1561,12 +1561,11 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
 
 The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}, which makes use of the following auxiliary definitions: \begin{align*}
-  \mathit{emp} \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\fun{x}\lnil) \conj k = \nil} \\ 
-  \mathit{bar}(i) \eqdef & \setof{(h,B,k)}{B(i) = \lnil} \\ 
-  \mathit{lock}(i) \eqdef & \setof{(h,B,k)}{h = \nil \conj B = (\fun{x}\lnil) \conj k = \setprocessors \setminus \set{i}} \\ 
-  \mathit{trim}(h,B,k) \eqdef & (h,(\fun{x}\lnil),k)\\  
-  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,k)}{h = \nil \conj B = \funup{(\fun{x}\lnil)}{\ptup{i}{\llit{(\ell,v)}}} \conj k \subseteq \set{i}} \\ 
-  \mathit{flushed}(\ell,v) \eqdef & \setof{(h,B,k)}{h = \ell \mapsto v \conj B = (\fun{x}\lnil) \conj k = \nil} 
+  \mathit{emp} \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \nil} \\ 
+  \mathit{bar}(i) \eqdef & \setof{(h,B,K,\Gamma) \in \mathit{emp}}{i \in \Gamma} \\ 
+  \mathit{lock}(i) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \setprocessors \setminus \set{i}} \\ 
+  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \funup{\arnil}{\ptup{i}{\llit{(\ell,v)}}} \conj K \subseteq \set{i}} \\ 
+  \mathit{flushed}(\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \ell \mapsto v \conj B = \arnil \conj K = \nil} 
 \end{align*}
 
 \begin{figure}[ht]
@@ -1575,20 +1574,21 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 	\begin{minipage}{\columnwidth}
 	\[
 	\begin{array}{lllll}
-		s,\mu & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
-		s,\mu & \sentails & P \disj Q & \iffdef & s,\mu \sentails P \disj s,\mu \sentails Q \\
-		s,\mu & \sentails & P \conj Q & \iffdef & s,\mu \sentails P \conj s,\mu  \sentails Q \\
-		s,\mu & \sentails & \exists x \st P & \iffdef & \exists v \in \setvalues \st \funup{s}{\ptup{x}{v}},\mu \sentails P \\
-		s,\mu & \sentails & \forall x \st P & \iffdef & \forall v \in \setvalues \st \funup{s}{\ptup{x}{v}},\mu \sentails P \\
-		s,\mu & \sentails & \femp & \iffdef & \mu \in \mathit{emp} \\ 
-		s,\mu & \sentails & \fbar{e} & \iffdef & \mu \in \mathit{bar}(\ext{s}(e)) \\ 
-		s,\mu & \sentails & \flock{e} & \iffdef & \mu \in \mathit{lock}(\ext{s}(e))\\ 
-    s,\mu & \sentails & \fexp{P} & \iffdef & \forall \mu' \st \mu' \taurefines \mu \onlyif \mathit{trim}(\mu') \sentails P \\ 
-		s,\mu & \sentails & e \fwrite{e'} e'' & \iffdef & \mu \in \mathit{pending}(\ext{s}(e'), \ext{s}(e), \ext{s}(e'')) \disj \\ &&&& \mu \in \mathit{flushed}(\ext{s}(e'), \ext{s}(e), \ext{s}(e'')) \\
-		s,\mu & \sentails & P \fhash P' & \iffdef & \exists \mu_0,\mu_1 \st \mu_0 \fhash \mu_1 = \mu \conj \\ & & & & \;\;s,\mu_0 \sentails P  \conj s,\mu_1 \sentails P' \\
-    s,\mu & \sentails & P \fsep P' & \iffdef & \exists \mu_0,\mu_1 \st \mu_0 \fsep \mu_1 = \mu \conj \\ & & & & \;\;s,\mu_0 \sentails P  \conj s,\mu_1 \sentails P' \\
-    s,\mu & \sentails & P \fseq P' & \iffdef & \exists \mu_0,\mu_1 \st \mu_0 \fseq \mu_1 = \mu \conj \\ & & & & \;\;s,\mu_0 \sentails P  \conj s,\mu_1 \sentails P' \\
-    s,\mu & \sentails & P \fsseq P' & \iffdef & \exists \mu_0,\mu_1 \st \mu_0 \fsseq \mu_1 = \mu \conj \\ & & & & \;\;s,\mu_0 \sentails P  \conj s,\mu_1 \sentails P'
+		s,\nu & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
+		s,\nu & \sentails & P \disj Q & \iffdef & s,\nu \sentails P \disj s,\nu \sentails Q \\
+		s,\nu & \sentails & P \conj Q & \iffdef & s,\nu \sentails P \conj s,\nu  \sentails Q \\
+		s,\nu & \sentails & \exists x \st P & \iffdef & \exists v \in \setvalues \st \funup{s}{\ptup{x}{v}},\nu \sentails P \\
+		s,\nu & \sentails & \forall x \st P & \iffdef & \forall v \in \setvalues \st \funup{s}{\ptup{x}{v}},\nu \sentails P \\
+		s,\nu & \sentails & \femp & \iffdef & \nu \in \mathit{emp} \\ 
+		s,\nu & \sentails & \fbar{e} & \iffdef & \nu \in \mathit{bar}(\ext{s}(e)) \\ 
+		s,\nu & \sentails & \flock{e} & \iffdef & \nu \in \mathit{lock}(\ext{s}(e))\\ 
+    %s,\nu & \sentails & \fexp{P} & \iffdef & \forall \nu' \st \nu' \taurefines \nu \onlyif \mathit{trim}(\nu') \sentails P \\ 
+		s,\nu & \sentails & e \fwrite{e'} e'' & \iffdef & \nu \in \mathit{pending}(\ext{s}(e'), \ext{s}(e), \ext{s}(e'')) \disj \\ &&&& \nu \in \mathit{flushed}(\ext{s}(e'), \ext{s}(e), \ext{s}(e'')) \\
+    s,\nu & \sentails & P \fsep P' & \iffdef & \exists \nu_0,\nu_1 \st \nu \in \nu_0 \msep \nu_1 \conj \\ & & & & \;\;s,\nu_0 \sentails P  \conj s,\nu_1 \sentails P' \\
+    s,\nu & \sentails & P \fseq P' & \iffdef & \exists \nu_0,\nu_1 \st \nu = \nu_0 \mseq \nu_1 \conj \\ & & & & \;\;s,\nu_0 \sentails P  \conj s,\nu_1 \sentails P' \\
+    s,\nu & \sentails & P \fsepi P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_0 \sentails P \conj \nu_1 \in \nu_0 \msep \nu \onlyif \\ & & & & \;\; s,\nu_1 \sentails P' \\
+    s,\nu & \sentails & P \fseqli P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_0 \sentails P \conj \nu_1 = \nu_0 \mseq \nu \onlyif \\ & & & & \;\; s,\nu_1 \sentails P' \\
+    s,\nu & \sentails & P \fseqri P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_1 \sentails P' \conj \nu_0 = \nu \mseq \nu_1 \onlyif \\ & & & & \;\; s,\nu_0 \sentails P
 	\end{array}
 	\]
 \end{minipage}}
