@@ -270,7 +270,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
 \subsection{Lists}
 \label{sec:lists}
 
-The empty list is denoted by $\lnil$, the literal list by $\llit{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$. 
+The empty list is denoted by $\lnil$, the literal list by $\llit{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$, and $\arnil$ for the function $(\fun{x} \lnil)$. 
 
 For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \fun{x} \begin{cases}
 	b &\text{ if $l = l' \lapp \llit{(x,b)}$}\\
@@ -1518,11 +1518,11 @@ For $\nu_0 = (h_0,B_0,K_0,\Gamma_0)$ and $\nu_1 = (h_1,B_1,K_1,\Gamma_1)$, the s
   & \forall i,j \in \setprocessors \setminus (K_0 \cup K_1) \st i \neq j \onlyif \dom{B_0(i)} \cap \dom{B_1(j)}. 
 \end{align*}
 
-It is easy to see that if $\nu_0 \mseq \nu_1$ is defined then so is $\nu_0 \mseq \nu_1 \in \nu_0 \mhash \nu_1$ because all the definedness conditions of the latter are required of the former. And, when defined, $\nu_0 \mseq \nu_1 \in \nu_0 \mhash \nu_1$ because $B_0 \lapp B_1$ is a member of the overriding $B_0 \override B_1$ (by Lemma~\ref{lem:list-override}). Similarly, if $\nu_0 \msep \nu_1$ is defined then so is $\nu_0 \mhash \nu_1$, because the strong disjointness requirements of the former imply the definedness conditions of the latter. And generally $\nu_0 \msep \nu_1 \subseteq \nu_0 \mhash \nu_1$ because, when $\nu_0 \compat_\sepsym \nu_1$, $h_0 \uplus h_1 = h_0 \override h_1$ (by Lemma~\ref{lem:override}) and $B_0 \override B_1 = B_0 \merge B_1$ (by Lemma~\ref{lem:list-override}). 
+It is easy to see that if $\nu_0 \compat_\seqsym \nu_1$ then also $\nu_0 \compat_\hashsym \nu_1$ because all the definedness conditions of the latter are required of the former. And, when $\nu_0 \compat_\seqsym \nu_1$ holds, $\nu_0 \mseq \nu_1 \in \nu_0 \mhash \nu_1$ because $B_0 \lapp B_1$ is a member of the overriding $B_0 \override B_1$ (by Lemma~\ref{lem:list-override}). Similarly, if $\nu_0 \compat_\sepsym \nu_1$ then also $\nu_0 \compat_\hashsym \nu_1$, because the strong disjointness requirements of the former imply the definedness conditions of the latter. And generally $\nu_0 \msep \nu_1 \subseteq \nu_0 \mhash \nu_1$ because, when $\nu_0 \compat_\sepsym \nu_1$, $h_0 \uplus h_1 = h_0 \override h_1$ (by Lemma~\ref{lem:override}) and $B_0 \override B_1 = B_0 \merge B_1$ (by Lemma~\ref{lem:list-override}). Consequently, all the equations and inclusions in the examples of the previous two sections, for temporal and spatial separation, hold for spatiotemporal separation as well. 
 
-As an example, consider $\nu_0 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,2)}}},\nil,\nil)$ and $\nu_1 = (3 \mapsto 4,\funup{\arnil}{\ptup{0}{\llit{(1,3)}}},\set{0},\nil)$. Note that $\nu_0 \mseq \nu_1$ is undefined because the buffer 0 is complete in $\nu_1$, but the buffer 0 is not empty in $\nu_0$. And $\nu_0 \msep \nu_1$ is empty as well because of failed disjointness conditions, with $1 \in \dom{B_0}(0) \cap B_1(0)$. But $\nu_0 \mhash \nu_1$ is nonempty because $\nu_0 \compat_\hashsym \nu_1$, with: \[ (3 \mapsto 4,\funup{\arnil}{\ptup{0}{\llit{(1,2),(1,3)}}},\set{0},\nil) \in \nu_0 \mhash \nu_1.\] Note that the result of a load of either location $1$ or $3$ on processor 0 in memory system $\nu_1$ above is preserved in the expanded memory system $\nu_0 \mhash nu_1$. This is important because, as mentioned above, we wish for commands to be local w.r.t.\ spatiotemporal separation so that conjunctions derived from it may have sound corresponding frame rule. 
+As an example of the weakness of spatiotemporal separation, consider $\nu_0 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,2)}}},\nil,\nil)$ and $\nu_1 = (3 \mapsto 4,\funup{\arnil}{\ptup{0}{\llit{(1,3)}}},\nil,\set{0})$. Observe that $\nu_0 \mseq \nu_1$ is undefined because the buffer 0 is complete in $\nu_1$ (i.e., $0 \in \Gamma_1$), but nonempty in $\nu_0$. And $\nu_0 \msep \nu_1$ is empty as well because of failed disjointness conditions (e.g., $1 \in \dom{B_0(0)} \cap \dom{B_1(0)}$. But in contrast $\nu_0 \compat_\hashsym \nu_1$ does hold, and hence $\nu_0 \mhash \nu_1$ is nonempty, with: \[ (3 \mapsto 4,\funup{\arnil}{\ptup{0}{\llit{(1,2),(1,3)}}},\nil,\set{0}) \in \nu_0 \mhash \nu_1.\] Note that the result of a load of either location $1$ or $3$ on processor 0 in memory system $\nu_1$ above is preserved in the expanded memory systems of $\nu_0 \mhash \nu_1$. This is important because, as mentioned above, we wish for commands to be local w.r.t.\ spatiotemporal separation so that conjunctions derived from it may have sound corresponding frame rule. 
 
-As further explanation of the definition of spatiotemporal separation, consider a load of location $\ell$ on processor $i$ in an arbitrary memory system $\nu_1$ for which $\ell$ is defined. Let us consider the manners in which the memory system can be extended while preserving the resultant value of the load. \begin{enumerate}
+As further explanation of the definition of spatiotemporal separation, consider a load of location $\ell$ on processor $i$ in an arbitrary memory system $\nu_1$ for which $\ell$ is defined. Let us consider the manners in which $\nu_1$ can be extended while preserving the resultant value of the load. \begin{enumerate}
   \item We \emph{may} augment $\nu_1$ with additional buffered writes to address $\ell$ on buffer $i$ if those writes occur before the most recent writes to $\ell$ on $i$. The load command only returns the most recent buffered write, so additional earlier buffered writes will not affect the result. 
   
   \item We \emph{may not} augment $\nu_1$ with additional buffered writes to address $\ell$ on $i$ that are more recent than the those already present, for these additional writes certainly will affect the outcome of the load. 
@@ -1533,11 +1533,11 @@ As further explanation of the definition of spatiotemporal separation, consider 
   
   \item We \emph{may} augment $\nu_1$ with additional writes to locations distinct from $\ell$ on other buffers as well. Although those writes may commit before or after the $\ell$-writes being loaded by $i$, they do not affect the result. 
   
-  \item Finally, consider writes to address $\ell$ on buffer $j$ with $j \neq i$. In general, this may adversely affect the load on $i$ because we are unable to predict the order in which the writes buffered by $j$ will commit to memory. It is possible that they will commit after buffered writes on $i$ have committed but before the load has completed, thus affecting the result of the load. So it would seem that such writes must be disallowed. 
+  \item Finally, consider writes to address $\ell$ on buffer $j$ with $j \neq i$. In general, this may adversely affect the load on $i$ because we are unable to predict the order in which the writes buffered by $j$ will commit to memory. It is possible, e.g., that they will commit after buffered writes on $i$ have committed but before the load has completed, thus affecting the result of the load. So it would seem that such writes must be disallowed. 
   
-  There is however a case in which it is safe to augment $\nu_1$ in this way: namely, when buffer $j$ is blocked. For in this case writes buffered by $j$ will not be committed to memory, and so there is no risk that these writes will be made visible to the load on $i$. Hence, we \emph{may} augment other buffers with writes to $\ell$ when $j$ is blocked. 
+  But there is a situation in which it is safe to augment $\nu_1$ in this way: namely, when buffer $j$ is blocked. Then, writes buffered by $j$ will not be committed to memory, and so there is no risk that they will be made visible to the load on $i$. Hence, we \emph{may} augment other buffers with writes to $\ell$ when $j$ is blocked. 
 
-  Furthermore, it is safe to augment the state with $\ell$-writes to other buffers when the lock is held by \emph{any} processor, and not just by $i$. For if $j$, with $j \neq i$, holds the lock, then a load on processor $i$ cannot proceed! And so, from a partial correctness standpoint, the writes on other processors are quite irrelevant.
+  % Furthermore, it is safe to augment the state with $\ell$-writes to other buffers when the lock is held by \emph{any} processor, and not just by $i$. For if $j$, with $j \neq i$, holds the lock, then a load on processor $i$ cannot proceed! And so, from a partial correctness standpoint, the writes on other processors are quite irrelevant.
 \end{enumerate}
 
 We can now check the proposed definition of $\nu_0 \mhash \nu_1$ for consistency with the scenarios above: \begin{enumerate}
@@ -1551,7 +1551,7 @@ We can now check the proposed definition of $\nu_0 \mhash \nu_1$ for consistency
   
   \item There are no ordering constraints among buffered writes on different write buffers by definition of overriding write buffer arrays, $B \override B'$. So in case the additional writes are to locations different from the already present writes, the definition is consistent with the corresponding scenario above. 
   
-  \item Finally, in the case the additional buffered writes are to locations already present on in other buffers or in the heap, the definition is consistent with the corresponding scenario above only by the definedness conditions, which ensure that buffer $j$ is blocked when $\ell$ writes are added if $\ell$ writes already exist in buffer $i$, or in the heap. 
+  \item Finally, in the case the additional buffered writes are to locations already present on in other buffers or in the heap, the definition is consistent with the corresponding scenario above by way of the definedness conditions, which ensure that buffer $j$ is blocked when $\ell$ writes are added if $\ell$ writes already exist in buffer $i$ or in the heap. 
 \end{enumerate}
 
 
@@ -1570,7 +1570,7 @@ In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty memo
 \label{sec:assertions}
 \label{sec:multiprocessor-assertions}
 
-Assertions denote sets of machine states, and are used to write the pre- and post-conditions of commands in the specification logic. The language is defined by the following grammar: \begin{align*}
+Assertions are used to describe certain sets of multiprocessor models---and hence multiprocessor states and memory systems---and are used to write the pre- and post-conditions of commands in the specification logic. The core language is defined by the following grammar: \begin{align*}
 	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
 	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar (P \fsep P') \bnfbar (P \fsepi P')  \bnfbar \\ 
 	&  (P \fseq P') \bnfbar (P \fseqli P') \bnfbar (P \fseqri P')
@@ -1579,10 +1579,6 @@ Assertions denote sets of machine states, and are used to write the pre- and pos
 The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar{e}$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. The temporal separating conjunction $(P \fseq P')$ describes per-write buffer concatenation of writes. The spatial separating conjunction $(P \fsep P')$ requires disjointness of the locations described by $P$ and $P'$, and interleaves the described writes on each write buffer instead of concatenating them. The spatial separating implication $(P \fsepi P')$ and the left and right temporal separating implications $(P \fseqli P')$ and $(P \fseqri P')$ are analogous to the separating implications defined earlier in Section~\ref{sec:separating-implications}. 
 
 The set of free variables of an assertion, written $\fv{P}$, is defined as usual. For example, $\fv{\exists z \st x \fwrite{z} y \fseq \fbar{z}} = (\fv{x \fwrite{z} y} \cup \fv{\fbar{z}}) \setminus \set{z} = (\set{x,y,z} \cup \set{z}) \setminus \set{z} = \set{x,y}$. 
-
-\paragraph{Assertion Abbreviations} The following abbreviation, analogous to the points-to formula of separation logic, describes the result of flushing a single write to memory: \begin{align*}
-	e \fpointsto e' \eqdef & \exists x \st e \fwrite{x} e' \conj \fbar{x}\\
-\end{align*} (We will note later that $(e \fwrite{x} e' \conj \fbar{x})\sequiv e \fwrite{y} e' \conj \fbar{y}$, which justifies this notation.) 
 
 \subsection{Satisfaction}
 
@@ -1593,7 +1589,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
   \mathit{bar}(i) \eqdef & \setof{(h,B,K,\Gamma) \in \mathit{emp}}{i \in \Gamma} \\ 
   \mathit{lock}(i) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \setprocessors \setminus \set{i}} \\ 
   \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \funup{\arnil}{\ptup{i}{\llit{(\ell,v)}}} \conj K \subseteq \set{i}} \\ 
-  \mathit{flushed}(\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \ell \mapsto v \conj B = \arnil \conj K = \nil} 
+  \mathit{flushed}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \ell \mapsto v \conj B = \arnil \conj K = \nil \conj i \in \Gamma} 
 \end{align*}
 
 \begin{figure}[ht]
@@ -1623,10 +1619,28 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 	\caption{\label{fig:satisfaction-relation} The satisfaction relation}
 \end{figure}
 
-We write $\pred{P}$ for the set of states that satisfies $P$,\[ \pred{P} \eqdef \setof{\sigma}{\sigma \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
+We write $\pred{P}$ for the set of models that satisfy $P$,\[ \pred{P} \eqdef \setof{\amod}{\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
 	P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
 	P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
+
+
+\subsection{Additional Assertions} 
+
+As before, we shall define the strong temporal separating conjunction as the additive conjunction of spatial and temporal separating conjunctions: \[ P \fsseq P' \eqdef (P \fsep P') \conj (P \fseq P').\]
+
+Again, the spatial separating conjunction $P \fsep Q$ is commutative, so there is no need to define its converse operation, but he temporal separating conjunction is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseqc P$, and similarly for $P \fsseqc Q$: \begin{align*}
+  P \fseqc Q \eqdef & Q \fseq P \\ 
+  P \fsseqc Q \eqdef & Q \fsseq P. \\ 
+\end{align*}
+
+In the sequential assertion logic we defined the points-to assertion $e \fpointsto e'$ as an abbreviation of of a leads-to assertion followed temporally by a barrier assertion. In the concurrent assertion logic, however, the situation is not as simple. The leads-to assertions are here annotated with expressions indicating the identifier of the processor on which they are buffered, and similarly for barrier assertions. We might try to define a points-to assertion as a leads-to assertion on a certain processor temporally conjoined with a barrier assertion on the same processor: \[
+  e \fpointsto e' \eqdef \exists x \st e \fwrite{x} e' \fseq \fbar{x}
+\] The intuition behind this abbreviation is that the result of flushing on one processor should be indistinguishable from the result of flushing the same write on a different processor, and hence the choice of a particular processof from which the write originated is unimportant. But, in the model described in this document, this is only true of models for which all buffers are complete; and in general models of assertions need not have all buffers complete. As a consequence of the abbreviation above, among the models of $1 \fwrite{0} 1 \fseq 2 \fpointsto 2$ are included some in which the write to location $1$ is buffered on processor 0, whereas there should arguably be none. 
+
+We might instead try a universal quantification instead of an existential one: \[e \fpointsto e' \eqdef \forall x \st e \fwrite{x} e' \fseq \fbar{x} \] But this too is unsuitable, for such formulas are necessarily inconsistent: the quantifier ranges over integer values, but not all integer values denote processor identifiers; and the matrix of the formula is only consistent when when the variable denotes a processor identifier. To get around this, we would also have to change the models of the leads-to and barrier assertions to denote empty models (instead of no models) when parametrized with something other than a processor identifier. 
+
+Most likely, this simply indicates a flaw in the model and logic presented thus far. Immediately, the best solution is to simply add the points-to formula to the assertion language as an atomic formula, and define the intended semantics (in which every buffer is complete) directly: \[ s,(h,B,K,\Gamma) \satisfies e \fpointsto e' \iffdef h = \ext{s}(e) \mapsto \ext{s}(e') \conj B = \arnil \conj K = \nil \conj \Gamma = \setprocessors.\] This could potentially make reasoning about syntactic entailments between assertions more difficult; in the meantime, it still provides the semantic entailments that are more relevant to the current goals of the project. 
 
 \subsection{Flushing Closure}
 \label{sec:predicates}
