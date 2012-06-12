@@ -1419,7 +1419,7 @@ A state is called \emph{coherent} if each location has writes buffered by at mos
 
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}_z} = \set{x,y,z}$ and $\mod{\cload{x}{y+1}_z} = \set{x}$.  
 
-\section{Multiprocessor Models and Separation}
+\section{Separation}
 
 In this section we define a series of notions of separation, analogous to those defined in Chapter~\ref{ch:uniprocessor}, but for multiprocessor states. As in the sequential, uniprocessor case, the goal for these notions of separation is to allow for local reasoning, by modeling separating conjunctions that have sound frame rules. 
 
@@ -1582,9 +1582,8 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 
 \subsection{Satisfaction}
 
-The meaning of assertions is given by a satisfaction relation $\sigma \sentails P$, relating states $\sigma$ to assertions $P$. The set of states that satisfies an assertion will be a predicate, as described in Section~\ref{sec:predicates}. 
-
-The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}, which makes use of the following auxiliary definitions: \begin{align*}
+The meaning of assertions is given by a satisfaction relation $\amod \sentails P$, relating \emph{models} $\amod$ to assertions $P$. A model is a pair $(s,\nu)$ consisting of a stack $s$ and a generalized multiprocessor memory system $\nu$. 
+The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}. For concision, the text of the definition makes use of the following auxiliary set definitions: \begin{align*}
   \mathit{emp} \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \nil} \\ 
   \mathit{bar}(i) \eqdef & \setof{(h,B,K,\Gamma) \in \mathit{emp}}{i \in \Gamma} \\ 
   \mathit{lock}(i) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \setprocessors \setminus \set{i}} \\ 
@@ -2305,8 +2304,13 @@ Processor identifiers & $i,j,k$ \\
 Memory addresses (aka locations) & $\ell$ \\ 
 Lists (generally) & $l,m,n$ \\ 
 Lists (as write buffers) & $b$ \\ 
+Buffer arrays & $B$ \\ 
 Stacks & $s$ \\ 
+Heaps & $h$ \\ 
+Blocking sets & $K$ \\ 
+Buffer-completeness sets & $\Gamma$ \\ 
 Memory systems & $\mu$ \\ 
+Generalized memory systems & $\nu$ \\ 
 States & $\sigma$ \\ 
 Expressions & $e,f$ \\ 
 Primitive commands & $p$ \\
