@@ -1724,14 +1724,13 @@ As in the uniprocessor semantics, a central claim is that the denotation $\pred{
 
 An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. 
 
-\begin{lemma}
+\begin{corollary}
     \label{lem:flushing-closure}
     % For any assertion $P$, $\pred{P}$ is a predicate. 
     If $s,(\mu,\Gamma) \sentails P$ and $\mu' \taurefines \mu$ then there exists $\Gamma'$ such that $s,(\mu',\Gamma') \sentails P$. 
-\end{lemma}
+\end{corollary}
 
-Intuitively, assertions may be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
-
+Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language and hence also of the program logic. 
 
 \section{Concurrent Specifications}
 \label{sec:specifications}
@@ -1763,8 +1762,8 @@ The axioms of the logic are given in Figure~\ref{fig:axioms}.
 		\infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq P}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq P)\conj x = e'}}
 		\vspace{1em}
 
-		\infax[store]{\spec{J}{(e \fwrite{i} e'') \fseq P}{\cstore{e}{e'}_i}{(e 
-		\fwrite{i} e'') \fseq P \fseq (e \fwrite{i} e')}}
+		\infax[store]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e 
+		\fwrite{i} e'') \fsseq P) \fseq (e \fwrite{i} e')}}
 		\vspace{1em}
 		
 		\infax[fence]{\spec{J}{\femp}{\cfence_i}{\fbar{i}}}
@@ -1778,18 +1777,18 @@ The axioms of the logic are given in Figure~\ref{fig:axioms}.
 	\caption{\label{fig:axioms}Axioms}
 \end{figure}
 
-The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as usual. The two axioms for $\cload{x}{e}$ reflect the fact that the write to be loaded may reside either in the buffer or in the heap. The schematic variable $P$ may be used to describe buffered writes to locations other than $e$ that are more recent than the write to $e$ being loaded, but not more recent writes to $e$. 
+The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as in Hoare logic, identical to the corresponding axioms of the sequential program logic except for the presence of the (arbitrary) invariant $J$. The load and store axioms are also similar to those of the sequential program logic, but the writes described by the pre- and post-condition are annotated with the processor identifier that annotates the command, which indicates the processor on which the writes are buffered. And similarly for the fence command, which introduces a barrier assertion annotated with the appropriate processor identifier. Finally, the lock and unlock commands produce and consume, respectively, a lock assertion annotated by the appropriate processor identifier. 
+Observe that the write in the precondition of both the load and store axioms need not be buffered: the placeholder assertion $P$ can be instantiated with an appropriate barrier assertion to indicate that the write has been flushed: 
+\infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq (\fbar{i} \fseq P')}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq (\fbar{i} \fseq P'))\conj x = e'}} It is interesting to note though that this only describes the result of loading a write in memory that originated from the processor performing the load. It does not, for example, allow processor $i$ to load a write that originated on buffer $j$ (with $j \neq i$).\todo{I can say a lot more about this, but it's not clear that to do so would be worthwhile.}
 
-The write in the precondition of the store axiom is a witness to the allocation status of $e$. There are other possible axioms for the store command, e.g.: 
-	\infax[store-buf]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fwrite{i} e'') \fsseq P) \fseq e \fwrite{i} e'}}
+The given axioms for the $\clock$ and $\cunlock$ commands are sound but rather weak insofar as they do not reflect the implicit fencing that is coincident with these commands. The axioms, however, can easily be strengthened as follows: 
+	\infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i} \fsep \fbar{i}}}
 
-	\infax[store-mem]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e \fpointsto e'') \fsseq P) \fseq e \fwrite{i} e'}}
-These reflect the two cases distinguished by the load axioms, and may or may not be more useful in practice. The axiom for $\cfence$ simply filters away states in which there are buffered writes. 
+	\infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\fbar{i}}}
 
-The axioms for $\clock$ and $\cunlock$ may be strengthened as follows to reflect the fact those commands are associated with implicit fences: 
-	\infax[lock]{\spec{J}{P}{\clock_i}{(P \fhash \flock{i}) \conj \fbar{i}}}
 
-	\infax[unlock]{\spec{J}{P \fhash \flock{i}}{\cunlock_i}{P \conj \fbar{i}}}
+The logical and structural inference rules of the logic are given in Figure~\ref{fig:inference-rules}. The logical rules require little explanation: besides the addition of the invariant assertion, they are unchanged from the previous chapter. Note again that, although the strong temporal conjunction is \emph{defined} as the additive conjunction of spatial and temporal conjunctions, its frame rule is not derivable from the other rules, which justifies the rule's inclusion. The spatial separating conjunction is commutative, but the others---which have a temporal aspect---are not. As in the sequential program logic, we have left-side frame rules only for these conjunctions. 
+
 
 \begin{figure}[p]
 	\centering
@@ -1835,8 +1834,6 @@ The axioms for $\clock$ and $\cunlock$ may be strengthened as follows to reflect
 	\end{minipage}}
 	\caption{\label{fig:inference-rules}Inference rules}
 \end{figure}
-The logical and structural inference rules of the logic are given in Figure~\ref{fig:inference-rules}. The logical rules require little explanation. Observe that there is a single left-side frame rule for each of the four separating conjunctions. The strong interleaving conjunction is commutative, and so with the rule of consequence effectively provides a right-side frame rule as well. 
-
 There has been no attempt to provide a conjunction rule because there has been no attempt as yet to identify a suitable notion of precision~\cite{DBLP:journals/entcs/GotsmanBC11}. 
 
 The structural rules for sequential composition, nondeterministic choice, loops and concurrency are as in Concurrent Separation Logic. In particular, the concurrency rule requires agreement between the two processes on the value shared invariant, and the strong interleaving separating conjunction is used to partition the local states. Note that both this conjunction and the concurrent composition command are commutative. Only the invariant rule differs from Concurrent Separation Logic. There, we require that the lock be held while accessing the shared invariant. 
