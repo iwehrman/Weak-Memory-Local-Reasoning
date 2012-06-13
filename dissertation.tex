@@ -1641,63 +1641,6 @@ We might instead try a universal quantification instead of an existential one: \
 
 Most likely, this simply indicates a flaw in the model and logic presented thus far. Immediately, the best solution is to simply add the points-to formula to the assertion language as an atomic formula, and define the intended semantics (in which every buffer is complete) directly: \[ s,(h,B,K,\Gamma) \satisfies e \fpointsto e' \iffdef h = \ext{s}(e) \mapsto \ext{s}(e') \conj B = \arnil \conj K = \nil \conj \Gamma = \setprocessors.\] This could potentially make reasoning about syntactic entailments between assertions more difficult; in the meantime, it still provides the semantic entailments that are more relevant to the current goals of the project. 
 
-\subsection{Flushing Closure}
-\label{sec:predicates}
-
-Assertions denote particular sets of machine states, which we refer to as predicates. In particular, a predicate is a set of states $S$ that satisfies the following flushing-closure property: if $\sigma \in S$ and $\sigma \taustep \sigma'$ then $\sigma' \in S$. The property is needed for soundness w.r.t.\ the memory model, which allows non-blocked processors to commit buffered writes to memory nondeterministically.  
-
-Assertions can thus be thought of as syntactic constructs that denote sets of multiprocessor models, and hence sets of multiprocessor machine states. We now extend the flushing order on memory systems described in Section~\ref{sec:uniprocessor-predicates} to generalized memory systems: 
-\begin{definition}
-  For generalized multiprocessor memory systems $\nu_1 = (\mu_1,\Gamma_1)$ and $\nu_2 = (\mu_2,\Gamma_2)$, \begin{align*}
-    \nu_2 \pstep{\widehat{\tau},i} \nu_1 \iffdef & \Gamma_2 \subseteq \Gamma_1 \conj i \in \Gamma_1 \conj \mu_2 \pstep{\tau,i} \mu_1 \\ 
-    \nu_2 \pstep{\widehat{\tau}} \nu_1 \iffdef & \exists i \in \setprocessors \st \nu_2 \pstep{\widehat{\tau},i} \nu_1 \\ 
-    \nu_1 \modrefines \nu_2 \iffdef & \nu_2 \rtcl{\pstep{\widehat{\tau}}} \nu_1
-  \end{align*}
-
-\end{definition} It is easy to see that this defines a partial order on generalized memory systems. Furthermore, the set of models denoted by assertions is closed with respect to this order. 
-
-The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
-
-\begin{lemma}
-  \label{lem:separation-tau}
-  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu \modstep \nu'$, then either there exists $\nu'_1$ such that $\nu' \in \nu'_1 \fhash \nu_2$, or there exists $\nu'_2$ such that $\nu' \in \nu_1 \fhash \nu'_2$.
-\end{lemma}
-
-\begin{proof}
-  Without loss of generality, assume $\nu = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\nu' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\nu_1 = (s,h_1,B_1,k_1)$ and $\nu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
-
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\nu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\nu_1 \modstep \nu'_1$. By definedness of $\nu_1 \fhash \nu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\nu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \nu'_1 \fhash \nu_2$. 
-
-  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\nu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\nu_2 \modstep \nu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\nu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \nu_1 \fhash \nu_2$. 
-\end{proof}
-
-\begin{lemma}
-  \label{lem:separation-refinement}
-  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu' \taurefines \nu$ then there exists $\nu'_1,\nu'_2$ such that $\nu'_1 \taurefines \nu_1$, $\nu'_2 \taurefines \nu_2$ and $\nu' \in \nu'_1 \fhash \nu'_2$. 
-\end{lemma}
-
-\begin{proof}
-  By induction on the number of $\tau$ steps from $\nu$ to $\nu'$. The base case is trivial. Otherwise, assume that $\nu'' \taurefines \nu$ and $\nu'' \taustep \nu'$, and by the induction hypothesis that there exists $\nu''_1,\nu''_2$ such that $\nu''_1 \taurefines \nu_1$, $\nu''_2 \taurefines \nu_2$ and $\nu'' \in \nu''_1 \fhash \nu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
-\end{proof}
-
-
-\begin{lemma}
-    \label{lem:assertions-denote-predicates2}
-    % For any assertion $P$, $\pred{P}$ is a predicate. 
-    If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
-\end{lemma}
-
-As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is a predicate; i.e., is closed w.r.t.~flushing. An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. Intuitively, assertions may intuitively be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
-
-\begin{corollary}[Flushing Closure]
-  \label{lem:flushing-closure}
-  If $s,\mu,\Gamma \sentails P$ and $\mu' \taurefines \mu$ then there exists $\Gamma'$ such that $s,\mu',\Gamma' \sentails P$. 
-\end{corollary}
-
-\begin{proof}
-$(\mu',\bvt) \modrefines (\mu,\gamma)$ because $\mu' \taurefines \mu \conj \bvt$; then Lemma~\ref{lem:assertions-denote-predicates}. 
-\end{proof}
-
 \subsection{Algebra}
 \label{sec:algebra}
 
@@ -1746,6 +1689,48 @@ As in the sequential assertion logic, each of the separating conjunctions is ass
 \end{figure}
 
 The first four entailments---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
+
+\subsection{Flushing Closure}
+\label{sec:predicates}
+
+Assertions can thus be thought of as syntactic constructs that denote sets of multiprocessor models, and hence sets of generalized multiprocessor machine states. These sets of models have a special structure: namely, they are down-closed w.r.t.\ a partial order, which encompasses the flushing partial order on multiprocessor memory systems. This section formalizes this property. 
+
+The flushing order on multiprocesor memory systems, described in Section~\ref{sec:uniprocessor-predicates}, is extended a generalized order on generalized multiprocessor memory systems as follows: 
+\begin{definition}
+  For generalized multiprocessor memory systems $\nu_1 = (\mu_1,\Gamma_1)$ and $\nu_2 = (\mu_2,\Gamma_2)$, \begin{align*}
+    \nu_2 \pstep{\widehat{\tau},i} \nu_1 \iffdef & \Gamma_2 \subseteq \Gamma_1 \conj i \in \Gamma_1 \conj \mu_2 \pstep{\tau,i} \mu_1 \\ 
+    \nu_2 \pstep{\widehat{\tau}} \nu_1 \iffdef & \exists i \in \setprocessors \st \nu_2 \pstep{\widehat{\tau},i} \nu_1 \\ 
+    \nu_1 \modrefines \nu_2 \iffdef & \nu_2 \rtcl{\pstep{\widehat{\tau}}} \nu_1
+  \end{align*} 
+\end{definition} Informally, $\nu_1 \modrefines \nu_2$ if $\nu_2$ can flushed its buffer-complete processors to arrive at $\nu_1$. 
+
+The fact that that this order on generalized multiprocessor memory systems encompasses the flushing order on multiprocessor memory systems is formalized by the following lemma. 
+
+\begin{lemma}
+  \label{lem:generalized-order-encompasses-flushing-order}
+  If $\mu_0 \taurefines \mu_1$ then for all $\Gamma_1$ there exists $\Gamma_0$ such that $(\mu_0,\Gamma_0) \modrefines (\mu_1,\Gamma_1)$. 
+\end{lemma}
+
+\begin{proof}
+  If $\mu_0 \taurefines \mu_1$, then there exists some sequence of memory systems such that $\mu'_0 \taustep \cdots \taustep \mu'_n$, with $\mu'_0 = \mu_1$ and $\mu'_n = \mu_0$. For each step in the above sequence, there exists a processor identifier $i$ such that $\mu'_m \pstep{\tau,i} \mu'_{m+1}$. Let $\Gamma_0$ be the set of these identifiers. 
+\end{proof}
+
+As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is closed w.r.t.\ the generalized flushing order. 
+
+\begin{lemma}[Flushing Closure]
+  \label{lem:generalized-flushing-closure}
+  If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
+\end{lemma}
+
+An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. 
+
+\begin{lemma}
+    \label{lem:flushing-closure}
+    % For any assertion $P$, $\pred{P}$ is a predicate. 
+    If $s,(\mu,\Gamma) \sentails P$ and $\mu' \taurefines \mu$ then there exists $\Gamma'$ such that $s,(\mu',\Gamma') \sentails P$. 
+\end{lemma}
+
+Intuitively, assertions may be thought to describe only the ``initial'' states, in which no nondeterministic flushing of writes has taken place, though the semantics encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language---and, hence, of the specification language. 
 
 
 \section{Concurrent Specifications}
@@ -2069,6 +2054,33 @@ In the best case, this work could someday provide a foundation for practically u
 \appendix
 
 \chapter{Proofs}
+
+\section{Flushing Closure}
+
+
+The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
+
+\begin{lemma}
+  \label{lem:separation-tau}
+  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu \modstep \nu'$, then either there exists $\nu'_1$ such that $\nu' \in \nu'_1 \fhash \nu_2$, or there exists $\nu'_2$ such that $\nu' \in \nu_1 \fhash \nu'_2$.
+\end{lemma}
+
+\begin{proof}
+  Without loss of generality, assume $\nu = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\nu' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\nu_1 = (s,h_1,B_1,k_1)$ and $\nu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\nu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\nu_1 \modstep \nu'_1$. By definedness of $\nu_1 \fhash \nu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\nu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \nu'_1 \fhash \nu_2$. 
+
+  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\nu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\nu_2 \modstep \nu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\nu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \nu_1 \fhash \nu_2$. 
+\end{proof}
+
+\begin{lemma}
+  \label{lem:separation-refinement}
+  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu' \taurefines \nu$ then there exists $\nu'_1,\nu'_2$ such that $\nu'_1 \taurefines \nu_1$, $\nu'_2 \taurefines \nu_2$ and $\nu' \in \nu'_1 \fhash \nu'_2$. 
+\end{lemma}
+
+\begin{proof}
+  By induction on the number of $\tau$ steps from $\nu$ to $\nu'$. The base case is trivial. Otherwise, assume that $\nu'' \taurefines \nu$ and $\nu'' \taustep \nu'$, and by the induction hypothesis that there exists $\nu''_1,\nu''_2$ such that $\nu''_1 \taurefines \nu_1$, $\nu''_2 \taurefines \nu_2$ and $\nu'' \in \nu''_1 \fhash \nu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
+\end{proof}
 
 \section{Soundness}
 \label{sec:soundness-proofs}
