@@ -1701,7 +1701,7 @@ $(\mu',\bvt) \modrefines (\mu,\gamma)$ because $\mu' \taurefines \mu \conj \bvt$
 \subsection{Algebra}
 \label{sec:algebra}
 
-A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:equivalences} and~\ref{fig:entailments}, respectively. If a formula contains instances of $\bullet$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the four separating conjunctions. 
+A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:equivalences} and~\ref{fig:entailments}, respectively. If a formula contains instances of $\bullet$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the separating conjunctions. 
 
 \begin{figure}[ht]
 	\centering
@@ -1712,33 +1712,40 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
 		\femp \bullet P \sequiv & P \\
 		(P \bullet P') \bullet P'' \sequiv & P \bullet (P' \bullet P'') \\
 		P \fsep P' \sequiv & P' \fsep P \\
-		P \bullet \flock{e} \sequiv & \flock{e} \bullet P \\
-		e \fwrite{x} e' \conj \fbar{x} \sequiv & e \fwrite{y} e' \conj \fbar{y}
+    P \bullet \flock{e} \sequiv & \flock{e} \bullet P \\
+    \flock{e} \gensym \flock{f} \sequiv & \bexpf \\ 
+    \fbar{e} \gensym \fbar{e} \sequiv & \fbar{e} \\ 
+		(P \gensym P') \fseq \fbar{e} \sequiv & (P \fseq \fbar{e}) \gensym (P' \fseq \fbar{e}) \\ 
+    e \fwrite{e'} e'' \fsep e \fwrite{f'} f'' \sequiv & \bexpf \\ 
+    e \fwrite{e'} e'' \fseq e \fwrite{e'} f \fseq \fbar{e'} \sequiv & e \fwrite{e'} f \fseq \fbar{e'} 
  	\end{align*}
 	\end{minipage}}
 	\caption{\label{fig:equivalences}Semantic equivalences}
 \end{figure}
 
-We note that the four separating conjunctions naturally form a sort of lattice, and that they satisfy the small exchange laws. The full exchange law only holds for the strong interleaving and sequential conjunctions. The law does not hold for the weak instantiations because, e.g., $P \fhash P'$ is not commutative. 
+As in the sequential assertion logic, each of the separating conjunctions is associative and has $\femp$ as a unit. And the spatial separating conjunction is again commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbar{e}$, and $\fbar{e}$ also distributes fully through the separating conjunctions. The separating conjunctions are multiplicative w.r.t.\ the lock assertion $\flock{e}$ and also symmetric. Note that the result of flushing successive writes to the same location is equivalent to flushing just the most recent write. 
 
 \begin{figure}[ht]
 	\centering
 	\resizebox{\columnwidth}{!}{
 	\begin{minipage}{\columnwidth}
 	\begin{align*}
-		P \fsseq P' \sentails & P \fsep P' \\ 
-		P \fsseq P' \sentails & P \fseq P' \\ 
-		P \fsep P' \sentails & P \fhash P' \\ 
-		P \fseq P' \sentails & P \fhash P' \\ 
-		P \bullet (P' \circ P'') \sentails & (P \bullet P') \circ P'' & \text{for $P \bullet P' \sentails P \circ P'$} \\
-		(P \circ P') \bullet P'' \sentails & P \circ (P' \bullet P'') & \text{for $P \bullet P' \sentails P \circ P'$} \\
-		(P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''') \\
-		P \bullet P' \sentails & P'' \bullet P' & \text{if $P \sentails P''$} \\
-		P \bullet P' \sentails & P \bullet P'' & \text{if $P' \sentails P''$}
+        \fbar{e} \sentails & \femp \\ 
+        P \bullet P' \sentails & P'' \bullet P' & \text{if $P \sentails P''$} \\
+        P \bullet P' \sentails & P \bullet P'' & \text{if $P' \sentails P''$}
+\\
+        e \fpointsto f \sentails & e \fwrite{e'} f \\
+        P \fsseq P' \sentails & P \fsep P' \\ 
+        P \fsseq P' \sentails & P \fseq P' \\ 
+        P \bullet (P' \circ P'') \sentails & (P \bullet P') \circ P'' & \text{for $P \bullet P' \sentails P \circ P'$} \\
+        (P \circ P') \bullet P'' \sentails & P \circ (P' \bullet P'') & \text{for $P \bullet P' \sentails P \circ P'$} \\
+        (P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''')
  	\end{align*}
  	\end{minipage}}
 	\caption{\label{fig:entailments}Semantic entailments}
 \end{figure}
+
+The first four entailments---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
 
 
 \section{Concurrent Specifications}
