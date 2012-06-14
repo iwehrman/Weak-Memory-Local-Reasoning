@@ -1849,11 +1849,11 @@ We can also derive ``backward'' variations of the global rules, using the tempor
 
   \infax[unlock-b]{\spec{J}{(P \fseqri \fbar{i}) \fsep \flock{i}}{\cunlock_i}{P}}
 
-Using the invariant rule and the axioms for $\clock$ and $\cunlock$, we can derive the following rule for reasoning about ``locked'' commands, such as those implemented on x86 like atomic increment or compare-and-swap: \infrule[locked]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{J \fsep Q \fsep \flock{i}}}{\spec{J}{P}{\cseq{\clock_i}{\cseq{c}{\cunlock_i}}}{Q \fseq \fbar{i}}} 
+Using the invariant rule and the axioms for $\clock$ and $\cunlock$, we can derive the following rule for reasoning about ``locked'' commands, such as those implemented on x86 like atomic increment or compare-and-swap: \infrule[locked]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{J \fsep Q \fsep \flock{i}}}{\spec{J}{P}{\cseq{\clock_i}{\cseq{c}{\cunlock_i}}}{Q \fseq \fbar{i}}} \todo{It seems that I can give a stronger \textsc{inv} rule that allows \emph{derivation} of a much stronger rule than the \textsc{locked} rule, similar to the \textsc{atomic} command, thus obviating the declaration of a special-purpose rule for locked commands. That would entail redoing the earlier example and rewriting this section.}
 
 A shortcoming of this derived rule specifically, and the existing locking axioms and invariant inference rules generally, is the shared invariant must be general enough to describe buffered writes that may never be observed because of the fencing implicit with the lock commands. For example, the following specification is true but not provable with the current rules:     \[ \spec{x \fpointsto 1}{\femp}{\clock_0 \opseq \cstore{x}{1}_0 \opseq \cunlock_0}{\femp} \] To prove this with the derived \textsc{locked} rule above, we would have to prove the following specification: \[ \spec{\femp}{x \fpointsto 1 \fsep \flock{0}}{\cstore{x}{1}_0}{x \fpointsto 1 \fsep \flock{0}},\] but this is false because the postcondition of the store command yields a buffered write that has not necessarily flushed, yet the postcondition requires that the buffer be empty. 
 
-We remedy this by providing an alternative, stronger invariant axiom that uses the expansion of the invariant, and relies upon commands being well-locked: \infrule[atomic]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{(J \fsep Q \fsep \flock{i}) \fseqri \fbar{i}}}{\spec{J}{P}{\clock_i \opseq c \cunlock_i}{Q}} (We call this the \textsc{atomic} rule to distinguish it from the \textsc{locked} derived rule, though they apply to the same commands.) This inference rule allows for a stronger invariant, such as in the previous example. 
+We remedy this by providing an alternative, stronger invariant axiom that uses the expansion of the invariant, and relies upon commands being well-locked: \infrule[atomic]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{(J \fsep Q \fsep \flock{i}) \fseqri \fbar{i}}}{\spec{J}{P}{\clock_i \opseq c \cunlock_i}{Q}} (We call this the \textsc{atomic} rule to distinguish it from the \textsc{locked} derived rule, though they apply to the same commands.) This inference rule allows for a stronger invariant, such as in the previous example.
  
 We may also consider two additional ``daring'' inference rules, the soundness of which may well be quite difficult to demonstrate. 
     \infrule[shared-load]{\spec{\femp}{J \fsep P}{\cload{x}{e}_i}{J \fsep Q}}{\spec{J}{P}{\cload{x}{e}_i}{Q}} 
@@ -1865,30 +1865,30 @@ The daring rules may be needed to reason about, e.g., x86 spinlock implementatio
 \subsection{Semantics}
 \label{sec:specification-semantics}
 
-A specification asserts the partial correctness of a command. Their informal meaning is roughly analogous to that of concurrent separation logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
+A specification asserts the partial correctness of a command. Its informal meaning is roughly analogous to that of Concurrent Separation Logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
 
-Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall \sigma \sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,J,Q}.\]
+Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall s \st \forall \mu \st (s,\mu,\setprocessors)\sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,J,Q}.\] Observe that only states $(s,\mu)$ for which \emph{buffer-complete models} $(s,\mu,\setprocessors)$ of the precondition are relevant to the meaning of specifications. 
 
 In the sequel, let $\locked{\mu}$ indicate that some processor holds the lock in memory system $\mu$: \[ \locked{h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
 
 We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
-  \item If $c = \cskip$ then $(s,\mu) \sentails Q$.
+  \item If $c = \cskip$ then $(s,\mu,\setprocessors) \sentails Q$.
 
   \item For all $\mu_0,\mu_J,\mu_F$ such that \begin{enumerate}[(i)]
-    \item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
+    \item $\mu_0 \in (\mu_J \msep (\mu_F\mhash \mu))$,
     \item $\complete{\mu_0}$, and
     \item either $(s,\mu_J) \sentails J$ or $\locked{\mu_1}$,
-  \end{enumerate} $c,(s,\mu_1) \nrightarrow \abort$.
+  \end{enumerate} $c,(s,\mu_0) \nrightarrow \abort$.
 
   \item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
     \item $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$,
     \item $\complete{\mu_0}$,
-    \item either $s,\mu_J \sentails J$ or $\locked{\mu_0}$, and 
+    \item either $(s,\mu_J,\setprocessors) \sentails J$ or $\locked{\mu_0}$, and 
     \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
   \end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
     \item $\mu_1 \in (\mu'_J \fsep (\mu'_F \fhash \mu'))$,
     \item $\mu'_F \taurefines \mu_F$,
-    \item either $s',\mu'_J \sentails J$ or $\locked{\mu_1}$, and
+    \item either $(s',\mu'_J,\setprocessors) \sentails J$ or $\locked{\mu_1}$, and
     \item $\safe{n}{c',s',\mu',J,Q}$.
   \end{enumerate}
 
