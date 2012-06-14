@@ -224,7 +224,7 @@ This specification bounds the sort of memory events that can occur in program ex
 
 \section{Mathematical Preliminaries and Notation}
 
-For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$. 
+For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$ as shorthand for $S \uplus \set{\bot}$, assuming $\bot \notin S$. 
 
 \subsection{Relations}
 \label{sec:relations}
@@ -243,7 +243,7 @@ For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, w
 	f(x) & \text{otherwise.}
 \end{cases}\] 
 
-We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$,i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \fun{x}\begin{cases}
+We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \fun{x}\begin{cases}
     f(x) & \text{if $x \in \dom{f}$} \\
     g(x) & \text{else if $x \in \dom{g}$} \\
     \bot & \text{otherwise.}
@@ -302,7 +302,7 @@ As for function overriding, list overriding has the basic property that, if $a \
 
 \section{Universes}
 
-The various universal sets are declared and in some cases defined in Figure~\ref{fig:universes}. Note that, in the case of memory locations (i.e., addresses) and processor identifiers, 0 is excluded. 
+The various universal sets are declared and in some cases defined in Figure~\ref{fig:universes}. Note that, in the case of memory locations (i.e., addresses) and processor identifiers, 0 is excluded. Also note that we use a single set of identifiers $\setidentifiers$ to represent later on both program variables and logical variables. 
 
 \begin{figure}[ht]
 	\centering
@@ -315,6 +315,7 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 	\end{tabular}
 	\caption{\label{fig:universes}Universal Sets}
 \end{figure}
+
 
 \section{Expressions and Stacks}
 \label{sec:expressions}
@@ -364,20 +365,20 @@ By induction on the structure of the expression $e$.
 \chapter{A Sequential Program Logic}
 \label{ch:uniprocessor}
 
-In this chapter we describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer, and the logic is tailored to reason about the behavior of sequential programs w.r.t.\ these states. The logic developed in this chapter is not especially useful; the behavior of sequential program execution on this model is essentially the same as on the typical, strong-memory model (in which memory is modeled as a single array of addresses), and existing logics for reasoning this behavior are certainly simpler than the one developed here. But the sequential program logic is a pedagogical stepping stone toward the current program logic, for which the behavior of programs may well be significantly different from that of a strong-memory model. The development of the sequential logic is vastly simpler than weak-memory multi-processor logic, and many of the more difficult issues in that task can be introduced and explained more easily in a single-processor setting. 
+In this chapter we describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer, and the logic is tailored to reason about the behavior of sequential programs w.r.t.\ these states. The logic developed in this chapter is not especially useful; the behavior of sequential program execution on this model is essentially the same as on the typical, strong-memory model (in which memory is modeled as a single array of addresses), and existing logics for reasoning about this behavior are certainly simpler than the one developed here. But the sequential program logic is a pedagogical stepping stone toward the concurrent program logic, for which the behavior of programs may well be significantly different from that of a strong-memory model. The development of the sequential logic is vastly simpler than the weak-memory, multi-processor logic, and many of the more difficult issues in that task can be introduced and explained more easily in a single-processor setting. 
 
-A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously in \cite{wmsldetails}. 
+A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously \cite{wmsldetails}. 
 
 \section{An Example Proof}
 
 Consider the following simple sequential program $c$, which loads the value at an address $x$ into variable $t$, writes the value $t+1$ into address $y$, and then flushes that write back to memory with a fence instruction: \[ c \eqdef \cload{t}{x} \opseq \cstore{y}{t+1} \opseq \cfence.\] This sequential program will fail with a memory error unless the value of $x$, from which the program loads, is a properly allocated memory address, as well as the value $y$, to which the program writes. Any provable specification of this program must require this of $x$ and $y$ initially. If the value of $x$ and $y$ are indeed allocated addresses, and the value in memory at address $x$ is initially some value $v$, then upon termination the write buffer will be empty and the value in memory at location $y$ will be $v+1$. 
 
 In the program logic we develop throughout this chapter, we express this informal specification of $c$ with the following formal specification: \begin{align}\label{eq:seq-ex-spec} \triple{(x \fpointsto z) \fsep (y \fpointsto -)}{c}{(x \fpointsto z) \fsep (y \fpointsto (z + 1))}.\end{align}
-We write $e \fpointsto f$ to mean that the value in memory at the address given by the integer-valued expression $e$ is equal to the value given by expression $f$---or $e \fpointsto -$ if the value in memory at $e$ is irrelevant. We also write $e \fpointsto f \fsep e' \fpointsto f'$ to mean that $e$ and $e'$ are distinct, allocated memory addresses, with values in memory given by $f$ and $f'$ respectively. Hence, the precondition on the left asserts that $x$ and $y$ are allocated memory locations, the former with value $z$, and the postcondition on the right asserts that, upon executing the command $c$, the value at $x$ remains $z$ and the value at $y$ has been set to $z+1$. 
+We write $e \fpointsto f$ to mean that the value in memory at the address given by the integer-valued expression $e$ is equal to the value given by expression $f$, or $e \fpointsto -$ if the value in memory at $e$ is irrelevant. We also write $e \fpointsto f \fsep e' \fpointsto f'$ to mean that $e$ and $e'$ are distinct, allocated memory addresses, with values in memory given by $f$ and $f'$ respectively. Hence, the precondition on the left asserts that $x$ and $y$ are allocated memory locations, the former with value $z$, and the postcondition on the right asserts that, upon executing the command $c$, the value at $x$ remains $z$ and the value at $y$ has been set to $z+1$. 
 
 Note that the specification above would not be true in case $x$ and $y$ were \emph{aliased} (i.e., if $x$ and $y$ denoted the same memory address) because then the store to $y$ would change the value in memory at $y$ as well as at $x$. Also note that the specification would not be true without trailing $\cfence$ command because the buffered write will not necessarily have committed to memory at the moment the commands have completed their execution. 
 
-A \emph{proof sketch} of the program specification in Equation~\ref{eq:seq-ex-spec} is as follows:
+A \emph{proof sketch} of the program specification in Equation~\ref{eq:seq-ex-spec} is as follows, the details of which will be explained shortly:
 \Calc{
   
   \conn{}{$(x \fpointsto z) \fsep (y \fpointsto -)$}
@@ -407,7 +408,7 @@ As the name indicates, a proof sketch provides a skeleton of a complete proof of
 
   \conn{}{$Q$}
 
-} which indicates that a complete proof will include proofs of the sub-specifications $\triple{P}{c_1}{R}$ and $\triple{R}{c_2}{Q}$, which will be combined in the last step using a rule of inference (\textsc{seq}) for composing specifications of sequentially combined commands: 
+} which indicates that a complete proof will include proofs of the sub-specifications $\triple{P}{c_1}{R}$ and $\triple{R}{c_2}{Q}$ that will be combined, in a final step, using a rule of inference (\textsc{seq}) for composing specifications of sequentially combined commands: 
 \[ \infer[{\textsc{seq}}]{\triple{P}{c_1 \opseq c_2}{Q}}{\infer{\triple{P}{c_1}{R}}{\vdots} & \infer{\triple{R}{c_2}{Q}}{\vdots}}\] where the vertical dots represent the remaining proofs to be supplied. 
 
 Returning to the proof sketch of the program specification in Equation~\ref{eq:seq-ex-spec}, we see that to complete the proof we must derive three sub-specifications, one for each primitive command: \begin{enumerate}
@@ -415,12 +416,12 @@ Returning to the proof sketch of the program specification in Equation~\ref{eq:s
   \item $\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}{\cstore{y}{t+1}}{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}$
   \item $\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}{\cfence}{(x \fpointsto z) \fsep (y \fpointsto (z+1))}$
 \end{enumerate}
-The first specification asserts that the result loading the value $z$ in memory at address $x$ into variable $t$ results in a state that is otherwise unchanged except that $t = z$. The second specification asserts that the result of storing the value $t+1$ to the address $y$ results in the addition of a new buffered write to the state, which may later be committed to memory, overwriting the current, unspecified value. The third specification asserts that the result of explicitly flushing this write to memory overwrites the existing value in memory at $y$ with the value $z+1$. 
+The first specification asserts that the result of loading the value $z$ in memory at address $x$ into variable $t$ results in a state that is otherwise unchanged except that $t = z$. The second specification asserts that the result of storing the value $t+1$ to the address $y$ results in the addition of a new buffered write to the state, which may later be committed to memory, overwriting the current, unspecified value. The third specification asserts that the result of explicitly flushing this write to memory overwrites the existing value in memory at $y$ with the value $z+1$. 
 
 We shall now derive these three specifications. For the first specification, we start by using an instance of the \textsc{load} axiom scheme to show that the result of evaluating the store command $\cstore{t}{y}$ from precondition $x \fpointsto z$ yields the postcondition $x \fpointsto z \conj t = z$.
 \[ 
   \infer[\textsc{load}]{\triple{x \fpointsto z}{\cload{y}{t}}{x \fpointsto z \conj t = z}}{}
-\] We then use the \emph{spatial frame rule} \textsc{frame-sp} to infer extend the pre and postcondition with a description of the value of an additional, distinct memory address $y$: \[ 
+\] We then use the \emph{spatial frame rule} \textsc{frame-sp} to extend the pre- and post-condition with a description of the value of an additional, distinct memory address $y$: \[ 
   \infer[\textsc{frame-sp}]{\triple{(y \fpointsto -) \fsep (x \fpointsto z)}{\cload{y}{t}}{(y \fpointsto -) \fsep (x \fpointsto z \conj t = z)}}{
     \infer[\textsc{load}]{\triple{x \fpointsto z}{\cload{y}{t}}{x \fpointsto z \conj t = z}}{}
   }
@@ -493,7 +494,7 @@ The pair that consists of a stack $s$, as defined in Section~\ref{sec:expression
 
 Note that the notion of machine state given here differs from that used to define the memory model. First and most obviously, there is only a single write buffer, because in this section we are discussing only the exection of sequential programs on uniprocessor machines. Second, the global lock value from the memory model is omitted because there is only one write buffer, and hence commands have no need to claim sole ownership of the memory system. Third, the set of names (i.e., ``registers,'' ``variables,'' ``identifiers,'' etc.) are global instead of local to each processor. This is for convenience only, and is not a technical restriction. The specification logic will be restricted to programs for which the names are partitioned among processes, except for those that are never modified to. Another reasonable choice would have been to use local names only, and to share read-only values among processes in the shared memory. This has the advantage of codifying the above healthiness condition on programs directly into the model of the language and logic; it has the disadvantage of (perhaps) describing access to shared values slightly more awkward. 
 
-The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics}. By \textsc{p-assume}, the primitive $\cassume{b}$ takes an evaluation step only if the boolean expression $b$ evaluates to $1$ in the current state. Otherwise, it is effectively stuck. Later, when we describe the specification logic, we will see that such stuck executions are irrelevant to the truth of specification. In fact, stuck executions are equivalent to diverging executions w.r.t.\ the specification logic. By \textsc{p-assert} and \textsc{p-assert-a}, $\cassert{b}$ either evaluates normally if the boolean expression $b$ evaluates to 1 in the current state, and aborts otherwise. An aborting command will later be shown to not satisfy any specification. By \textsc{p-assign}, the assignment primitive $\cassign{x}{e}$ always evaluates successfully by assigning to $x$ the value of the expression $e$ in the current state. By \textsc{p-load}, the load primitive $\cload{x}{e}$ assigns to $x$ the value of the most recent buffered write to the address that is the value of expression $e$, if such a write exists, and otherwise gives the value in the current heap at at that address. If the address that is the value of expression $e$ has neither any buffered writes nor is defined in the heap (i.e., if $\ext{s}(e) \notin (h \override \funof{b})$) then by \text{p-load-a} the load primitive aborts. By \textsc{p-store}, the store primitive $\cstore{e}{e'}$ appends to the write buffer a new write with address the value of expression $e$ and value the value of $e'$, but only if the value of $e$ is an address that is already allocated (i.e., if $\ext{s}(e) \in \dom{h \override \funof{b}}$). Otherwise, by \textsc{p-store-a} the store primitive aborts. Finally, by \textsc{p-fence}, the $\cfence$ primitives evaluates without changing the state if the write buffer is empty. Later, when we describe the semantics of full commands, we will explain how the fence primitive can be thought to flush a non-empty buffer. 
+The definition of the semantic relation for primitive commands is given in Figure~\ref{fig:primitive-semantics}. By \textsc{p-assume}, the primitive $\cassume{b}$ takes an evaluation step only if the boolean expression $b$ evaluates to $1$ in the current state. Otherwise, it is effectively stuck. Later, when we describe the specification logic, we will see that such stuck executions are irrelevant to the truth of specification. In fact, stuck executions are equivalent to diverging executions w.r.t.\ the specification logic. By \textsc{p-assert} and \textsc{p-assert-a}, $\cassert{b}$ either evaluates normally if the boolean expression $b$ evaluates to 1 in the current state, and aborts otherwise. An aborting command will later be shown to not satisfy any specification. By \textsc{p-assign}, the assignment primitive $\cassign{x}{e}$ always evaluates successfully by assigning to $x$ the value of the expression $e$ in the current state. By \textsc{p-load}, the load primitive $\cload{x}{e}$ assigns to $x$ the value of the most recent buffered write to the address that is the value of expression $e$, if such a write exists, and otherwise gives the value in the current heap at at that address. If the address that is the value of expression $e$ has neither any buffered writes nor is defined in the heap (i.e., if $\ext{s}(e) \notin (h \override \funof{b})$) then by \textsc{p-load-a} the load primitive aborts. By \textsc{p-store}, the store primitive $\cstore{e}{e'}$ appends to the write buffer a new write with address the value of expression $e$ and value the value of $e'$, but only if the value of $e$ is an address that is already allocated (i.e., if $\ext{s}(e) \in \dom{h \override \funof{b}}$). Otherwise, by \textsc{p-store-a} the store primitive aborts. Finally, by \textsc{p-fence}, the $\cfence$ primitives evaluates without changing the state if the write buffer is empty. Later, when we describe the semantics of full commands, we will explain how the fence primitive can be thought to flush a non-empty buffer. 
 
 \begin{figure}[p]
     \centering
@@ -608,7 +609,7 @@ The reflexive-transitive closure of command evaluation relation, written $c,\sig
     \caption{\label{fig:sequential-command-abbreviations} Command abbreviations}
 \end{figure}
 
-\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
+\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
 
 \section{Locality and Separation}
 \label{sec:locality}
@@ -630,7 +631,7 @@ In the example above, the state was separated by memory address. But in the prog
 
 In this section we carefully define a notion of separation for uniprocessor states analogous to the one described in the previous section, in which states are decomposed according by memory address. This is accomplished by defining a notion of separation for memory systems, and then lifting that function to states that have identical stacks: i.e., given a definition of $\mu \bullet \mu'$, the lifted partial function on states $(s,\mu) \bullet (s',\mu')$ is defined as follows \[ (s,\mu) \bullet (s',\mu') \eqdef (s,\mu \bullet \mu') \text{~if $s = s'$ and $\mu \bullet \mu'$ is defined.}\] In the sequel, we shall ignore the distinction between the function on memory systems and the lifted function on states. 
 
-States are typically separated by the resources they describe. In the heaps model of separation logic, the resource is a flat shared memory and the heaps are separated according to address: \[ h_0 \ssep h_1 \eqdef \begin{cases}
+States are typically separated by the resources they describe. In the traditional, strong-memory heap model of separation logic, the resource is a flat shared memory and the heaps are separated according to address: \[ h_0 \ssep h_1 \eqdef \begin{cases}
     h_0 \uplus h_1 & \text{if $\dom{h_0} \cap \dom{h_1} = \nil$} \\ 
     \bot & \text{otherwise.}
 \end{cases}\] Note that the partial function is defined only when the heaps have disjoint domains. It is also, very obviously, commutative. 
@@ -645,7 +646,7 @@ Unlike for the heap separation function, the heap-buffer separation function map
 
 We can informally observe locality as follows. For safety monotonicity, note that the domain of the memory systems $(\mu_0 \ssep \mu_1)$ are supersets of the domain of $\mu_1$, and so if, e.g., a load command does not abort with a memory error in $\mu_1$ then neither will it in $(\mu_0 \ssep \mu_1)$. For the frame property, a load in $\mu_0 \ssep \mu_1$ does not change the memory system, and since we have assumed that it does not abort in $\mu_1$ alone, then it will have the same result in $\mu_1$ as in $(\mu_0 \bullet \mu_1)$. For example, with $\mu_0 = (\nil,\llit{(\ell,v)})$, $\mu_1 = (\nil,\llit{(m,u)})$ and the load command $c = \cload{x}{\ell}$, it is clear that, for any $\mu \in \mu_0 \ssep \mu_1$, if $c,(s,\mu) \rtstep \cskip,(s',\mu')$ then also $c,(s,\mu_1) \rtstep \cskip,(s',\mu_1)$.
 
-It is useful to to lift the definition of spatial separation from a partial function on states up to a total function on sets of states as follows: \[ S_0 \ssep S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \ssep \sigma_1}.\] By overloading notation in this way, this allows us to write, e.g., $\sigma_0 \ssep (\sigma_1 \ssep \sigma_2)$ as shorthand for $\bigcup \setof{\sigma_0 \ssep \sigma_{12}}{\sigma_{12} \in \sigma_1 \ssep \sigma_2}$. It also allows us to assert associativity of lifted function: \[ \sigma_0 \ssep (\sigma_1 \ssep \sigma_2) = (\sigma_0 \ssep \sigma_1) \ssep \sigma_2 \] Spatial separation as well as its lifting are also commutative, they have as a units $(\nil,\lnil)$ and $\set{(\nil,\lnil)}$, respectively. 
+It is useful to to lift the definition of spatial separation from a partial function on states up to a total function on sets of states as follows: \[ S_0 \ssep S_1 \eqdef \bigcup_{\sigma_0 \in S_0} \bigcup_{\sigma_1 \in S_1} \set{\sigma_0 \ssep \sigma_1}.\] By overloading notation in this way, this allows us to write, e.g., $\sigma_0 \ssep (\sigma_1 \ssep \sigma_2)$ as shorthand for $\bigcup \setof{\sigma_0 \ssep \sigma_{12}}{\sigma_{12} \in \sigma_1 \ssep \sigma_2}$. It also allows us to assert associativity of lifted function: \[ \sigma_0 \ssep (\sigma_1 \ssep \sigma_2) = (\sigma_0 \ssep \sigma_1) \ssep \sigma_2 \] Spatial separation as well as its lifting are also commutative, they have as units $(\nil,\lnil)$ and $\set{(\nil,\lnil)}$, respectively. 
 
 \subsection{Temporal Separation}
 \label{sec:sequential-temporal-separation}
