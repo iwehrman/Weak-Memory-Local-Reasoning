@@ -1923,7 +1923,9 @@ For the sake of a soundness theorem about the proof system described above, we s
 
 \chapter{Loose Ends}
 
-\section{Top Assertions for a Smaller Load Axiom}
+This chapter describes open questions about the current program logic, and also some notable features that were explored but not been adopted either because they were considered narrowly unsuitable, or not sufficiently well understood, or simply due to lack of time. 
+
+\section{Top Assertions}
 \label{sec:top-assertion}
 
 Previous iterations of the logic included an additional right-side frame rule for the strong temporal separating conjunction: \infrule[r-frame]{\spec{J}{P}{c}{Q}\text{~~~}\fv{R}\cap\mod{c'}=\nil}{\spec{J}{P \fsseq R}{c}{Q \fsseq R}} The intuition behind this rule is that additional, more recent writes to distinct locations are irrelevant to the load command. In fact, this frame rule allows for the following smaller load axiom: \infax[sm-load]{\spec{J}{e \fwrite{e'} e''}{\cload{x}{e}_{e'}}{e \fwrite{e'} e'' \conj x = e''}} The load axiom defined in Chapter~\ref{ch:multiprocessor} is then derivable from the smaller load axiom and the right-side strong temporal frame rule: \[ \infer[\textsc{cons}]{\spec{J}{e \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{(e \fwrite{e'} e'' \fsseq P) \conj x = e''}}{\infer[\textsc{r-frame}]{\spec{J}{e \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{(e \fwrite{e'} e'' \conj x = e'') \fsseq P }}{\infer[\textsc{sm-load}]{\spec{J}{e \fwrite{e'} e''}{\cload{x}{e}_{e'}}{e \fwrite{e'} e'' \conj x = e''}}{}}}\]
