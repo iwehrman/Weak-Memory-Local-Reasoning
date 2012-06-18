@@ -1836,7 +1836,7 @@ Unlike the sequential logic, there is no conjunction rule in the concurrent logi
 
 The structural rules for sequential composition, nondeterministic choice, loops and concurrency are similar in spirit to those in Concurrent Separation Logic. In particular, the concurrency rule requires agreement between the two processes on the value shared invariant, and the strong interleaving separating conjunction is used to partition the local states. Note that both this conjunction and the concurrent composition command are commutative. The sharing rule allows us to infer that, if a portion of the state is invariant w.r.t.\ the assertion $J$, then $J$ may also be assumed to hold initially and upon termination. 
 
-Only the invariant rule differs significantly from Concurrent Separation Logic. Here, we require that the lock be held before accessing the shared state; and that, under the assumption that the shared state satisfied the invariant initially, upon completion of the command the shared state must again be shown to satisfy the invariant. In the section below, we discuss a number of variations on this important. rule. 
+Only the invariant rule differs significantly from Concurrent Separation Logic. Here, we require that the lock be held before accessing the shared state; and that, under the assumption that the shared state satisfied the invariant initially, upon completion of the command the shared state must again be shown to satisfy the invariant. In the subsection below, we discuss a number of variations on this important rule. 
 
 \subsubsection{Derived and Alternative Axioms and Inference Rules}
 
@@ -1876,7 +1876,7 @@ A specification asserts the partial correctness of a command. Its informal meani
 
 Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,J,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$, invariant assertion $J$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truespec{J}{P}{c}{Q} \iffdef \forall s \st \forall \mu \st (s,\mu,\setprocessors)\sentails P \onlyif \forall n \in \setnaturals \st \safe{n}{c,s,\mu,J,Q}.\] Observe that only states $(s,\mu)$ for which \emph{buffer-complete models} $(s,\mu,\setprocessors)$ of the precondition are relevant to the meaning of specifications. 
 
-In the sequel, let $\locked{\mu}$ indicate that some processor holds the lock in memory system $\mu$: \[ \locked{h,B,k} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
+In the sequel, let $\locked{\mu}$ indicate that some processor holds the lock in memory system $\mu$: \[ \locked{h,B,K} \iffdef \exists i \in \setprocessors \st k = \setprocessors \setminus \set{i}. \]
 
 We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number induction on $n$. $\safe{0}{c,s,\mu,J,Q}$ holds always. And for $n \in \setnaturals$, $\safe{n+1}{c,s,\mu,J,Q}$ holds iff the following conditions are true: \begin{enumerate}
   \item If $c = \cskip$ then $(s,\mu,\setprocessors) \sentails Q$.
@@ -1901,12 +1901,16 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
 
 \end{enumerate}
 
-The definition of the predicate above differs from Vafeiadis' in three ways. First, the separating conjunctions are obviously different and, in particular, there are two different separating conjunctions used: one for framing and one for partitioning the local from the shared state. It may be possible (or even necessary) to make use of $\fhash$ uniformly in the definition, which would yield a stronger notion of specification. Second, the frame state is allowed to change from one step to another, but only by making silent transitions. Third, because there is no inherent notion of atomicity, we cannot require that the system state always be separable so that one part satisfies the invariant assertion. For even while one processor holds the lock, others may continue to execute. Hence, we weaken the invariant condition to require only that it hold while the lock is available.
+The definition of the predicate above differs from Vafeiadis' in three ways. First, the separating conjunctions are obviously different and, in particular, there are two different separating conjunctions used: spatiotemporal separation for framing and spatial separation for partitioning the local from the shared state. The spatiotemporal separator is used for framing because it subsumes spatial and temporal frames, as well as any combination of spatial and temporal frames. It may be possible to make use of $\shash$ uniformly in the definition, which would yield a stronger notion of specification, but recent theoretical results \cite{DBLP:conf/concur/HoareHMOPS11}, which describes the importance of a commutative notion of separation for the concurrency rule, makes this seem unlikely. (Recall that spatial separation is commutative, but not spatiotemporal separation is not.)
+
+Second, the frame state is allowed to change from one step to another, but only by making silent transitions. This reflects the fact that specifications are oblivious to the nondeterministc flushing transitions required by the memory model and described by the program semantics---the program logic allows for reasoning about specifications at a level that is generally higher than the level of nondeterministic buffer flushing. 
+
+Third, because there is no inherent notion of atomicity in this language and memory model, we cannot require that the system state \emph{always} be partitionable so that one cell satisfies the invariant assertion. For even while one processor holds the lock, others may well continue to execute by, e.g., storing to their write buffers, assigning to identifiers. etc. Hence, the invariant condition from Vafeiadis' safety predicate is weakened to require only that the invariant holds while the lock is available. This allows a process to  temporarily violate the invariant after aquiring the lock. In these states, other processes of course cannot rely on the shared state satisfying the invariant, but this is generally not a concern because, while the other processes can continue to execute while the invariant is violated, they cannot read the shared state; instead, they are blocked until the lock is released. 
 
 
 \subsection{Soundness}
 
-A proof is a tree of specifications, in which the leaves are instances of axiom schemas, and the internal specification nodes are instances of the conclusion of some inference rule, with the children of that node as instances of the hypotheses of the inference rule. We write $\overline{\spec{J}{P}{c}{Q}}$ to indicate that there exists a proof tree with the root labeled by $\spec{J}{P}{c}{Q}$. The soundness property simply asserts that provable specifications are true: 
+For the sake of a soundness theorem about the proof system described above, we say that a \emph{proof} is a tree of specifications, in which the leaves are instances of axiom schemas, and the internal specification nodes are instances of the conclusion of some inference rule, with the children of that node as instances of the hypotheses of the inference rule. We write $\overline{\spec{J}{P}{c}{Q}}$ to indicate that there exists some proof for which the root of the tree is labeled with $\spec{J}{P}{c}{Q}$. The soundness theorem asserts that provable specifications are true: 
 
 \begin{theorem}[Soundness]
   \label{thm:soundness}
@@ -2332,22 +2336,23 @@ By induction on the structure of an arbitrary derivation of $\proofof{\spec{J}{P
 
 \begin{figure}
 \centering
-\begin{tabular}{l|l}
-Object & Symbols \\  
+\begin{tabular}{l|l|l}
+Object & Symbols & Components\\  
 \hline 
-Identifiers (aka variables) & $x,y,z,t,u,v$ \\
-Processor identifiers & $i,j,k$ \\ 
-Memory addresses (aka locations) & $\ell$ \\ 
-Lists (generally) & $l,m,n$ \\ 
-Lists (as write buffers) & $b$ \\ 
-Buffer arrays & $B$ \\ 
-Stacks & $s$ \\ 
-Heaps & $h$ \\ 
-Blocking sets & $K$ \\ 
-Buffer-completeness sets & $\Gamma$ \\ 
-Memory systems & $\mu$ \\ 
-Generalized memory systems & $\nu$ \\ 
-States & $\sigma$ \\ 
+Identifiers (aka variables) & $x,y,z,t,u,v$ & \\
+Processor identifiers & $i,j,k$ & \\ 
+Memory addresses (aka locations) & $\ell$ & \\ 
+Lists (generally) & $l,m,n$ & \\ 
+Lists (as write buffers) & $b$ & \\ 
+Buffer arrays & $B$ & \\ 
+Stacks & $s$ & \\ 
+Heaps & $h$ & \\ 
+Blocking sets & $K$ & \\ 
+Buffer-completeness sets & $\Gamma$ & \\ 
+Memory systems & $\mu$ & $(h,b)$ or $(h,B)$\\ 
+Generalized memory systems & $\nu$ & $(\mu,\gamma)$ or $(\mu,\Gamma)$ \\ 
+States & $\sigma$ & $(s,\mu)$\\ 
+Models & $\amod$ & $(s,\nu)$\\ 
 Expressions & $e,f$ \\ 
 Primitive commands & $p$ \\
 Commands & $c$ \\ 
