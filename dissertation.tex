@@ -278,7 +278,7 @@ For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the correspondi
 	\bot & \text{otherwise.}
 \end{cases}\] For $A' \subseteq A$, $\restrict{l}{A'}$ is the sublist restriction of $l$ to domain $A'$.
 
-For convenience, we lift these function definitions pointwise to sets of lists. E.g., for a set $L$ of lists, $a \lcons L \eqdef \setof{a \lcons l}{l \in L}$. 
+For convenience, we lift these function definitions pointwise to sets of lists. For example, for a set $L$ of lists, $a \lcons L \eqdef \setof{a \lcons l}{l \in L}$. 
 
 The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined by recursion on the structure of $m$ and $n$: \begin{align*}
 	m \merge \lnil & = \lnil \merge m = \set{m} \\ 
@@ -609,7 +609,7 @@ The reflexive-transitive closure of command evaluation relation, written $c,\sig
     \caption{\label{fig:sequential-command-abbreviations} Command abbreviations}
 \end{figure}
 
-\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
+\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) For example, $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
 
 \section{Locality and Separation}
 \label{sec:locality}
@@ -894,7 +894,7 @@ The closure requirement also explains why we have omitted negation (and implicat
 
 Let us call the complement of a closed set an \emph{open} set. Open sets are rather curious; for example, an open set of memory systems that contains $(1 \mapsto 2,\nil,\bvt)$ also contains every possible memory system that, when flushed, results in this memory system, e.g., $(\nil, \llit{(1,2)})$, $(\nil, \llit{(1,3),(1,2)})$, $(\nil, \llit{(1,4),(1,3),(1,2)})$, etc. Open sets are thus not appropriate for describing individual writes. Sets that are both closed and open would might well yield an elegant algebra, allowing full negation and implication, but it is not obvious that such an algebra would be useful for program reasoning. 
 
-Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. E.g., if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{e \fwriteu e' \fseq \fbaru} = \pred{e \fwriteu e'} \mseq \pred{\fbaru} = \nil,\] and hence so too would be its flushing closure.  
+Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. For example, if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{e \fwriteu e' \fseq \fbaru} = \pred{e \fwriteu e'} \mseq \pred{\fbaru} = \nil,\] and hence so too would be its flushing closure.  
 
 \subsection{Assertion Abbreviations}
 \label{sec:uniprocessor-abbreviations} 
@@ -1165,7 +1165,7 @@ Similarly, the pre and postcondition both assert private ownership of the invari
 A proof sketch of the antecedent follows below: 
 \Calc{
 
-  \aconn{$(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}$}
+  \aconnt{$(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}$}
 
   \aconn{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 0 \conj \femp)) \fseq \fbar{0}$}
 
@@ -1418,7 +1418,7 @@ A state is called \emph{coherent} if each location has writes buffered by at mos
 
 \paragraph{Interleaving versus Parallelism} A pleasant property of this semantics is the uniform description of both interleaving and parallel concurrency. Let $c_i$ be a sequential command $c$ in which each primitive has processor annotation $i$. Then, e.g., $(\cpar{c_1}{c'_1})$ describes the interleaving concurrent execution of commands $c$ and $c'$ on processor 1, while $(\cpar{c_1}{c'_2})$ describes the parallel concurrent execution of $c$ and $c'$ on processors 1 and 2, respectively. But one does not typically have control over the particular processor on which a command executes (e.g., $c_1$ instead of $c_2$). Thus, $(\cpar{c_x}{c'_x})$ describes the interleaving concurrent execution of commands $c$ and $c'$ on some individual processor, denoted by the free variable $x$. For $x \neq y$, $(\cpar{c_x}{c'_y})$ describes the parallel concurrent execution of $c$ and $c'$ on distinct processors given by $x$ and $y$ respectively. Furthermore, without any assumptions about the relationship between $x$ and $y$, $(\cpar{c_x}{c'_y})$ describes both interleaving and parallel executions of $c$ and $c'$. This presumably is the most common situation with concurrent composition: it is up to the operating system to assign processors to threads, and correctness of a program ought to encompass any such assignment.
 
-\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}_z} = \set{x,y,z}$ and $\mod{\cload{x}{y+1}_z} = \set{x}$.  
+\paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) For example, $\fv{\cload{x}{y+1}_z} = \set{x,y,z}$ and $\mod{\cload{x}{y+1}_z} = \set{x}$.  
 
 \section{Separation}
 \label{sec:separation}
@@ -1648,7 +1648,7 @@ In the sequential assertion logic we defined the points-to assertion $e \fpoints
   e \fpointsto e' \eqdef \exists x \st e \fwrite{x} e' \fseq \fbar{x}
 \] The intuition behind this abbreviation is that the result of flushing on one processor should be indistinguishable from the result of flushing the same write on a different processor, and hence the choice of a particular processof from which the write originated is unimportant. But, in the model described in this document, this is only true of models for which all buffers are complete; and in general models of assertions need not have all buffers complete. As a consequence of the abbreviation above, among the models of $1 \fwrite{0} 1 \fseq 2 \fpointsto 2$ are included some in which the write to location $1$ is buffered on processor 0, whereas there should arguably be none. 
 
-We might instead try a universal quantification instead of an existential one: \[e \fpointsto e' \eqdef \forall x \st e \fwrite{x} e' \fseq \fbar{x} \] But this too is unsuitable, for such formulas are necessarily inconsistent: the quantifier ranges over integer values, but not all integer values denote processor identifiers; and the matrix of the formula is only consistent when when the variable denotes a processor identifier. To get around this, we would also have to change the models of the leads-to and barrier assertions to denote empty models (instead of no models) when parametrized with something other than a processor identifier. 
+We might instead try a universal quantification instead of an existential one: \[e \fpointsto e' \eqdef \forall x \st e \fwrite{x} e' \fseq \fbar{x} \] But this too is unsuitable, for such formulas are necessarily inconsistent: the quantifier ranges over all integer values, but not all integer values denote processor identifiers; and the matrix of the formula can only be satisfied by models in which the variable denotes a processor identifier. To get around this, we would also have to change the models of the leads-to and barrier assertions to denote empty models (instead of no models) when parametrized with something other than a processor identifier. 
 
 Most likely, this simply indicates a flaw in the model and logic presented thus far. Immediately, the best solution is to simply add the points-to formula to the assertion language as an atomic formula, and define the intended semantics (in which every buffer is complete) directly: \[ s,(h,B,K,\Gamma) \satisfies e \fpointsto e' \iffdef h = \ext{s}(e) \mapsto \ext{s}(e') \conj B = \arnil \conj K = \nil \conj \Gamma = \setprocessors.\] This could potentially make reasoning about syntactic entailments between assertions more difficult; in the meantime, it still provides the semantic entailments that are more relevant to the current goals of the project. 
 
@@ -1670,14 +1670,15 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
     \flock{e} \gensym \flock{f} \sequiv & \bexpf \\ 
     \fbar{e} \gensym \fbar{e} \sequiv & \fbar{e} \\ 
 		(P \gensym P') \fseq \fbar{e} \sequiv & (P \fseq \fbar{e}) \gensym (P' \fseq \fbar{e}) \\ 
+    \flock{e} \fseq \fbar{e} \sequiv & \flock{e} \fsep \fbar{e}\\ 
     e \fwrite{e'} e'' \fsep e \fwrite{f'} f'' \sequiv & \bexpf \\ 
-    e \fwrite{e'} e'' \fseq e \fwrite{e'} f \fseq \fbar{e'} \sequiv & e \fwrite{e'} f \fseq \fbar{e'} 
+    e \fwrite{e'} e'' \fseq e \fwrite{e'} f \fseq \fbar{e'} \sequiv & e \fwrite{e'} f \fseq \fbar{e'}
  	\end{align*}
 	\end{minipage}}
 	\caption{\label{fig:equivalences}Semantic equivalences}
 \end{figure}
 
-As in the sequential assertion logic, each of the separating conjunctions is associative and has $\femp$ as a unit. And the spatial separating conjunction is again commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbar{e}$, and $\fbar{e}$ also distributes fully through the separating conjunctions. The separating conjunctions are multiplicative w.r.t.\ the lock assertion $\flock{e}$ and also symmetric. Note that the result of flushing successive writes to the same location is equivalent to flushing just the most recent write. 
+As in the sequential assertion logic, each of the separating conjunctions is associative and has $\femp$ as a unit. And the spatial separating conjunction is again commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbar{e}$, and $\fbar{e}$ also distributes fully through the separating conjunctions. The separating conjunctions are multiplicative w.r.t.\ the lock assertion $\flock{e}$ and also symmetric. $\fbar{e}$ also commutes with $\flock{e}$, even for the sequential conjunctions. Note that the result of flushing successive writes to the same location is equivalent to flushing just the most recent write. 
 
 \begin{figure}[ht]
 	\centering
@@ -1699,7 +1700,7 @@ As in the sequential assertion logic, each of the separating conjunctions is ass
 	\caption{\label{fig:entailments}Semantic entailments}
 \end{figure}
 
-The first four entailments---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
+The first four entailments in Figure~\ref{fig:entailments}---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
 
 \subsection{Flushing Closure}
 \label{sec:predicates}
