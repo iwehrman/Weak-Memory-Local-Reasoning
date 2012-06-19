@@ -194,9 +194,16 @@ RG-Sep embodies the most advanced ideas about high-level reasoning techniques fo
 
 \section{Memory Consistency Models}
 
-TODO 
+A \emph{memory consistency model} (or just \emph{memory model}) is a specification of a concrete implementation of a shared memory system. Memory consistency models bound the possible results of reading an address in shared memory according to the history of writes and reads that have already occurred. For the sake of reasoning about the behavior of software programs interacting with a shared memory, memory concistency models are a crucial abstraction: not only are concrete implementations of shared memory in modern computer systems are incredibly complex, but their details may additionally be considered proprietary and secret.\footnote{As a consequence of this complexity and secrecy, it can be challenge to determine whether or not a memory implementation is soundly described by a particular memory consistency model. This interesting problem is beyond the scope of this project.}  
 
-\paragraph{Sequential Consistency} 
+Many memory consistency models have been defined and studied \cite{SteinkeNutt,higham98weak,DBLP:journals/computer/AdveG96}. Below, we discuss two of particular interest: sequential consistency, the most commonly used abstraction of memory for well-behaved programs; and the x86-TSO memory model, which describes the interaction between memory and arbitrary software programs on x86-like multiprocessor computers. 
+
+\subsection{Sequential Consistency} 
+\label{sec:sc}
+
+\emph{Sequential consistency} was originally defined by Leslie Lamport in 1979 \cite{DBLP:journals/tc/Lamport79} to indicate a consistency property in which \begin{quotation}\noindent the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program. \end{quotation}
+
+Data-race freedom. 
 
 \subsection{The x86-TSO Memory Model}
 \label{sec:memory-model}
