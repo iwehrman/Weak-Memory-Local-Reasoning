@@ -1153,7 +1153,7 @@ If we are successful in proving these specifications, then we may use an inferen
 The precondition can then be strengthened and the postcondition weakened using the rule of consequence (\textsc{cons}) with and the following semantic entailments: \begin{align*}
 s = 0 \conj x = 0 \conj d \fpointsto 0 & \sentails I \fsep P_s \fsep P_r \\ 
 I \fsep Q_s \fsep Q_r & \sentails d \fpointsto (x + 1)
-\end{align*} With a final inference rule (\textsc{aux})\footnote{No attempt shall be made here to formalize the notion of auxiliary variable or the auxiliary variable elimination rule.} we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
+\end{align*} With a final inference rule (\textsc{aux})\footnote{No attempt is made here to formalize the notion of auxiliary variable or the auxiliary variable elimination rule.} we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
 \[ \infer[\textsc{aux}]{ \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \conj x = 0 \conj d \fpointsto 0}{c'_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }}}}\]
 
 It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows from an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{P_s}{\clock_0 \opseq c \opseq \cunlock_0}{Q_s} }{\spec{\femp}{(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}}{c}{(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. 
@@ -1167,9 +1167,9 @@ A proof sketch of the antecedent follows below:
 
   \aconnt{$(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}$}
 
-  \aconn{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 0 \conj \femp)) \fseq \fbar{0}$}
+  \aconnt{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 0 \conj \femp)) \fseq \fbar{0}$}
 
-  \aconn{$(\flock{0} \fsep (x = 0 \conj \femp) \fsep d \fpointsto -) \fseq \fbar{0}$}
+  \aconnt{$(\flock{0} \fsep (x = 0 \conj \femp) \fsep d \fpointsto -) \fseq \fbar{0}$}
 
   \aconn{$\flock{0} \fsep (x = 0 \conj \femp) \fsep d \fpointsto -$}
   
@@ -1179,15 +1179,16 @@ A proof sketch of the antecedent follows below:
 
   \acomm{$\cassign{s}{1}$}
 
-  \aconn{$\flock{0} \fsep (x = 0 \conj s = 1 \conj \femp) \fsep d \fpointsto - \fseq d \fwrite{0} 1$}
+  \aconnt{$\flock{0} \fsep (x = 0 \conj s = 1 \conj \femp) \fsep d \fpointsto - \fseq d \fwrite{0} 1$}
 
-  \aconn{$(\flock{0} \fsep x = 0 \conj s = 1 \conj d \fpointsto 1) \fseqri \fbar{0}$}
+  \aconnt{$(\flock{0} \fsep x = 0 \conj s = 1 \conj d \fpointsto 1) \fseqri \fbar{0}$}
 
-  \aconn{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 1 \conj \femp)) \fseqri \fbar{0}$}
+  \aconnt{$(\flock{0} \fsep (x = 0 \conj d \fpointsto s) \fsep (s = 1 \conj \femp)) \fseqri \fbar{0}$}
 
-  \aconn{$(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}$}
+  \aconnl{$(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}$}
       
-}
+} In the proof sketch above, we separate successive assertions with $\therefore$ to indicate implication---weakening preconditions and strengthening postconditions of triples---allowed by the rule of consequence. In the first triple, the precondition describes the memory address $d$ is allocated but has an unknown value ($d \fpointsto -$), while the postcondition of the store command $\cstore{d}{1}_0$ describes the addition of a buffered write on processor 0 ($d \fpointsto - \fseq d \fwrite{0} 1$). The postcondition of the assignment command $s = 1$ simply asserts the equality. The final implication  indicates that, once a barrier is performed, the buffered write will be flushed, yielding the correct value in memory.  
+
 
 The specification for $c_r$ can be proved similarly to that of $c'_s$. The locked portion of the command is proved using the atomic rule; and the rest by basic sequential reasoning. A proof sketch of the specification of $c_r$ follows below: 
 \Calc{
