@@ -1421,6 +1421,7 @@ A state is called \emph{coherent} if each location has writes buffered by at mos
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there is are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) E.g., $\fv{\cload{x}{y+1}_z} = \set{x,y,z}$ and $\mod{\cload{x}{y+1}_z} = \set{x}$.  
 
 \section{Separation}
+\label{sec:separation}
 
 In this section we define a series of notions of separation, analogous to those defined in Chapter~\ref{ch:uniprocessor}, but for multiprocessor states. As in the sequential, uniprocessor case, the goal for these notions of separation is to allow for local reasoning, by modeling separating conjunctions that have sound frame rules. 
 
@@ -1625,6 +1626,8 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 \end{minipage}}
 	\caption{\label{fig:satisfaction-relation} The satisfaction relation}
 \end{figure}
+
+The classical atomic formulas and logical operations are defined as usual. The $\femp$ assertion describes generalized memory systems with empty heaps, empty write buffers, and with no processors blocked. The $\fbar{i}$ assertion additionally requires that $i$ be buffer-complete. The $\flock{i}$ assertion is like $\femp$, but requires that all processors except for $i$ be blocked. The leads-to assertion $e \fwrite{i} f$ is modeled by two classes of generalized memory systems: those that are \emph{pending}, with an empty heap, a single buffered write, and in which at most $i$ is blocked; and those that are \emph{flushed}, with a single-point heap, all buffers empty, and in which no processors are blocked. (In the latter case, $i$ must is not blocked because it describes the result of a flushing a buffered write, which cannot happen if the buffer is blocked.) The separating conjunctions and implications are defined with the semantic functions described in Section~\ref{sec:separation}.  
 
 We write $\pred{P}$ for the set of models that satisfy $P$,\[ \pred{P} \eqdef \setof{\amod}{\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
 	P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
