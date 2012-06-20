@@ -211,10 +211,6 @@ On the other hand, the following two executions are not sequentially consistent:
 \end{align*} In the first execution, it is not the case that the operations of thread 0 take place in the order specified by the program: the read precedes the write. In the second execution, the order of operations is consistent with the order specified by the program, but the result is not the same as if the operations were executed in that order: the final read of $f_0$ by thread 1 should not result in value 0, because it directly succeeds the write to $f_1$. 
 
 Operationally, this constraint on the possible execution traces of a program can be realized by modeling memory as a simple location-value map, in which reads and writes to memory happen occur atomically. That is, memory is represented by a (possibly partial) function $\setlocations \pfun \setvalues$; and the semantics of the program is defined such that no more than one thread may read or update the memory at once. This, of course, is the most widespread model of memory used in the semantics of imperative, shared-memory programs, and consequently the vast majority of program reasoning and verification techniques tacitly assume that programs are sequentially consistent; i.e., that all its executions can be described by its interactions with this simple model of memory. 
-
-\subsubsection{Data Races and Sequential Consistency} 
-\label{sec:drf}
-
 \subsection{The x86-TSO Memory Model}
 \label{sec:memory-model}
 
@@ -235,6 +231,12 @@ Transitions (labeled by memory events) between states indicate the possibility a
 \end{itemize}
 
 This specification bounds the sort of memory events that can occur in program executions, but it does not give meaning to the programs of a particular language. The semantics of the programming language used in this project is however guided by the memory model, and it ought be possible to prove that it respects the bounds of the model. But this is not the focus of this project; and, even without such a correspondence proof, it will still be clear that the semantics of the programming language is manifestly weak. 
+
+\subsection{Data-Race-Freedom Guarantees} 
+\label{sec:drf}
+
+Although the memory models of most modern computer architectures---including, as we have seen, x86-like computer architectures---are relatively weak, allowing additional executions compared to a sequentially consistent memory model, the tacit assumption that programs are sequentially consistent made by most verification techniques is actually, in many cases, perfectly reasonable. This is because modern computer architectures, including x86, guarantee sequentially consistent execution for a large class of programs: namely, the data-race free programs. Because of these so-called data-race-freedom (DRF) guarantees, verification techniques which assume sequential consistency are perfectly sound in case the program under consideration is race-free. And because races are generally considered to be errors, a reasonable verification workflow is to first check that a program is race-free before proceeding with the verification of more elaborate properties; or, alternatively, to leverage techniques which succeed only for race-free programs. But not all correct programs are race-free; for these programs, verification techniques may need to account for the full complexities of the underlying memory model. 
+
 
 \chapter{Basics}
 \label{ch:basics}
