@@ -194,16 +194,26 @@ RG-Sep embodies the most advanced ideas about high-level reasoning techniques fo
 
 \section{Memory Consistency Models}
 
-A \emph{memory consistency model} (or just \emph{memory model}) is a specification of a concrete implementation of a shared memory system. Memory consistency models bound the possible results of reading an address in shared memory according to the history of writes and reads that have already occurred. For the sake of reasoning about the behavior of software programs interacting with a shared memory, memory concistency models are a crucial abstraction: not only are concrete implementations of shared memory in modern computer systems are incredibly complex, but their details may additionally be considered proprietary and secret.\footnote{As a consequence of this complexity and secrecy, it can be challenge to determine whether or not a memory implementation is soundly described by a particular memory consistency model. This interesting problem is beyond the scope of this project.}  
+A \emph{memory consistency model} (or just \emph{memory model}) is a specification of a concrete implementation of a shared memory system. Memory consistency models bound the possible results of reading an address in shared memory according to the history of writes and reads that have already taken place or are in progress. For the sake of reasoning about the behavior of concurrent software programs interacting with a shared memory, memory concistency models are a crucial abstraction: not only are concrete implementations of shared memory in modern computer systems are incredibly complex, but their details may additionally be considered proprietary and secret.\footnote{As a consequence of this complexity and secrecy, it can be challenge to determine whether or not a memory implementation is soundly described by a particular memory consistency model. This interesting problem is beyond the scope of this project.}  
 
-Many memory consistency models have been defined and studied \cite{SteinkeNutt,higham98weak,DBLP:journals/computer/AdveG96}. Below, we discuss two of particular interest: sequential consistency, the most commonly used abstraction of memory for well-behaved programs; and the x86-TSO memory model, which describes the interaction between memory and arbitrary software programs on x86-like multiprocessor computers. 
+Many memory consistency models have been defined and studied \cite{SteinkeNutt,higham98weak,DBLP:journals/computer/AdveG96}. Below, we discuss (informally) two of particular interest: sequential consistency, the most commonly used abstraction of memory for well-behaved programs; and the x86-TSO memory model, which describes the interaction between memory and arbitrary software programs on x86-like multiprocessor computers. 
 
 \subsection{Sequential Consistency} 
 \label{sec:sc}
 
-\emph{Sequential consistency} was originally defined by Leslie Lamport in 1979 \cite{DBLP:journals/tc/Lamport79} to indicate a consistency property in which \begin{quotation}\noindent the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program. \end{quotation}
+Sequential consistency was originally defined by Leslie Lamport in 1979 \cite{DBLP:journals/tc/Lamport79}. For a sequentially consistent program, he wrote: \begin{quotation}\noindent the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program. \end{quotation} 
 
-Data-race freedom. 
+As an example, consider again the program in Figure~\ref{fig:dekker}, in which thread 0 writes to $f_0$ and then reads from $f_1$; and thread 1 writes to $f_1$ and reads from $f_0$. If we write $(p,o,\ell,v)$ to indicate that thread $p$ performs operation $o$ (where $o \in \set{r,w}$ is either a read or a write) on location $\ell$ with value $v$ (indicate the value written or value read), then: \[ (0,w,f_0,1), (1,w,f_1,1), (1,r,f_0,1), (0,r,f_1,1)\] is a sequentially consistent execution, because the operations of each thread occurs, within the execution, in the same order as the operations appear in their respective programs (with the writes preceding the reads), and the results of the loads clearly are consistent with the total order of operations given. 
+
+On the other hand, the following two executions are not sequentially consistent: \begin{align*}
+  (0,r,f_1,0), (1,w,f_1,1), (1,r,f_0,0), (0,w,f_0,1) \\ 
+  (0,w,f_0,1), (0,r,f_1,0), (1,w,f_1,1), (1,r,f_0,0), 
+\end{align*} In the first execution, it is not the case that the operations of thread 0 take place in the order specified by the program: the read precedes the write. In the second execution, the order of operations is consistent with the order specified by the program, but the result is not the same as if the operations were executed in that order: the final read of $f_0$ by thread 1 should not result in value 0, because it directly succeeds the write to $f_1$. 
+
+Operationally, this constraint on the possible execution traces of a program can be realized by modeling memory as a simple location-value map, in which reads and writes to memory happen occur atomically. That is, memory is represented by a (possibly partial) function $\setlocations \pfun \setvalues$; and the semantics of the program is defined such that no more than one thread may read or update the memory at once. This, of course, is the most widespread model of memory used in the semantics of imperative, shared-memory programs, and consequently the vast majority of program reasoning and verification techniques tacitly assume that programs are sequentially consistent; i.e., that all its executions can be described by its interactions with this simple model of memory. 
+
+\subsubsection{Data Races and Sequential Consistency} 
+\label{sec:drf}
 
 \subsection{The x86-TSO Memory Model}
 \label{sec:memory-model}
