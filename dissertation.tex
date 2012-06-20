@@ -1970,7 +1970,7 @@ By unifying states and models, the semantics of assertions and specifications is
 In the case of the \textsc{atomic} inference rule, the situation is even worse: \infrule[atomic]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{(J \fsep Q \fsep \flock{i}) \fseqri \fbar{i}}}{\spec{J}{P}{\clock_i \opseq c \cunlock_i}{Q}} Soundness of this rule relies crucially on the use of the temporal separating implication in the post-condition of the antecedent, in which, in the current model, $P \fseqri \fbar{i}$ denotes the set of states which, when flushed on processor $i$, satisfy $P$. But in the simplified model, the separating implication $P \fseqri \fbar{i}$ does not have the intended meaning.\footnote{Or, really, any coherent or intuitive meaning.} The problem lies in the  incompatibility between the multiplicative separating conjunctions and implication, and the additive semantics of the barrier assertion. We might also consider using an additive implication $P \Leftarrow \fbar{i}$, but neither is this intuitively correct (it describes either flushed states that satisfy $P$ states, or arbitrary non-flushed states), nor is additive implication (along with negation) technically feasible for the reasons previously discussed in Section~\ref{sec:uniprocessor-satisfaction}. 
 
 
-\section{Splitting Permissions} 
+\section{Permissions} 
 \label{sec:splitting-permissions}
 
 In Concurrent Separation Logic, the concept of \emph{permissions} (or \emph{shares}) has been fruitful. The idea originated from the ownership interpretation of separation logic assertions, in which $e \fpointsto f$ is read as an assertion of complete ownership of the address $e$, thus effectively granting the command which has this assertion as a precondition full permission to access and modify the location $e$. There can be no concurrent modification of the value at $e$ because, in order to do so, a command would also require $e \fpointsto -$ in its precondition, but the parallel composition rule requires the preconditions of parallel commands to be disjoint. For example, consider the following CSL command specifications: \begin{align*}
@@ -1990,6 +1990,8 @@ Using the fractional permission model, we can prove the desired specification of
   \spec{J}{x \stackrel{0.5}{\fpointsto} 1}{\cload{t}{x}}{x \stackrel{0.5}{\fpointsto} 1 \conj t = 1} \\
   \spec{J}{x \stackrel{0.5}{\fpointsto} 1}{\cload{u}{x}}{x \stackrel{0.5}{\fpointsto} 1 \conj u = 1}  
 \end{align*} The parallel composition rule and is then used to derive \[ \spec{J}{x \stackrel{0.5}{\fpointsto} 1 \fsep x \stackrel{0.5}{\fpointsto} 1}{\cload{t}{x}\oppar \cload{u}{x}}{(x \stackrel{0.5}{\fpointsto} 1 \conj t = 1) \fsep (x \stackrel{0.5}{\fpointsto} 1 \conj u = 1)}\] And now the precondition of this specification is equivalent to $x \stackrel{1}{\fpointsto} 1$ and the postcondition to $x \stackrel{1}{\fpointsto} 1 \conj t = 1 \conj u = 1$, as desired. 
+
+\subsection{Potential Uses for Splitting Permissions}
 
 % The weak memory logic described in this dissertation would greatly benefit from the addition of a fractional model of permissions. Consider again the concurrent example in Section~\ref{sec:concurrent-example}, in which we consider the parallel composition of a writing thread $c_w$ and a reading thread $c_r$, defined as follows: \begin{align*}
 % c_w \eqdef & \clock_0 \opseq \cstore{d}{1}_0 \opseq \cstore{r}{1}_0 \opseq \cunlock_0 \\ 
@@ -2027,7 +2029,7 @@ Using the fractional permission model, we can prove the desired specification of
 % }
  
 
-\section{Memory Management Commands and Counting Permissions}
+\subsection{Potential Uses for Counting Permissions}
 
 Memory management commands \cite{wmsldetails,lola11}. An asymmetric variant of counting permissions are useful for these commands. 
 
@@ -2036,6 +2038,10 @@ Memory management commands \cite{wmsldetails,lola11}. An asymmetric variant of c
 Negation and implication, or lack thereof. Maybe also discuss the connection to the Alexandrov topology, etc. The negation of a closed set is not a closed set. Phase semantics of Linear Logic? 
 
 \section{Multiple Resource Bundles}
+
+In Concurrent Separation Logic, program specifications are not limited to describing a single shared portion of state. Instead, there can be many, distinct portions of state that are shared among threads, each described by its own invariant, and whose access requires synchronization (e.g., conditional regions). Also assigned to each of these shared state descriptions are a set of protected variables, whose values can be read from and written to by threads upon taking temporary ownership of the particular shared regions. Each shared region, along with its protected variables and invariant description, are referred to as \emph{resource bundles}. 
+
+Such a treatment of concurrency, allowing multiple resource bundles, is more general than the simplified system of reasoning described in this dissertation, and hence desirable. For a variety of reasons, however, such a generalization may prove rather difficult. ... 
 
 Multiple resources, the CSL counterexample \cite{Brookes20115} and syntactic control of interference \cite{DBLP:conf/popl/ReddyR12}.  
 
