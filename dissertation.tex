@@ -298,10 +298,10 @@ After a great deal of investigation, experimentation and discussion with manufac
 The model identified by Owens et al.~is essentially a \emph{total-store order} (TSO) model which, as the name implies, indicates that there is a single total order, agreed upon by all processors, that organizes store events. Their x86-TSO model is described as a collection of legal traces of memory events, defined both axiomatically and operationally. The latter, informally, is described in terms of \emph{write buffers}: per-processor FIFO queues of ``writes'' (i.e., location-value pairs). The informal semantics of store events entails buffering a new write in the processor's write buffer; the semantics of load events entails returning the value of the most recent buffered write to the intended location in the processor's write buffer or, if no such buffered write exists, in the shared memory. 
  
 Formally, the operational model is given with a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
-	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ is a register file for each processor;
-	\item $m : \setlocations \pfun \setvalues$ is a shared memory; 
-	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is a write buffer for each processor; 
-	\item $l : \setprocessors^\bot$ is a global lock. 
+	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ represents a register file for each processor;
+	\item $m : \setlocations \pfun \setvalues$ represents a shared memory; 
+	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ represents a write buffer for each processor; 
+	\item $l : \setprocessors^\bot$ represents a global lock. 
 \end{itemize}
 
 Transitions (labeled by memory events) between states indicate the possibility and effect of those memory events. For example, in any state $(R,m,B,l)$, processor $p$ may write a value $v$ into its register $i$; i.e., it may update the state such that $R_p(i) = v$. Similarly, if $R_p(i) = v$ then $p$ may read value $v$ from its register $i$. A summary of the other events processor $p$ may perform is as follows: \begin{itemize}
