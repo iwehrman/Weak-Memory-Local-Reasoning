@@ -138,6 +138,84 @@ The specification language encompasses the programming and assertions languages,
 
 \chapter{Background}
 
+\section{Mathematical Preliminaries and Notation}
+
+For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$ as shorthand for $S \uplus \set{\bot}$, assuming $\bot \notin S$. 
+
+\subsection{Relations}
+\label{sec:relations}
+
+For any set $A$, we write $\ident{A}$ for the identity relation on $A$. For a binary relation $R$ on $A$ and $n \in \setnaturals$, we write $\relexp{R}{n}$ for the $n$-fold iteration of $A$, defined by induction on $n$ as follows: \begin{align*} \relexp{R}{0} \eqdef &\ident{A} \\ 
+\relexp{R}{n+1} \eqdef & \relexp{R}{n} \rcomp R.\end{align*} We write $R$ we write $\tcl{R}$ for the transitive closure of $R$, and $\rtcl{R}$ for its reflexive-transitive closure: \begin{align*}
+    \tcl{R} \eqdef \bigcup_{n \in \setpositives} \relexp{R}{n} \text{~~~and~~~}
+    \rtcl{R} \eqdef \bigcup_{n \in \setnaturals} \relexp{R}{n} 
+\end{align*}
+
+\subsection{Functions}
+\label{sec:functions}
+
+For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \fun{x} \begin{cases}
+  b & \text{if $x = a$} \\
+  f(x) & \text{otherwise.}
+\end{cases}\] 
+
+We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \fun{x}\begin{cases}
+    f(x) & \text{if $x \in \dom{f}$} \\
+    g(x) & \text{else if $x \in \dom{g}$} \\
+    \bot & \text{otherwise.}
+\end{cases}\]
+
+ When convenient, we also write $f_a$ as shorthand for $f(a)$. $a \mapsto b$ is shorthand for the unique partial function $f$ such that $f(a) = b$ and is undefined otherwise. For $A' \subseteq A$, $\restrict{f}{A'}$ is the restriction of $f$ to domain $A'$. 
+
+For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \fun{x} \begin{cases}
+  g(x) & \text{if $x \in \dom{g}$} \\
+  f(x) & \text{otherwise.}
+\end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Some additional properties follow in Lemma~\ref{lem:override}. 
+
+\begin{lemma}
+    \label{lem:override}
+    Let $f,g,h : A \pfun B$. 
+    \begin{enumerate}
+        \item $f \override \nil = \nil \override f = f$
+        \item $f \override (g \override h) = (f \override g) \override h$. 
+        \item $\dom{f \override g} = \dom{f} \cup \dom{g}$. 
+        \item If $\dom{f} \cap \dom{g} = \nil$ then $f \override g = f \uplus g$, and hence $f \override g = g \override f$. 
+    \end{enumerate}
+\end{lemma}
+
+\subsection{Lists}
+\label{sec:lists}
+
+The empty list is denoted by $\lnil$, the literal list by $\llit{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$, and $\arnil$ for the function $(\fun{x} \lnil)$. 
+
+For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \fun{x} \begin{cases}
+  b &\text{ if $l = l' \lapp \llit{(x,b)}$}\\
+  \funof{l'}(x) &\text{ if $l = l' \lapp \llit{(y,b)}$ with $x \neq y$}\\
+  \bot & \text{otherwise.}
+\end{cases}\] For $A' \subseteq A$, $\restrict{l}{A'}$ is the sublist restriction of $l$ to domain $A'$.
+
+For convenience, we lift these function definitions pointwise to sets of lists. For example, for a set $L$ of lists, $a \lcons L \eqdef \setof{a \lcons l}{l \in L}$. 
+
+The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined by recursion on the structure of $m$ and $n$: \begin{align*}
+  m \merge \lnil & = \lnil \merge m = \set{m} \\ 
+  a \lcons m' \merge b \lcons n' & = a \lcons (m' \merge (b\lcons n')) \uplus b \lcons ((a \lcons m') \merge n').
+\end{align*}
+
+We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \fun{x} \funof{l}(x),\] for arbitrary $l \in m \override n$. 
+
+As for function overriding, list overriding has the basic property that, if $a \in \dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
+\begin{lemma}
+    \label{lem:list-override}
+    Let $l,m,n : \listof{A \times B}$. 
+    \begin{enumerate}
+        \item $l \override \nil = \nil \override l = l$
+        \item $l \override (m \override n) = (l \override m) \override n$. 
+        \item $\dom{\funof{m \override n}} = \dom{\funof{m}} \cup \dom{\funof{n}}$. 
+        \item If $\dom{\funof{m}} \cap \dom{\funof{n}} = \nil$ then $m \override n = m \merge n$, and hence $m \override n = n \override m$. 
+        \item $(m \lapp n) \in (m \override n) \subseteq (m \merge n)$.
+    \end{enumerate}
+\end{lemma}
+
 \section{Program Logics}
 \label{sec:program-logics}
 
@@ -211,10 +289,15 @@ On the other hand, the following two executions are not sequentially consistent:
 \end{align*} In the first execution, it is not the case that the operations of thread 0 take place in the order specified by the program: the read precedes the write. In the second execution, the order of operations is consistent with the order specified by the program, but the result is not the same as if the operations were executed in that order: the final read of $f_0$ by thread 1 should not result in value 0, because it directly succeeds the write to $f_1$. 
 
 Operationally, this constraint on the possible execution traces of a program can be realized by modeling memory as a simple location-value map, in which reads and writes to memory happen occur atomically. That is, memory is represented by a (possibly partial) function $\setlocations \pfun \setvalues$; and the semantics of the program is defined such that no more than one thread may read or update the memory at once. This, of course, is the most widespread model of memory used in the semantics of imperative, shared-memory programs, and consequently the vast majority of program reasoning and verification techniques tacitly assume that programs are sequentially consistent; i.e., that all its executions can be described by its interactions with this simple model of memory. 
+
 \subsection{The x86-TSO Memory Model}
 \label{sec:memory-model}
 
-This section contains a brief, informal review of the x86-TSO memory model as defined by Owens, Sarkar and Sewell \cite{DBLP:conf/tphol/OwensSS09}. The model is given as a collection of legal traces of memory events. Legal traces are defined axiomatically and operationally, the latter via a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
+After a great deal of investigation, experimentation and discussion with manufacturers, Owens, Sarkar and Sewell published a specification \cite{DBLP:conf/tphol/OwensSS09} of the x86 memory model. This model has become widely accepted as accurate, and forms the basis for a great deal of related research---e.g., the Comp-Cert project \cite{Leroy-Compcert-CACM}, which is attempting to produce a realistic verified compiler. 
+
+The model identified by Owens et al.~is essentially a \emph{total-store order} (TSO) model which, as the name implies, indicates that there is a single total order, agreed upon by all processors, that organizes store events. Their x86-TSO model is described as a collection of legal traces of memory events, defined both axiomatically and operationally. The latter, informally, is described in terms of \emph{write buffers}: per-processor FIFO queues of ``writes'' (i.e., location-value pairs). The informal semantics of store events entails buffering a new write in the processor's write buffer; the semantics of load events entails returning the value of the most recent buffered write to the intended location in the processor's write buffer or, if no such buffered write exists, in the shared memory. 
+ 
+Formally, the operational model is given with a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
 	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ is a register file for each processor;
 	\item $m : \setlocations \pfun \setvalues$ is a shared memory; 
 	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is a write buffer for each processor; 
@@ -230,6 +313,13 @@ Transitions (labeled by memory events) between states indicate the possibility a
 	\item it may release the lock (i.e., change the lock value in the current state to $\bot$) if it holds the lock.
 \end{itemize}
 
+The x86-TSO memory model includes all the sequentially consistent executions, as well as others. For example, the sequentially consistent execution from the previous section: \[ (0,w,f_0,1), (1,w,f_1,1), (1,r,f_0,1), (0,r,f_1,1), \] is shown valid under the x86-TSO model as follows. Assume that no processors hold the lock. The first thread may perform its store operation by enqueuing a write $(f_0,1)$ in its buffer, and then immediately flushing that write to memory; and then similarly for the second thread, which enqueues a write $(f_1,1)$ and then immediately flushes it to memory. If then the second thread then reads location $f_0$ it finds value 1 (because it has no other writes to $f_0$ in its buffer); and similarly if the first thread then reads location $f_1$ it finds value 1 for the same reason. 
+
+Next, consider again the two non-sequentially consistent executions of Figure~\ref{fig:dekker} from the previous section: \begin{align*}
+  (0,r,f_1,0), (1,w,f_1,1), (1,r,f_0,0), (0,w,f_0,1) \\ 
+  (0,w,f_0,1), (0,r,f_1,0), (1,w,f_1,1), (1,r,f_0,0), 
+\end{align*} The first non-sequentially consistent execution is invalid w.r.t.\ the x86-TSO model as well, because the operations of a single thread still take place in the order specified by the program. The second non-sequentially consistent execution, however, is valid under the x86-TSO model: the first process enqueues a write $(f_0,1)$ in its buffer, and then reads $0$ from location $f_1$ in memory (because its buffer contains no writes to $f_0$); then the second process enqueues a write $(f_1,1)$ in its buffer, and then reads $0$ from location $f_0$ in memory (because its buffer has no writes to $f_1$, only the other buffer). 
+
 This specification bounds the sort of memory events that can occur in program executions, but it does not give meaning to the programs of a particular language. The semantics of the programming language used in this project is however guided by the memory model, and it ought be possible to prove that it respects the bounds of the model. But this is not the focus of this project; and, even without such a correspondence proof, it will still be clear that the semantics of the programming language is manifestly weak. 
 
 \subsection{Data-Race-Freedom Guarantees} 
@@ -238,86 +328,6 @@ This specification bounds the sort of memory events that can occur in program ex
 Although the memory models of most modern computer architectures---including, as we have seen, x86-like computer architectures---are relatively weak, allowing additional executions compared to a sequentially consistent memory model, the tacit assumption that programs are sequentially consistent made by most verification techniques is actually, in many cases, perfectly reasonable. This is because modern computer architectures, including x86, guarantee sequentially consistent execution for a large class of programs: namely, the data-race free programs. Because of these so-called data-race-freedom (DRF) guarantees, verification techniques which assume sequential consistency are perfectly sound in case the program under consideration is race-free. And because races are generally considered to be errors, a reasonable verification workflow is to first check that a program is race-free before proceeding with the verification of more elaborate properties; or, alternatively, to leverage techniques which succeed only for race-free programs. But not all correct programs are race-free; for these programs, verification techniques may need to account for the full complexities of the underlying memory model. 
 
 
-\chapter{Basics}
-\label{ch:basics}
-
-\section{Mathematical Preliminaries and Notation}
-
-For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$ as shorthand for $S \uplus \set{\bot}$, assuming $\bot \notin S$. 
-
-\subsection{Relations}
-\label{sec:relations}
-
-For any set $A$, we write $\ident{A}$ for the identity relation on $A$. For a binary relation $R$ on $A$ and $n \in \setnaturals$, we write $\relexp{R}{n}$ for the $n$-fold iteration of $A$, defined by induction on $n$ as follows: \begin{align*} \relexp{R}{0} \eqdef &\ident{A} \\ 
-\relexp{R}{n+1} \eqdef & \relexp{R}{n} \rcomp R.\end{align*} We write $R$ we write $\tcl{R}$ for the transitive closure of $R$, and $\rtcl{R}$ for its reflexive-transitive closure: \begin{align*}
-    \tcl{R} \eqdef \bigcup_{n \in \setpositives} \relexp{R}{n} \text{~~~and~~~}
-    \rtcl{R} \eqdef \bigcup_{n \in \setnaturals} \relexp{R}{n} 
-\end{align*}
-
-\subsection{Functions}
-\label{sec:functions}
-
-For a (possibly partial) function $f : A \pfun B$ and $a \in A$ and $b \in B$, we write $\funup{f}{\ptup{a}{b}}$ for the updated function: \[ \funup{f}{\ptup{a}{b}} \eqdef \fun{x} \begin{cases}
-	b & \text{if $x = a$} \\
-	f(x) & \text{otherwise.}
-\end{cases}\] 
-
-We write $f(a) = \bot$ if the partial function $f$ is not defined at point $a$, i.e. if $a \notin \dom{f}$, and $\defined{f(a)}$ otherwise. The everywhere-undefined function is indicated by $\nil$. The partial sum $f \uplus g$ of partial functions $f$ and $g$ is defined, when $\dom{f} \cap \dom{g} = \nil$, as follows: \[ f \uplus g \eqdef \fun{x}\begin{cases}
-    f(x) & \text{if $x \in \dom{f}$} \\
-    g(x) & \text{else if $x \in \dom{g}$} \\
-    \bot & \text{otherwise.}
-\end{cases}\]
-
- When convenient, we also write $f_a$ as shorthand for $f(a)$. $a \mapsto b$ is shorthand for the unique partial function $f$ such that $f(a) = b$ and is undefined otherwise. For $A' \subseteq A$, $\restrict{f}{A'}$ is the restriction of $f$ to domain $A'$. 
-
-For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ for the result of \emph{overriding} $f$ with $g$: \[ f \override g \eqdef \fun{x} \begin{cases}
-	g(x) & \text{if $x \in \dom{g}$} \\
-	f(x) & \text{otherwise.}
-\end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Some additional properties follow in Lemma~\ref{lem:override}. 
-
-\begin{lemma}
-    \label{lem:override}
-    Let $f,g,h : A \pfun B$. 
-    \begin{enumerate}
-        \item $f \override \nil = \nil \override f = f$
-        \item $f \override (g \override h) = (f \override g) \override h$. 
-        \item $\dom{f \override g} = \dom{f} \cup \dom{g}$. 
-        \item If $\dom{f} \cap \dom{g} = \nil$ then $f \override g = f \uplus g$, and hence $f \override g = g \override f$. 
-    \end{enumerate}
-\end{lemma}
-
-\subsection{Lists}
-\label{sec:lists}
-
-The empty list is denoted by $\lnil$, the literal list by $\llit{o,\ldots, o'}$, list construction by $o \lcons l$, and list concatenation by $l \lapp l'$, for objects $o$ and lists $l$. We write $\listof{\mathcal{T}}$ to indicate lists of elements drawn from the set $\mathcal{T}$, and $\arnil$ for the function $(\fun{x} \lnil)$. 
-
-For a list $l : \listof{(A \times B)}$, we write $\funof{l}$ for the corresponding partial lookup function: \[ \funof{l} \eqdef \fun{x} \begin{cases}
-	b &\text{ if $l = l' \lapp \llit{(x,b)}$}\\
-	\funof{l'}(x) &\text{ if $l = l' \lapp \llit{(y,b)}$ with $x \neq y$}\\
-	\bot & \text{otherwise.}
-\end{cases}\] For $A' \subseteq A$, $\restrict{l}{A'}$ is the sublist restriction of $l$ to domain $A'$.
-
-For convenience, we lift these function definitions pointwise to sets of lists. For example, for a set $L$ of lists, $a \lcons L \eqdef \setof{a \lcons l}{l \in L}$. 
-
-The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined by recursion on the structure of $m$ and $n$: \begin{align*}
-	m \merge \lnil & = \lnil \merge m = \set{m} \\ 
-	a \lcons m' \merge b \lcons n' & = a \lcons (m' \merge (b\lcons n')) \uplus b \lcons ((a \lcons m') \merge n').
-\end{align*}
-
-We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \fun{x} \funof{l}(x),\] for arbitrary $l \in m \override n$. 
-
-As for function overriding, list overriding has the basic property that, if $a \in \dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
-\begin{lemma}
-    \label{lem:list-override}
-    Let $l,m,n : \listof{A \times B}$. 
-    \begin{enumerate}
-        \item $l \override \nil = \nil \override l = l$
-        \item $l \override (m \override n) = (l \override m) \override n$. 
-        \item $\dom{\funof{m \override n}} = \dom{\funof{m}} \cup \dom{\funof{n}}$. 
-        \item If $\dom{\funof{m}} \cap \dom{\funof{n}} = \nil$ then $m \override n = m \merge n$, and hence $m \override n = n \override m$. 
-        \item $(m \lapp n) \in (m \override n) \subseteq (m \merge n)$.
-    \end{enumerate}
-\end{lemma}
 
 \section{Universes}
 
@@ -335,51 +345,6 @@ The various universal sets are declared and in some cases defined in Figure~\ref
 	\caption{\label{fig:universes}Universal Sets}
 \end{figure}
 
-
-\section{Expressions and Stacks}
-\label{sec:expressions}
-
-Expressions are terms that denote values, which in this development are just integers. Hence, they are also used later on to denote memory locations and processor identifiers. 
-
-The language of expressions, written $\exprs$, is given by the following grammar: \[ \exprs~e \bnfdef v \bnfbar x \bnfbar (e + e') \bnfbar (e - e') \bnfbar \ldots, \] where $v \in \setvalues$ and $x \in \setidentifiers$. (The possibility of additional operations is left open; the complete set of expression is not important.)
-
-The semantics of expressions is given w.r.t.~\emph{stacks}, which are total functions from $\setidentifiers$ to $\setvalues$. The collection of functions $\setidentifiers \tfun \setvalues$ is abbreviated $\setstacks$. The interpretation of an expression w.r.t.~a stack $s$ is given by the \emph{extension} of a stack, written $\ext{s}$, which is a total function from $\exprs$ to $\setvalues$ defined as follows: \begin{align*}
-    \ext{s}(v) \eqdef & v \\
-    \ext{s}(x) \eqdef & s(x) \\
-    \ext{s}(e + e') \eqdef & \ext{s}(e) + \ext{s}(e') \\
-    \ext{s}(e - e') \eqdef & \ext{s}(e) - \ext{s}(e')
-\end{align*}  
-
-Boolean expressions are terms that denote truth values. Their language is given by the following grammar: \[ \bexprs~b \bnfdef \bexpf \bnfbar \bexpt \bnfbar (!b) \bnfbar (e = e') \bnfbar \ldots, \] where $e,e' \in \exprs$. For convenience, we represent truth values by the set $\set{0,1}$ so the extension of a stack can also be used to interpret boolean expressions: \begin{align*}
-    \ext{s}(\bexpf) \eqdef & 0 \\
-    \ext{s}(\bexpt) \eqdef & 1 \\
-    \ext{s}(!b) \eqdef & 1 - \ext{s}(b) \\
-    \ext{s}(e = e') \eqdef & \begin{cases}
-        1 &\text{ if } \ext{s}(e) = \ext{s}(e')\\
-        0 &\text{ otherwise.}
-    \end{cases}
-\end{align*}
-
-The set of \emph{free variables} of a (boolean) expression $e$, written $\fv{e}$, is defined as usual: \begin{align*}
-    \fv{v} \eqdef & \nil \\ 
-    \fv{x} \eqdef & \set{x} \\ 
-    \fv{e + e'} \eqdef & \fv{e} \cup \fv{e'} \\ 
-    \fv{e - e'} \eqdef & \fv{e} \cup \fv{e'} \\ 
-    \fv{\bexpf} \eqdef & \nil \\ 
-    \fv{\bexpt} \eqdef & \nil \\ 
-    \fv{!b} \eqdef & \fv{b} \\ 
-    \fv{e = e'} \eqdef & \fv{e} \cup \fv{e'}
-\end{align*}
-
-For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ if, for all $x \in X$, $s(x) = s'(x)$. The following basic lemma uses this relation to connect the static and dynamic semantics of expressions. 
-\begin{lemma}
-\label{lem:exp-stcong}
-    If $s \stcong{\fv{e}} s'$ then $\ext{s}(e) = \ext{s'}(e)$. 
-\end{lemma}
-
-\begin{proof}
-By induction on the structure of the expression $e$. 
-\end{proof}
 
 \chapter{A Sequential Program Logic}
 \label{ch:uniprocessor}
@@ -478,6 +443,51 @@ For the third and final specification, we begin with the axiom for the $\cfence$
 \infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}}\]
 
 This completes the proof of the program specification of Equation~\ref{eq:seq-ex-spec}. In the following sections, the notions of program, system state, assertion, model, specification and proof are formally defined and discussed.
+
+\section{Expressions and Stacks}
+\label{sec:expressions}
+
+Expressions are terms that denote values, which in this development are just integers. Hence, they are also used later on to denote memory locations and processor identifiers. 
+
+The language of expressions, written $\exprs$, is given by the following grammar: \[ \exprs~e \bnfdef v \bnfbar x \bnfbar (e + e') \bnfbar (e - e') \bnfbar \ldots, \] where $v \in \setvalues$ and $x \in \setidentifiers$. (The possibility of additional operations is left open; the complete set of expression is not important.)
+
+The semantics of expressions is given w.r.t.~\emph{stacks}, which are total functions from $\setidentifiers$ to $\setvalues$. The collection of functions $\setidentifiers \tfun \setvalues$ is abbreviated $\setstacks$. The interpretation of an expression w.r.t.~a stack $s$ is given by the \emph{extension} of a stack, written $\ext{s}$, which is a total function from $\exprs$ to $\setvalues$ defined as follows: \begin{align*}
+    \ext{s}(v) \eqdef & v \\
+    \ext{s}(x) \eqdef & s(x) \\
+    \ext{s}(e + e') \eqdef & \ext{s}(e) + \ext{s}(e') \\
+    \ext{s}(e - e') \eqdef & \ext{s}(e) - \ext{s}(e')
+\end{align*}  
+
+Boolean expressions are terms that denote truth values. Their language is given by the following grammar: \[ \bexprs~b \bnfdef \bexpf \bnfbar \bexpt \bnfbar (!b) \bnfbar (e = e') \bnfbar \ldots, \] where $e,e' \in \exprs$. For convenience, we represent truth values by the set $\set{0,1}$ so the extension of a stack can also be used to interpret boolean expressions: \begin{align*}
+    \ext{s}(\bexpf) \eqdef & 0 \\
+    \ext{s}(\bexpt) \eqdef & 1 \\
+    \ext{s}(!b) \eqdef & 1 - \ext{s}(b) \\
+    \ext{s}(e = e') \eqdef & \begin{cases}
+        1 &\text{ if } \ext{s}(e) = \ext{s}(e')\\
+        0 &\text{ otherwise.}
+    \end{cases}
+\end{align*}
+
+The set of \emph{free variables} of a (boolean) expression $e$, written $\fv{e}$, is defined as usual: \begin{align*}
+    \fv{v} \eqdef & \nil \\ 
+    \fv{x} \eqdef & \set{x} \\ 
+    \fv{e + e'} \eqdef & \fv{e} \cup \fv{e'} \\ 
+    \fv{e - e'} \eqdef & \fv{e} \cup \fv{e'} \\ 
+    \fv{\bexpf} \eqdef & \nil \\ 
+    \fv{\bexpt} \eqdef & \nil \\ 
+    \fv{!b} \eqdef & \fv{b} \\ 
+    \fv{e = e'} \eqdef & \fv{e} \cup \fv{e'}
+\end{align*}
+
+For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ if, for all $x \in X$, $s(x) = s'(x)$. The following basic lemma uses this relation to connect the static and dynamic semantics of expressions. 
+\begin{lemma}
+\label{lem:exp-stcong}
+    If $s \stcong{\fv{e}} s'$ then $\ext{s}(e) = \ext{s'}(e)$. 
+\end{lemma}
+
+\begin{proof}
+By induction on the structure of the expression $e$. 
+\end{proof}
 
 \section{Programs}
 \label{sec:sequential-programs}
