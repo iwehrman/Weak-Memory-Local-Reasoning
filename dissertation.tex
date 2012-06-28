@@ -138,7 +138,7 @@ The specification language encompasses the programming and assertions languages,
 
 \chapter{Background}
 
-\section{Mathematical Preliminaries and Notation}
+\section{Mathematical Preliminaries}
 
 For a set $S$ and object $o \notin S$ we write $S^o \eqdef S \uplus \set{o}$. For example, a domain $S$ can be lifted to its optional domain by writing $S^\bot$ as shorthand for $S \uplus \set{\bot}$, assuming $\bot \notin S$. 
 
@@ -215,6 +215,25 @@ As for function overriding, list overriding has the basic property that, if $a \
         \item $(m \lapp n) \in (m \override n) \subseteq (m \merge n)$.
     \end{enumerate}
 \end{lemma}
+
+
+\subsection{Universes}
+\label{sec:universes} 
+
+The various universal sets are declared and in some cases defined in Figure~\ref{fig:universes}. Note that, in the case of memory locations (i.e., addresses) and processor identifiers, 0 is excluded. Also note that we use a single set of identifiers $\setidentifiers$ to represent later on both program variables and logical variables. 
+
+\begin{figure}[ht]
+  \centering
+  \begin{tabular}{rcl|l}
+    \multicolumn{3}{c}{Set} & Description \\ \hline
+    \multicolumn{3}{l|}{$\setidentifiers$} & Identifiers \\
+    $\setvalues$ & $=$ &  $\setintegers$ & Values \\
+    $\setlocations$ & $\subseteq$  &  $\setpositives$ & Memory locations \\
+    $\setprocessors$ &$\subseteq$ &  $\setpositives$ & Processor identifiers
+  \end{tabular}
+  \caption{\label{fig:universes}Universal Sets}
+\end{figure}
+
 
 \section{Program Logics}
 \label{sec:program-logics}
@@ -340,25 +359,6 @@ Note that, despite the completely informal examples above, this specification of
 \label{sec:drf}
 
 Although the memory models of most modern computer architectures---including, as we have seen, x86-like computer architectures---are relatively weak, allowing additional executions compared to a sequentially consistent memory model, the tacit assumption that programs are sequentially consistent made by most verification techniques is actually, in many cases, perfectly reasonable. This is because modern computer architectures, including x86, guarantee sequentially consistent execution for a large class of programs: namely, the data-race free programs. Because of these so-called data-race-freedom (DRF) guarantees, verification techniques which assume sequential consistency are perfectly sound in case the program under consideration is race-free. And because races are generally considered to be errors, a reasonable verification workflow is to first check that a program is race-free before proceeding with the verification of more elaborate properties; or, alternatively, to leverage techniques which succeed only for race-free programs. But not all correct programs are race-free; for these programs, verification techniques may need to account for the full complexities of the underlying memory model. 
-
-
-
-\section{Universes}
-
-The various universal sets are declared and in some cases defined in Figure~\ref{fig:universes}. Note that, in the case of memory locations (i.e., addresses) and processor identifiers, 0 is excluded. Also note that we use a single set of identifiers $\setidentifiers$ to represent later on both program variables and logical variables. 
-
-\begin{figure}[ht]
-	\centering
-	\begin{tabular}{rcl|l}
-		\multicolumn{3}{c}{Set} & Description \\ \hline
-		\multicolumn{3}{l|}{$\setidentifiers$} & Identifiers \\
-		$\setvalues$ & $=$ &  $\setintegers$ & Values \\
-		$\setlocations$ & $\subseteq$  &  $\setpositives$ & Memory locations \\
-		$\setprocessors$ &$\subseteq$ &  $\setpositives$ & Processor identifiers
-	\end{tabular}
-	\caption{\label{fig:universes}Universal Sets}
-\end{figure}
-
 
 \chapter{A Sequential Program Logic}
 \label{ch:uniprocessor}
