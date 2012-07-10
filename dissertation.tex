@@ -139,14 +139,23 @@ Ideally there would also be a proof theory of assertions and a corresponding sou
 
 The specification language encompasses the programming and assertions languages, and its semantics is given in terms of the semantics of programs and assertions. The proof theory of specifications relies on the existence of a suitable proof theory of assertions for determining entailments. The soundness of the specification logic relies on the soundness of the proof theory of assertions as well as the semantics of programs and assertions. Specifications are described in Section~\ref{sec:specifications}.
 
-\subsection{Contributions}
+\subsection{Contributions and Status}
+
+The significant contributions of this dissertation project are as follows:
 
 \begin{enumerate}
-  \item An x86-like operational semantics based on state transitions for a C-like programming language with pointers and pointer arithmetic, memory fences and constructs for concurrency. 
+  \item An x86-like operational semantics based on state transitions for a C-like programming language with pointers and pointer arithmetic, memory fences and concurrency constructs. The model is novel, and is expressive enough to describe both processor-parallel and interleaved thread executions. 
 
   \item An assertion language for describing, naturally and concisely, x86-like system configurations, and a formal semantics in terms of the aforementioned states. Both the language and the model are novel. 
 
-  \item A program specification logic---i.e., a formal language of specifications and a proof system---for describing and deducing partial correctness of the aforementioned C-like programs in terms of the aforementioned assertions, as well as a formal semantics of specifications that relates the x86-like execution of C-like programs among states described by assertions.  
+  \item A program specification logic---i.e., a formal language of specifications and a proof system---for describing and deducing partial correctness of the aforementioned C-like programs in terms of the aforementioned assertions, as well as a formal semantics of specifications that relates the x86-like execution of C-like programs among states described by assertions. The specification logic additionally embodies an x86-specific principal of local reasoning, which allows proofs to be constructed by describing the interaction between the program and the small portion of system resources relevant to its behavior; and subsequently generalizing the proof to describe the interaction of the program with more complete system descriptions. This is the first known local reasoning principle for a weak memory model. 
+\end{enumerate}
+
+The languages, models and deduction system described above are completely and formally defined, having undergone hundreds of revisions. There are however two major components left unfinished: 
+\begin{enumerate}
+  \item There is no proof system for the assertion language. Omitting this component of the project was an early, intentional decision for two reasons. First, a proof system is necessary for practical application of the specification logic---and in particular automation of the specification logic---but is not critical for the study of the specification language. In practice, syntactic entailment is a practically important approximation of semantic entailment, but in principle simply having a well defined notion of semantic entailment is sufficient. Second, it is hypothesized that the traditional inference rules of first-order logic are sound for the assertion language defined here---as is the case for related theories of similar logics---and also that there is no complete set of rules---as this language encompasses, e.g., arithmetic. Consequently, the task of finding a suitable proof system for the assertion can be seen as a purely practical issue.
+
+  \item There is not a total soundness proof for the specification logic. Although the logic is hypothesized to be sound w.r.t.\ the model described later in the document, this is of course a serious drawback.  
 \end{enumerate}
 
 \chapter{Background}
