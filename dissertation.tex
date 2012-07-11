@@ -54,9 +54,9 @@ software verification techniques therefore relies on race-freedom of
 the program under study. This is not considered a major shortcoming
 though because races usually indicate a program error.
 
-There are, however, useful and interesting programs for which races do not indicate an error. For example, concurrent data structures, which optimize for speed and throughput by using locks and memory fence instructions sparingly, are often racey by design. Their correctness is demonstrated by relating the executions of the comparatively daring implementation to those of its simpler, abstract counterpart. Constructing such a relation therefore requires a technique that is tolerant of races. But that requirement comes with a serious consequence: any technique that tolerates races soundly must also admit that processes may observe the inconsistencies in the value of shared memory that result from the peculiarities of the architecture's memory model.
+There are, however, useful and interesting programs for which races do not indicate an error. For example, concurrent data structures, which optimize for speed and throughput by using locks and memory fence instructions sparingly, are often racy by design. Their correctness is demonstrated by relating the executions of the comparatively daring implementation to those of its simpler, abstract counterpart. Constructing such a relation therefore requires a technique that is tolerant of races. But that requirement comes with a serious consequence: any technique that tolerates races soundly must also admit that processes may observe the inconsistencies in the value of shared memory that result from the peculiarities of the architecture's memory model.
 
-The literature offers little insight into the problem of verifying concurrent data structures and other inherently racey programs. This is because a model of a contemporary memory adds serious complication to an already difficult problem, but also because until recently formal specifications of common architectures' memory models did not exist publicly.\footnote{Or, perhaps, privately.} Fortunately, the latter problem has been alleviated with recent safety specifications for the x86, Power and ARM memory models \cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for these architectures, the path toward a solution to the correctness problem of concurrent data structures and other important programs now lies essentially unimpeded.
+The verification literature offers little insight into the problem of verifying concurrent data structures and other inherently racy programs. This is because a model of a contemporary memory adds serious complication to an already difficult problem, but also because until recently formal specifications of common architectures' memory models did not exist publicly. (Or, perhaps, privately.) Fortunately, the latter problem has been alleviated with recent safety specifications for the x86, Power and ARM memory models \cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for these architectures, the path toward a solution to the correctness problem of concurrent data structures and other important programs now lies essentially unimpeded.
 
 \section{A Motivating Example}
 
@@ -64,7 +64,7 @@ The literature offers little insight into the problem of verifying concurrent da
 \centering
 %\resizebox{\textwidth}{!}{
 \begin{tabular}{cc||cc}
-  \multicolumn{4}{c}{\textit{// initially:} $f_0 \mapsto 0 * f_1 \mapsto
+  \multicolumn{4}{c}{\textit{// initially:} $f_0 \mapsto 0 \fsep f_1 \mapsto
   0$}\vspace{0.5em}\\
 
   \begin{minipage}{0.25\textwidth}
@@ -108,11 +108,11 @@ The particular programs studied in this dissertation are structured, C-like prog
 
 The particular weak memory model explored in this dissertation is x86-like; in particular, based on the x86-TSO memory model as defined by Owens, Sarkar and Sewell \cite{DBLP:conf/tphol/OwensSS09}. This model was chosen for a variety of reasons. First, x86 multiprocessors are now in extremely widespread use, commonly found in servers, desktops, laptops, tablets, smartphones and many other small computing appliances. Second, unlike most other modern multiprocessor architectures (e.g., ARM and Power \cite{DBLP:conf/popl/AlglaveFIMSSN09,DBLP:conf/pldi/SarkarSAMW11}), the memory model is both well understood and has, thanks to Owens et~al., a clear, simple and formal specification. 
 
-In this project, local reasoning is explored in the context of an x86-like memory model in particular by developing a logic which embodies such a principle. The sequential fragment of this logic is loosely based on separation logic, a recent Hoare-style logic which has spurred a revolution in high-level program reasoning due to the simplicity with which it handles pointers using a local reasoning principle. The concurrent extension of the logic is similarly based on a concurrent extension to separation logic. 
+In this project, local reasoning is explored in the context of an x86-like memory model in particular by developing two program logics that embodies such a principle: a logic for purely sequential programs that execute on a single processor; and a more general logic for concurrent programs that execute on multiple processors in parallel. The sequential fragment of this logic is loosely based on separation logic, a recent Hoare-style logic which has spurred a revolution in high-level program reasoning due to the simplicity with which it handles pointers using a local reasoning principle. The concurrent extension of the logic is similarly based on a concurrent extension to separation logic. 
 
 \subsection{Components and Dependencies}
 
-The various components of the program logics described in this dissertation and their explicit dependencies are pictured in the (transitively reduced) graph of Figure~\ref{fig:dependency-graph}. The components are represented by shapes that indicate their approximate type: semantic objects by octagons; formal languages by squares; semantic relationships by ovals; deduction systems by hexagons; and key lemmas by trapezoids. 
+The various components of the program logics described in this dissertation and their explicit dependencies are pictured in the (transitively reduced) graph of Figure~\ref{fig:dependency-graph}. The components are represented by shapes that indicate their approximate type: semantic objects by octagons; formal languages by squares; semantic relationships by ovals; deduction systems by hexagons; and key properties by trapezoids. 
 
 \begin{figure}[ht]
 \begin{center}
@@ -123,11 +123,11 @@ The various components of the program logics described in this dissertation and 
 
 The memory model is shown in a double-lined octagon, which reflects the assumption in this project that it is complete and correct, and is not further modified from its operational definition in \cite{DBLP:conf/tphol/OwensSS09}, which is summarized in Section~\ref{sec:memory-model}. 
 
-The machine model---in particular, the notion of machine state---depends on, but is distinct from, the memory model. For example, the memory model dictates that each processor has a private set of named registers, whereas in the machine models I shall define, a single share set of variable names is assumed. I will also take the liberty in the machine model to relax other restrictions on the notion of state from the memory model, such as the requirement that writes buffered by a single processor are totally ordered. 
+The machine model---in particular, the notion of machine state---depends on, but is distinct from, the memory model. For example, the memory model dictates that each processor has a private set of named registers, whereas in the machine models that we shall define, a single share set of variable names is assumed. We will also take the liberty in the machine model to relax other restrictions on the notion of state from the memory model, such as the requirement that writes buffered by a single processor are totally ordered. 
 
-The programming language is a structured C-like language with concurrent composition. It does not explicitly depend on any other components of the project. The programming language semantics relates the programming language to the machine model, and hence depends on them both. The machine models, programming language and semantics are described in Section~\ref{sec:programming-language}. 
+The programming language is a structured C-like language with concurrent composition. It does not explicitly depend on any other components of the project. The programming language semantics relates the programming language to the machine model, and hence depends on them both. The uniprocessor machine model and sequential programming language are described in Section~\ref{sec:sequential-programs}; the multiprocessor machine model and concurrent programming language are described in Section~\ref{sec:programming-language}. 
 
-The assertion language also does not explicitly depend on any other components of the project.\footnote{Implicitly, of course, it depends significantly on the memory and machine models.} The assertion language semantics associates the assertion language to predicates, which are defined later as sets of states (as defined by the machine model) with a particular structure. Assertions and their meaning are described in Section~\ref{sec:assertions}. 
+The assertion language also does not explicitly depend on any other components of the project.\footnote{Implicitly, of course, it depends significantly on the memory and machine models.} The assertion language semantics associates the assertion language to sets of machine states (as defined by the machine model) with a particular structure. Assertions and their meaning are described in Section~\ref{sec:assertions}. 
 
 Ideally there would also be a proof theory of assertions and a corresponding soundness theorem. I have chosen not to focus on a proof theory of assertions in this project, but will indicate some semantic implications and equivalences that would be relevant to that end in Section~\ref{sec:algebra}.
 
@@ -313,7 +313,7 @@ While a considerable improvement over the Owicki-Gries logic---subsumption proof
 
 \paragraph{RG-Sep} A partial solution to this problem of specification has recently appeared via separation logic. A new concurrent program logic from Vafeiadis and Parkinson, dubbed RG-Sep \cite{DBLP:conf/concur/VafeiadisP07} (``a marriage of rely/guarantee and separation logic''), mates a generalization of separation logic's assertion language and frame rules with the rely/guarantee logic. Besides inheriting the local reasoning features of separation logic, RG-Sep eases the pain of specifying environmental interference by semantically partitioning the system state into private and shared parts. A new class of boxed assertions $\boxed{P}$ is used to describe shared state, and the logical operations are adjusted so that, e.g., a separated conjunction of boxed assertions $\boxed{P} * \boxed{Q}$ allows their footprints to overlap.\footnote{An interesting consequence is that $\boxed{P} * \boxed{Q}$ is logically equivalent to $\boxed{P \wedge Q}$.} The proof rules are then modified so that, e.g., parallel composition requires only that each component be tolerant of environmental interference to shared state, not private state. This could be used in the previous example to obviate the explicit enumeration needed to describe invariance of the irrelevant state variables.
 
-RG-Sep embodies the most advanced ideas about high-level reasoning techniques for fine-grained concurrent shared-memory programs, including local reasoning. Vafeiadis' 2008 dissertation \cite{VafeiadisDissertation} includes correctness proofs for a variety of complex, racey concurrent data structures using the logic. RG-Sep is by no means simple, but does yield relatively concise, readable proofs about difficult algorithms. Indeed, the only significant criticism I provide here is that, as with all the other concurrent logics discussed, RG-Sep is not sound w.r.t.~weak memory models for racey programs.
+RG-Sep embodies some of the most advanced ideas about high-level reasoning techniques for fine-grained concurrent shared-memory programs, including local reasoning. Vafeiadis' 2008 dissertation \cite{VafeiadisDissertation} includes correctness proofs for a variety of complex, racy concurrent data structures using the logic. RG-Sep is by no means simple, but does yield relatively concise, readable proofs about difficult algorithms. Indeed, the only significant criticism I provide here is that, as with all the other concurrent logics discussed, RG-Sep is not sound w.r.t.~weak memory models for racy programs.
 
 \paragraph{Concurrent Separation Logic} A simplified variant of the original Owicki-Gries logic does away with the complicated interference side condition, instead restricting its scope to well locked\footnote{The exact definition of ``well locked'' is technical and rather complicated, but purely syntactic, and hence preferable to the logical interference side conditions imposed by the full Owicki-Gries logic.} and race-free programs. For this smaller (but still large and useful) class of programs, it is possible to use the Owicki-Gries logic to perform \emph{invariant-based} reasoning, in which threads' interaction with shared state may rely only on a specified invariant, and must always preserve that same invariant.
 
@@ -1183,7 +1183,7 @@ Note that the two conditions for locality---the safety monotonicity and frame pr
 
 This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 
 
-\section{A Concurrent Example}
+\section{An Example Proof}
 \label{sec:concurrent-example}
 
 Consider the following simple program, $c_s$, which updates a single memory location while holding a global memory lock: \[ c_s \eqdef \clock_0 \opseq \cstore{d}{1}_0 \opseq \cunlock_0. \] Each primitive command in this program is annotated with the processor identifier $0$, which indicates that, on a multiprocessor machine, it will be executed on the $0^{\mathrm{th}}$ processor. The program first acquires a global lock with the $\clock$
@@ -1278,7 +1278,7 @@ The specification for $c_r$ can be proved similarly to that of $c'_s$. The locke
 }
 This completes the proof of the concurrent program specification of Equation~\ref{eq:conc-ex-spec-rev}.
 
-\section{Concurrent Programs}
+\section{Programs}
 \label{sec:programming-language}
 
 In this section we describe a simplified C-like structured programming language with concurrency. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not an assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
@@ -1807,7 +1807,7 @@ An effect of this is that \emph{assertions are oblivious to the nondeterministic
 
 Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language and hence also of the program logic. 
 
-\section{Concurrent Specifications}
+\section{Specifications}
 \label{sec:specifications}
 \label{sec:multiprocessor-specifications}
 
