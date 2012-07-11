@@ -3,32 +3,34 @@ digraph G {
 	{ rank=sink; center=true; 
 		memory_model[shape=doubleoctagon,label="Memory model",fillcolor=white, style=filled,fillcolor=white, style=filled];
 	}
-	
-	
-		programming_language[shape=box,label="Programming language",group="PL",fillcolor=white, style=filled];
-		programming_model[shape=octagon,label="Machine model",group="PL",fillcolor=white, style=filled];
-		assertion_language[shape=box,label="Assertion language",group="AL",fillcolor=white, style=filled];
+
+	{ center=true; 
+	  	programming_model[shape=octagon,label="Machine model",group="PL",fillcolor=white, style=filled];
+
+		programming_language[shape=box,label="Programming lang",group="PL",fillcolor=white, style=filled];
 		
-		predicates[shape=octagon,label="Predicates",group="AL",fillcolor=white, style=filled];
+		assertion_language[shape=box,label="Assertion lang",group="AL",fillcolor=white, style=filled];
+		
+		// predicates[shape=octagon,label="Predicates",group="AL",fillcolor=white, style=filled];
 
 	
 
 
-		specification_language[shape=box,label="Specification language",group="SL",fillcolor=white, style=filled];
+		specification_language[shape=box,label="Specification lang",group="SL",fillcolor=white, style=filled];
 
 
-		programming_language_semantics[shape=ellipse,label="PL semantics",group="PL",fillcolor=white, style=filled];
-		assertion_language_semantics[shape=ellipse,label="AL semantics",group="AL",fillcolor=white, style=filled];
-		specification_semantics[shape=ellipse,label="SL semantics",group="SL",fillcolor=white, style=filled];
-		assertion_logic_soundness[shape=trapezium,label="AL soundness",group="AL",fillcolor=white, style=filled];
+		programming_language_semantics[shape=ellipse,label="Program semantics",group="PL",fillcolor=white, style=filled];
+		assertion_language_semantics[shape=ellipse,label="Assertion semantics",group="AL",fillcolor=white, style=filled];
+		specification_semantics[shape=ellipse,label="Specification semantics",group="SL",fillcolor=white, style=filled];
+		// assertion_logic_soundness[shape=trapezium,label="Assert sound",group="AL",fillcolor=white, style=filled];
 
-		assertion_logic[shape=hexagon,label="Assertion logic",group="AL",fillcolor=white, style=filled];
-		specification_logic[shape=hexagon,label="Specification logic",group="SL",fillcolor=white, style=filled];
+		// assertion_logic[shape=hexagon,label="Assert proofs",group="AL",fillcolor=white, style=filled];
+		specification_logic[shape=hexagon,label="Specification proofs",group="SL",fillcolor=white, style=filled];
 
 	
 
-		specification_logic_soundness[shape=trapezium,label="SL soundness",group="SL",fillcolor=white, style=filled];
-
+		// specification_logic_soundness[shape=trapezium,label="Spec sound",group="SL",fillcolor=white, style=filled];
+}
 
 
 
@@ -36,36 +38,37 @@ digraph G {
 
 	specification_logic -> specification_language;
 	specification_logic -> assertion_language;
-	specification_logic -> assertion_logic;
+	// specification_logic -> assertion_logic;
 	specification_logic -> programming_language;
 	
 	specification_language -> assertion_language;
 	specification_language -> programming_language;
 	
-	assertion_logic -> assertion_language; 
+	// assertion_logic -> assertion_language; 
 	
 	specification_semantics -> assertion_language_semantics;
 	specification_semantics -> programming_language_semantics;
 	
-	assertion_language_semantics -> predicates;
+	// assertion_language_semantics -> predicates;
+        assertion_language_semantics -> programming_model;
 	assertion_language_semantics -> assertion_language;
 	
 	
-	predicates -> programming_model;
+	// predicates -> programming_model;
 	
 	programming_language_semantics -> programming_model;
 	programming_language_semantics -> programming_language;
 
 	programming_model -> memory_model;
 	
-	assertion_logic_soundness -> assertion_logic;
-	assertion_logic_soundness -> assertion_language;
-	assertion_logic_soundness -> assertion_language_semantics;
+	// assertion_logic_soundness -> assertion_logic;
+	// assertion_logic_soundness -> assertion_language;
+	// assertion_logic_soundness -> assertion_language_semantics;
 	
-	specification_logic_soundness -> specification_logic;
-	specification_logic_soundness -> assertion_logic_soundness;
-	specification_logic_soundness -> specification_language;
-	specification_logic_soundness -> specification_semantics;
+	// specification_logic_soundness -> specification_logic;
+	// specification_logic_soundness -> assertion_logic_soundness;
+	// specification_logic_soundness -> specification_language;
+	// specification_logic_soundness -> specification_semantics;
 
 	
 }
