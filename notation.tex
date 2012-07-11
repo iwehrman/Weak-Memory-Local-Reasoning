@@ -93,9 +93,13 @@
 
 \newcommand{\Calc}[1]{\begin{description}
                 \item \begin{tabbing}\qquad\=\quad\=\kill
+                \> \> #1\end{tabbing}
+                \end{description}}
+\newcommand{\Sketch}[1]{\begin{description}
+                \item \begin{tabbing}\qquad\=\quad\=\kill
                 #1\end{tabbing}
                 %\> \> #1\end{tabbing}
-                \end{description}}
+                \end{description}}                
 \newcommand{\aconn}[1]{\> \{#1\}\\ }
 \newcommand{\aconnl}[1]{\> \{#1\} }
 \newcommand{\aconnt}[1]{\> \{#1\} $\therefore$\\ }
