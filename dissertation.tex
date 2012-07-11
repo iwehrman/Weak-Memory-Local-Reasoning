@@ -395,34 +395,35 @@ We write $e \fpointsto f$ to mean that the value in memory at the address given 
 Note that the specification above would not be true in case $x$ and $y$ were \emph{aliased} (i.e., if $x$ and $y$ denoted the same memory address) because then the store to $y$ would change the value in memory at $y$ as well as at $x$. Also note that the specification would not be true without trailing $\cfence$ command because the buffered write will not necessarily have committed to memory at the moment the commands have completed their execution. 
 
 A \emph{proof sketch} of the program specification in Equation~\ref{eq:seq-ex-spec} is as follows, the details of which will be explained shortly:
-\Calc{
+\Sketch{
   
-  \conn{}{$(x \fpointsto z) \fsep (y \fpointsto -)$}
+  \aconn{$(x \fpointsto z) \fsep (y \fpointsto -)$}
 
-  $\cload{t}{x}$
+  \acomm{$\cload{t}{x}$}
 
-  \conn{}{$(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)$}
+  \aconn{$(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)$}
 
-  $\cstore{y}{t+1}$
+  \acomm{$\cstore{y}{t+1}$}
 
-  \conn{}{$(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1))) $}
+  \aconn{$(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1))) $}
 
-  $\cfence$
+  \acomm{$\cfence$}
 
-  \conn{}{$(x \fpointsto z) \fsep (y \fpointsto (z+1))$}
+  \aconnl{$(x \fpointsto z) \fsep (y \fpointsto (z+1))$}
 
 }
-As the name indicates, a proof sketch provides a skeleton of a complete proof of a program specification. For a program $c_1 \opseq c_2$, a proof sketch may take the form: \Calc{
+As the name indicates, a proof sketch provides a skeleton of a complete proof of a program specification. For a program $c_1 \opseq c_2$, a proof sketch may take the form: 
+\Sketch{
 
-  \conn{}{$P$}
+  \aconn{$P$}
 
-  $c_1$
+  \acomm{$c_1$}
 
-  \conn{}{$R$}
+  \aconn{$R$}
 
-  $c_2$
+  \acomm{$c_2$}
 
-  \conn{}{$Q$}
+  \aconnl{$Q$}
 
 } which indicates that a complete proof will include proofs of the sub-specifications $\triple{P}{c_1}{R}$ and $\triple{R}{c_2}{Q}$ that will be combined, in a final step, using a rule of inference (\textsc{seq}) for composing specifications of sequentially combined commands: 
 \[ \infer[{\textsc{seq}}]{\triple{P}{c_1 \opseq c_2}{Q}}{\infer{\triple{P}{c_1}{R}}{\vdots} & \infer{\triple{R}{c_2}{Q}}{\vdots}}\] where the vertical dots represent the remaining proofs to be supplied. 
@@ -1224,7 +1225,7 @@ This rule, in essence, asserts that if a command $c$ can be shown to maintain an
 Similarly, the pre and postcondition both assert private ownership of the invariant $I$, along with but distinct from the local precondition $P_s$ and postcondition $Q_s$. The $\clock_0$ command implicitly fences, flushing any pending writes described by the invariant or local state, and so the entire precondition in the antecedent is succeeded by $\fbar{0}$. The $\cunlock_0$ command also implicitly fences, so the postcondition of the antecedent is generalized to include states that \emph{would} satisfy the invariant and local postcondition if they were succeeded by $\fbar{0}$. This generalization is accomplished with the \emph{temporal separating implication}, $P \fseqri Q$, which describes states that satisfy $P$ if they are temporally combined on the right with states that satisfy $Q$. For example, assertion $d \fpointsto 0 \fseqri \fbar{0}$ describes states which, when processor 0 is flushed, satisfy $d \fpointsto 0$; that is, states which include any number of writes to $d$, followed by a write to $d$ with value 1. 
 
 A proof sketch of the antecedent follows below: 
-\Calc{
+\Sketch{
 
   \aconnt{$(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}$}
 
@@ -1252,15 +1253,15 @@ A proof sketch of the antecedent follows below:
 
 
 The specification for $c_r$ can be proved similarly to that of $c'_s$. The locked portion of the command is proved using the atomic rule; and the rest by basic sequential reasoning. A proof sketch of the specification of $c_r$ follows below: 
-\Calc{
+\Sketch{
   
-  \conn{}{$x = 0 \conj \femp$}
+  \aconn{$x = 0 \conj \femp$}
 
-  $\clock_1 \opseq \cstore{d}{1}_1 \opseq \cunlock_1$
+  \acomm{$\clock_1 \opseq \cstore{d}{1}_1 \opseq \cunlock_1$}
 
-  \conn{}{$(x = 0 \conj \femp) \disj (x = 1 \conj d \fpointsto 1)$}
+  \aconn{$(x = 0 \conj \femp) \disj (x = 1 \conj d \fpointsto 1)$}
 
-  $\mathsf{if} (x)$ \\
+  \acomm{$\mathsf{if} (x)$}
 
   \> \> \{$x = 1 \conj d \fpointsto 1$\} \\ 
 
@@ -1270,9 +1271,9 @@ The specification for $c_r$ can be proved similarly to that of $c'_s$. The locke
 
   \> \> $\;\;\;\;\cfence_1$ \\
 
-  \> \> \{$x = 1 \conj d \fpointsto 2$\} 
+  \> \> \{$x = 1 \conj d \fpointsto 2$\} \\
 
-  \conn{}{$(x = 0 \conj \femp) \disj (x = 1 \conj d \fpointsto 2)$}
+  \aconnl{$(x = 0 \conj \femp) \disj (x = 1 \conj d \fpointsto 2)$}
 
 }
 This completes the proof of the concurrent program specification of Equation~\ref{eq:conc-ex-spec-rev}.
