@@ -1697,7 +1697,17 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 	\caption{\label{fig:satisfaction-relation} The satisfaction relation}
 \end{figure}
 
-The classical atomic formulas and logical operations are defined as usual. The $\femp$ assertion describes generalized memory systems with empty heaps, empty write buffers, and with no processors blocked. The $\fbar{i}$ assertion additionally requires that $i$ be buffer-complete. The $\flock{i}$ assertion is like $\femp$, but requires that all processors except for $i$ be blocked. The leads-to assertion $e \fwrite{i} f$ is modeled by two classes of generalized memory systems: those that are \emph{pending}, with an empty heap, a single buffered write, and in which at most $i$ is blocked; and those that are \emph{flushed}, with a single-point heap, all buffers empty, and in which no processors are blocked. (In the latter case, $i$ must is not blocked because it describes the result of a flushing a buffered write, which cannot happen if the buffer is blocked.) The separating conjunctions and implications are defined with the semantic functions described in Section~\ref{sec:separation}.  
+The classical atomic formulas and logical operations are defined as usual. The $\femp$ assertion describes generalized memory systems with empty heaps, empty write buffers, and with no processors blocked. The $\fbar{i}$ assertion additionally requires that $i$ be buffer-complete. The $\flock{i}$ assertion is like $\femp$, but requires that all processors except for $i$ be blocked. The leads-to assertion $e \fwrite{i} f$ is modeled by two classes of generalized memory systems: those that are \emph{pending}, with an empty heap, a single buffered write, and in which at most $i$ is blocked; and those that are \emph{flushed}, with a single-point heap, all buffers empty, and in which no processors are blocked. The separating conjunctions and implications are defined with the semantic functions described in Section~\ref{sec:separation}.  
+
+\begin{remark}
+The choice of blocked sets in the leads-to equation deserves additional explanation. In the case of models with a pending write on processor $i$, the blocked set may or may not contain $i$---the pending write may not have flushed to memory because the buffer on which it is enqueued is blocked; or, if the buffer is not blocked, it may simply have not yet flushed. In the case of models in which the write has flushed, $i$ must not be blocked because, indeed, the write has flushed, which can only happen if the buffer is unblocked.
+
+It is also instructive to consider the models of the leads-to assertion in separating-conjunction with the lock assertions: $e \fwrite{i} e' \fsep \flock{j}$. The only blocked set of the models of $\flock{j}$ is $\setprocessors \setminus \set{j}$, which is maximal w.r.t.\ set inclusion. (Operationally, no lock state corresponds to every processor being blocked.) Consequently, because the separating conjunction requires that the blocked sets of the constituent models be disjoint, the only models of $e \fwrite{i} e'$ that are compatible with a model of $\flock{j}$ are those with an empty blocked set; i.e., those in which $i$ is not blocked. An informal interpretation of an empty blocked set is thus that of a model in which the lock status is wholly unconstrained. 
+
+Incompatibility of models of the leads-to assertion in which $i$ is blocked is intuitive in case $i = j$: a blocked set that consists solely of $i$ ought not to be compatible with one that consists of all processors except $i$. But in case $i \neq j$, the incompatibility is less obvious. Why must a model of a leads-to assertion which asserts that $i$ is blocked be incompatible with a model of a lock assertion which asserts that many processors including $i$ are blocked? The reason is that the lock status may be dynamically changed by the lock-manipulation primitives, which if compatibility were relaxed could lead to inconsistency. That is, even if a model of $e \fwrite{i} e'$ in which $i$ is necessarily blocked were allowed to be compatible with models of $\flock{i}$, it surely ought not be compatible with models of $\flock{j}$, with $j \neq i$; but the lock-manipulations primitives can effect just this change. The separating conjunctions are designed to isolate parts of the state from such changes, and such a relaxed notion of compatibility would lead to unsoundness of the frame rules in the context of lock manipulation primitives. 
+
+Similarly, even if the semantics were relaxed so that $\flock{i} \fsep \flock{i} \sequiv \flock{i}$, we must still ensure that $\flock{i} \fsep \flock{j}$ is inconsistent when $i \neq j$. But then we could derive an invalid specification as follows: \[ \infer[\textsc{cons}]{\spec{J}{\flock{0}}{\cunlock_0 \oppar \clock_1}{\bexpf}}{\infer[\textsc{frame-sp}]{\spec{J}{\flock{0} \fsep \flock{0}}{\cunlock_0 \oppar \clock_1}{\flock{0} \fsep \flock{1}}}{\infer[\textsc{...}]{\spec{J}{\flock{0}}{\cunlock_0 \oppar \clock_1}{\flock{1}}}{\vdots}}}\] \qedsymbol \\ 
+\end{remark}
 
 We write $\pred{P}$ for the set of models that satisfy $P$,\[ \pred{P} \eqdef \setof{\amod}{\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
 	P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
@@ -1709,14 +1719,14 @@ We write $\pred{P}$ for the set of models that satisfy $P$,\[ \pred{P} \eqdef \s
 
 As before, we shall define the strong temporal separating conjunction as the additive conjunction of spatial and temporal separating conjunctions: \[ P \fsseq P' \eqdef (P \fsep P') \conj (P \fseq P').\]
 
-Again, the spatial separating conjunction $P \fsep Q$ is commutative, so there is no need to define its converse operation, but he temporal separating conjunction is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseqc P$, and similarly for $P \fsseqc Q$: \begin{align*}
+Again, the spatial separating conjunction $P \fsep Q$ is commutative, so there is no need to define its converse operation, but he temporal separating conjunction is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseq P$, and similarly for $P \fsseqc Q$: \begin{align*}
   P \fseqc Q \eqdef & Q \fseq P \\ 
   P \fsseqc Q \eqdef & Q \fsseq P. \\ 
 \end{align*}
 
-In the sequential assertion logic we defined the points-to assertion $e \fpointsto e'$ as an abbreviation of of a leads-to assertion followed temporally by a barrier assertion. In the concurrent assertion logic, however, the situation is not as simple. The leads-to assertions are here annotated with expressions indicating the identifier of the processor on which they are buffered, and similarly for barrier assertions. We might try to define a points-to assertion as a leads-to assertion on a certain processor temporally conjoined with a barrier assertion on the same processor: \[
+In the sequential assertion logic we defined the points-to assertion $e \fpointsto e'$ as an abbreviation of a leads-to assertion followed temporally by a barrier assertion. In the concurrent assertion logic, however, the situation is not as simple. The leads-to assertions are here annotated with expressions indicating the identifier of the processor on which they are buffered, and similarly for barrier assertions. We might try to define a points-to assertion as a leads-to assertion on a certain processor temporally conjoined with a barrier assertion on the same processor: \[
   e \fpointsto e' \eqdef \exists x \st e \fwrite{x} e' \fseq \fbar{x}
-\] The intuition behind this abbreviation is that the result of flushing on one processor should be indistinguishable from the result of flushing the same write on a different processor, and hence the choice of a particular processof from which the write originated is unimportant. But, in the model described in this document, this is only true of models for which all buffers are complete; and in general models of assertions need not have all buffers complete. As a consequence of the abbreviation above, among the models of $1 \fwrite{0} 1 \fseq 2 \fpointsto 2$ are included some in which the write to location $1$ is buffered on processor 0, whereas there should arguably be none. 
+\] The intuition behind this abbreviation is that the result of flushing on one processor should be indistinguishable from the result of flushing the same write on a different processor, and hence the choice of a particular process from which the write originated is unimportant. But, in the model described in this document, this is only true of models for which all buffers are complete; and in general models of assertions need not have all buffers complete. As a consequence of the abbreviation above, among the models of $1 \fwrite{0} 1 \fseq 2 \fpointsto 2$ are included some in which the write to location $1$ is buffered on processor 0, whereas there should arguably be none. 
 
 We might instead try a universal quantification instead of an existential one: \[e \fpointsto e' \eqdef \forall x \st e \fwrite{x} e' \fseq \fbar{x} \] But this too is unsuitable, for such formulas are necessarily inconsistent: the quantifier ranges over all integer values, but not all integer values denote processor identifiers; and the matrix of the formula can only be satisfied by models in which the variable denotes a processor identifier. To get around this, we would also have to change the models of the leads-to and barrier assertions to denote empty models (instead of no models) when parametrized with something other than a processor identifier. 
 
@@ -1725,7 +1735,7 @@ Most likely, this simply indicates a flaw in the model and logic presented thus 
 \subsection{Algebra}
 \label{sec:algebra}
 
-A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:equivalences} and~\ref{fig:entailments}, respectively. If a formula contains instances of $\bullet$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the separating conjunctions. 
+A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:equivalences} and~\ref{fig:entailments}, respectively. If a formula contains instances of $\bullet$ or $\circ$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the separating conjunctions. 
 
 \begin{figure}[ht]
 	\centering
@@ -1740,6 +1750,7 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
     \flock{e} \gensym \flock{f} \sequiv & \bexpf \\ 
     \fbar{e} \gensym \fbar{e} \sequiv & \fbar{e} \\ 
 		(P \gensym P') \fseq \fbar{e} \sequiv & (P \fseq \fbar{e}) \gensym (P' \fseq \fbar{e}) \\ 
+    P \fsseq \fbar{e} \sequiv & P \fseq \fbar{e} \\ 
     \flock{e} \fseq \fbar{e} \sequiv & \flock{e} \fsep \fbar{e}\\ 
     e \fwrite{e'} e'' \fsep e \fwrite{f'} f'' \sequiv & \bexpf \\ 
     e \fwrite{e'} e'' \fseq e \fwrite{e'} f \fseq \fbar{e'} \sequiv & e \fwrite{e'} f \fseq \fbar{e'}
@@ -1748,7 +1759,7 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
 	\caption{\label{fig:equivalences}Semantic equivalences}
 \end{figure}
 
-As in the sequential assertion logic, each of the separating conjunctions is associative and has $\femp$ as a unit. And the spatial separating conjunction is again commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbar{e}$, and $\fbar{e}$ also distributes fully through the separating conjunctions. The separating conjunctions are multiplicative w.r.t.\ the lock assertion $\flock{e}$ and also symmetric. $\fbar{e}$ also commutes with $\flock{e}$, even for the sequential conjunctions. Note that the result of flushing successive writes to the same location is equivalent to flushing just the most recent write. 
+As in the sequential assertion logic, each of the separating conjunctions is associative and has $\femp$ as a unit. And the spatial separating conjunction is again commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbar{e}$, and $\fbar{e}$ also distributes fully through the separating conjunctions. Again, the strong and weak temporal separating conjunctions of barrier assertions are equivalent. The separating conjunctions are multiplicative w.r.t.\ the lock assertion $\flock{e}$ and also symmetric. $\fbar{e}$ also commutes with $\flock{e}$, even for the sequential conjunctions. Note that the result of flushing successive writes to the same location is equivalent to flushing just the most recent write. 
 
 \begin{figure}[ht]
 	\centering
@@ -1770,23 +1781,23 @@ As in the sequential assertion logic, each of the separating conjunctions is ass
 	\caption{\label{fig:entailments}Semantic entailments}
 \end{figure}
 
-The first four entailments in Figure~\ref{fig:entailments}---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
+The first four entailments in Figure~\ref{fig:entailments}---that $\fbar{e}$ strengthens $\femp$, that points-to strengthens leads-to, and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity of $\conj$. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the principal connective in the consequent, and the other conjunctions are not commutative. 
 
 \subsection{Flushing Closure}
 \label{sec:predicates}
 
 Assertions can thus be thought of as syntactic constructs that denote sets of multiprocessor models, and hence sets of generalized multiprocessor machine states. These sets of models have a special structure: namely, they are down-closed w.r.t.\ a partial order, which encompasses the flushing partial order on multiprocessor memory systems. This section formalizes this property. 
 
-The flushing order on multiprocesor memory systems, described in Section~\ref{sec:uniprocessor-predicates}, is extended a generalized order on generalized multiprocessor memory systems as follows: 
+The flushing order on multiprocesor memory systems, described in Section~\ref{sec:uniprocessor-predicates}, is extended to a generalized order on generalized multiprocessor memory systems as follows: 
 \begin{definition}
   For generalized multiprocessor memory systems $\nu_1 = (\mu_1,\Gamma_1)$ and $\nu_2 = (\mu_2,\Gamma_2)$, \begin{align*}
     \nu_2 \pstep{\widehat{\tau},i} \nu_1 \iffdef & \Gamma_2 \subseteq \Gamma_1 \conj i \in \Gamma_1 \conj \mu_2 \pstep{\tau,i} \mu_1 \\ 
     \nu_2 \pstep{\widehat{\tau}} \nu_1 \iffdef & \exists i \in \setprocessors \st \nu_2 \pstep{\widehat{\tau},i} \nu_1 \\ 
     \nu_1 \modrefines \nu_2 \iffdef & \nu_2 \rtcl{\pstep{\widehat{\tau}}} \nu_1
   \end{align*} 
-\end{definition} Informally, $\nu_1 \modrefines \nu_2$ if $\nu_2$ can flushed its buffer-complete processors to arrive at $\nu_1$. 
+\end{definition} Informally, $\nu_1 \modrefines \nu_2$ if $\nu_2$ can flush its buffer-complete processors to arrive at $\nu_1$. 
 
-The fact that that this order on generalized multiprocessor memory systems encompasses the flushing order on multiprocessor memory systems is formalized by the following lemma. 
+The fact that this order on generalized multiprocessor memory systems encompasses the flushing order on multiprocessor memory systems is formalized by the following lemma. 
 
 \begin{lemma}
   \label{lem:generalized-order-encompasses-flushing-order}
@@ -1908,7 +1919,7 @@ Unlike the sequential logic, there is no conjunction rule in the concurrent logi
 	\caption{\label{fig:inference-rules}Inference rules}
 \end{figure}
 
-The structural rules for sequential composition, nondeterministic choice, loops and concurrency are similar in spirit to those in Concurrent Separation Logic. In particular, the concurrency rule requires agreement between the two processes on the value shared invariant, and the strong interleaving separating conjunction is used to partition the local states. Note that both this conjunction and the concurrent composition command are commutative. The sharing rule allows us to infer that, if a portion of the state is invariant w.r.t.\ the assertion $J$, then $J$ may also be assumed to hold initially and upon termination. 
+The structural rules for sequential composition, nondeterministic choice, loops and concurrency are similar in spirit to those in Concurrent Separation Logic. In particular, the concurrency rule requires syntactic agreement between the two processes on the shared invariant, and the strong interleaving separating conjunction is used to partition the local states. Note that both this conjunction and the concurrent composition command are commutative. The sharing rule allows us to infer that, if a portion of the state is invariant w.r.t.\ the assertion $J$, then $J$ may also be assumed to hold initially and upon termination. 
 
 Only the invariant rule differs significantly from Concurrent Separation Logic. Here, we require that the lock be held before accessing the shared state; and that, under the assumption that the shared state satisfied the invariant initially, upon completion of the command the shared state must again be shown to satisfy the invariant. In the subsection below, we discuss a number of variations on this important rule. 
 
