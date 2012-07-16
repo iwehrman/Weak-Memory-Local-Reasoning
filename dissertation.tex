@@ -1719,7 +1719,7 @@ We write $\pred{P}$ for the set of models that satisfy $P$,\[ \pred{P} \eqdef \s
 
 As before, we shall define the strong temporal separating conjunction as the additive conjunction of spatial and temporal separating conjunctions: \[ P \fsseq P' \eqdef (P \fsep P') \conj (P \fseq P').\]
 
-Again, the spatial separating conjunction $P \fsep Q$ is commutative, so there is no need to define its converse operation, but he temporal separating conjunction is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseq P$, and similarly for $P \fsseqc Q$: \begin{align*}
+Again, the spatial separating conjunction $P \fsep Q$ is commutative, so there is no need to define its converse operation, but the temporal separating conjunction is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseq P$, and similarly for $P \fsseqc Q$: \begin{align*}
   P \fseqc Q \eqdef & Q \fseq P \\ 
   P \fsseqc Q \eqdef & Q \fsseq P. \\ 
 \end{align*}
@@ -1882,7 +1882,7 @@ Unlike the sequential logic, there is no conjunction rule in the concurrent logi
 		\infrule[disj]{\spec{J}{P}{c}{Q} \text{~~~} \spec{J}{P'}{c}{Q}}{\spec{J}{P \disj P'}{c}{Q}}
 		\vspace{0.8em}
 
-		\infrule[ex]{\spec{J}{P}{c}{Q} \text{~~~} x \notin \fv{c,P}}{\spec{J}{\exists x \st P}{c}{Q}}
+		\infrule[ex]{\spec{J}{P}{c}{Q} \text{~~~} x \notin \fv{c,Q}}{\spec{J}{\exists x \st P}{c}{Q}}
 		\vspace{0.8em}
 
 		\infrule[frame-sp]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fsep P}{c}{R \fsep Q}}
@@ -1906,14 +1906,13 @@ Unlike the sequential logic, there is no conjunction rule in the concurrent logi
 		\infrule[loop]{\spec{J}{P}{c}{P}}{\spec{J}{P}{\cloop{c}}{P}}
 		\vspace{0.8em}
 
-		\infrule[inv]{\spec{\femp}{J \fsep P \fsep \flock{i}}{c}{J \fsep Q \fsep \flock{i}}}{\spec{J}{P \fsep \flock{i}}{c}{Q \fsep \flock{i}}}
-		\vspace{0.8em}
-
-	 	\infrule[conc]{\spec{J}{P}{c}{Q} \text{~~~}\spec{J}{P'}{c'}{Q'} \text{~~~} \fv{P,c,Q} \cap \mod{c'} = \nil \text{, etc.}}{\spec{J}{P \fsep P'}{\cpar{c}{c'}}{Q \fsep Q'}}
+	 	\infrule[conc]{ \spec{J}{P_i}{c_i}{Q_i} \text{~~~} \fv{P_i,c_i,Q_i} \cap \mod{c_{1-i}} = \nil \text{for~} i \in \set{0,1}}{\spec{J}{P_0 \fsep P_1}{\cpar{c_0}{c_1}}{Q_0 \fsep Q_1}}
     \vspace{0.8em}
 
     \infrule[share]{\spec{J}{P}{c}{Q}}{\spec{\femp}{J \fsep P}{c}{J \fsep Q}}
+    \vspace{0.8em}
 
+    \infrule[inv]{\spec{\femp}{J \fsep P \fsep \flock{i}}{c}{J \fsep Q \fsep \flock{i}}}{\spec{J}{P \fsep \flock{i}}{c}{Q \fsep \flock{i}}}
 
 	\end{minipage}}
 	\caption{\label{fig:inference-rules}Inference rules}
@@ -1926,18 +1925,29 @@ Only the invariant rule differs significantly from Concurrent Separation Logic. 
 \subsubsection{Derived and Alternative Axioms and Inference Rules}
 
 Observe that the write in the precondition of both the load and store axioms need not be buffered: the placeholder assertion $P$ can be instantiated with an appropriate barrier assertion to indicate that the write has been flushed: 
-\infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq (\fbar{i} \fseq P')}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq (\fbar{i} \fseq P'))\conj x = e'}} It is interesting to note though that this only describes the result of loading a write in memory that originated from the processor performing the load. It does not, for example, allow processor $i$ to load a write that originated on buffer $j$ (with $j \neq i$).\todo{I can say a lot more about this, but it's not clear that to do so would be worthwhile.}
+\infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq (\fbar{i} \fseq P')}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq (\fbar{i} \fseq P'))\conj x = e'}} It is interesting to note though that this only describes the result of loading a write in memory that originated from the processor performing the load. It does not, for example, allow processor $i$ to load a write that originated on buffer $j$ (with $j \neq i$).
+
+Another unfortunately wrinkle of the current model is that we are apparently unable to derive axioms for loading and storing in the context of points-to formulas. For that, we must add additional axioms: 
+    \infax[load-p]{\spec{J}{(e \fpointsto e') \fsseq P}{\cload{x}{e}_i}{((e \fpointsto e') \fsseq P)\conj x = e'}}
+
+    \infax[store-p]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e 
+    \fpointsto e'') \fsseq P) \fseq (e \fwrite{i} e')}}
+We must adopt these as additional axioms in the current model because, as discussed in the previous section, there does not seem to be any assertion $P$ for which $e \fwrite{i} e' \fsseq P \sequiv e \fpointsto e'$. This is especially curious because, as we shall describe shortly, the semantics of specifications is restricted to buffer-complete models, and for buffer-complete models it \emph{is} the case that $e \fwrite{i} e' \fsseq \fbar{i} \sequiv e \fpointsto e'$. But it is not yet clear how this observation can be leveraged by the program logic to eliminate these additional axioms. \todo{Maybe there is a suitable assertion: $\forall x \st \fbar{x}$. Must relax semantics so that if $s(x) \notin \setprocessors$ then $\fbar{x} \sequiv \femp$, by changing the comprehension in the def of $\mathit{bar}(i)$ to $i \notin \setprocessors \disj i \in \Gamma$.}
 
 The given axioms for the $\clock$ and $\cunlock$ commands are sound but rather weak insofar as they do not reflect the implicit fencing that is coincident with these commands. The axioms, however, can be strengthened to take this into account as follows: 
   \infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i} \fsep \fbar{i}}}
 
   \infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\fbar{i}}}
-Using the frame rules, we can derive ``global'' axioms for $\clock$ and $\cunlock$
+Using the frame rules, we can also derive ``global'' axioms for $\clock$ and $\cunlock$, as well as $\cfence$: 
+  \infax[fence-g]{\spec{J}{P}{\cfence_i}{P \fseq \fbar{i}}}
+  
   \infax[lock-g]{\spec{J}{P}{\clock_i}{\flock{i} \fsep P \fseq \fbar{i}}}
 
   \infax[unlock-g]{\spec{J}{P \fsep \flock{i}}{\cunlock_i}{P \fseq \fbar{i}}}
-We can also derive ``backward'' variations of the global rules, using the temporal separating implication: 
-  \infax[lock-b]{\spec{J}{P \fseqri \fbar{i}}{\clock_i}{\flock{i} \fsep P}}
+We can also derive ``backward'' variations of the global rules, using the temporal and spatial separating implications: 
+  \infax[fence-b]{\spec{J}{P \fseqri \fbar{i}}{\clock_i}{P}}
+
+  \infax[lock-b]{\spec{J}{(P \fseqri \fbar{i}) \fsepic \flock{i}}{\clock_i}{P}}
 
   \infax[unlock-b]{\spec{J}{(P \fseqri \fbar{i}) \fsep \flock{i}}{\cunlock_i}{P}}
 
@@ -1969,10 +1979,10 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
   \item For all $\mu_0,\mu_J,\mu_F$ such that \begin{enumerate}[(i)]
     \item $\mu_0 \in (\mu_J \ssep (\mu_F \shash \mu))$,
     \item $\lockcomplete{\mu_0}$, and
-    \item either $(s,\mu_J,\setprocessors) \sentails J$ or $\locked{\mu_1}$,
+    \item either $(s,\mu_J,\setprocessors) \sentails J$ or $\locked{\mu_0}$,
   \end{enumerate} $c,(s,\mu_0) \nrightarrow \abort$.
 
-  \item For all $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that \begin{enumerate}[(i)]
+  \item For all $\mu_0,\mu_1,\mu_J,\mu_F,c',s'$ such that \begin{enumerate}[(i)]
     \item $\mu_0 \in (\mu_J \ssep (\mu_F \shash \mu))$,
     \item $\lockcomplete{\mu_0}$,
     \item either $(s,\mu_J,\setprocessors) \sentails J$ or $\locked{\mu_0}$, and 
@@ -1990,7 +2000,7 @@ The definition of the predicate above differs from Vafeiadis' in three ways. Fir
 
 Second, the frame state is allowed to change from one step to another, but only by making silent transitions. This reflects the fact that specifications are oblivious to the nondeterministc flushing transitions required by the memory model and described by the program semantics---the program logic allows for reasoning about specifications at a level that is generally higher than the level of nondeterministic buffer flushing. 
 
-Third, because there is no inherent notion of atomicity in this language and memory model, we cannot require that the system state \emph{always} be partitionable so that one cell satisfies the invariant assertion. For even while one processor holds the lock, others may well continue to execute by, e.g., storing to their write buffers, assigning to identifiers. etc. Hence, the invariant condition from Vafeiadis' safety predicate is weakened to require only that the invariant holds while the lock is available. This allows a process to  temporarily violate the invariant after aquiring the lock. In these states, other processes of course cannot rely on the shared state satisfying the invariant, but this is generally not a concern because, while the other processes can continue to execute while the invariant is violated, they cannot read the shared state; instead, they are blocked until the lock is released. 
+Third, because there is no inherent notion of atomicity in this language and memory model, we cannot require that the system state \emph{always} be partitionable so that one cell satisfies the invariant assertion. For even while one processor holds the lock, others may well continue to execute by, e.g., storing to their write buffers, assigning to identifiers, etc. Hence, the invariant condition from Vafeiadis' safety predicate is weakened to require only that the invariant holds while the lock is available. This allows a process to  temporarily violate the invariant after aquiring the lock. In these states, other processes of course cannot rely on the shared state satisfying the invariant, but this is generally not a concern because, while the other processes can continue to execute while the invariant is violated, they cannot read the shared state; instead, they are blocked until the lock is released. 
 
 
 \subsection{Soundness}
