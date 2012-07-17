@@ -2070,7 +2070,25 @@ Some (strong-memory) concurrent programs are more amenable to verification using
 
 A variation on splitting permission could significantly extend the programs about which the concurrent weak-memory logic is capable of reasoning: namely, to more racy programs. Consider a program that performs no locking whatsoever, in which at most one thread at a time may write to a shared region of memory, while the other threads may only read. If the shared invariant relates more than one memory location in a non-trivial way, then the the ``daring'' rules from in Section~\ref{sec:proof-theory}, which allow individual reads and writes to shared memory without requiring that the global lock be acquired first, may be insufficient because it may not be possible to show that individual writes necessarily preserve the invariant.
 
-For example, consider a message-passing program with two shared memory locations: address $d$, which contains a data value; and address $r$ which contains a ``ready'' flag. The invariant, informally, is that whenever the ready flag is set the value of the data flag is also set. Formally, let $J$ be the following invariant: \[ J \eqdef \exists r' \st \exists d' \st r \fpointsto r' \fsep d \fpointsto d' \conj (r \neq 1 \disj d = 1).\] There may be multiple copies of a reading (or receiving) thread, which may load $r$ and $d$ at any time without first acquiring a lock. The ``daring'' load axiom is sufficient to describe the results of these loads. There is also a single writing (or sending) thread $c_s$, which updates these locations in accordance to the invariant, defined as follows: \[ c_s \eqdef \cstore{d}{1} \opseq \cstore{r}{1}.\] Intuitively, it is clear that this thread maintains the invariant, because it only sets the ready flag after first setting the data flag; and no other threads may interfere, resetting the data flag between these two writes. But the ``daring'' store axiom is not sufficient to show that this thread maintains the invariant $J$. 
+For example, consider a message-passing program with two shared memory locations: address $d$, which contains a data value; and address $r$ which contains a ``ready'' flag. The invariant, informally, is that whenever the ready flag is set the value of the data flag is also set. Formally, let $J$ be the following invariant: \[ J \eqdef \exists r' \st \exists d' \st r \fpointsto r' \fsep d \fpointsto d' \conj (r' \neq 1 \disj d' = 1).\] There may be multiple copies of a reading (or receiving) thread, which may load $r$ and $d$ at any time without first acquiring a lock. The ``daring'' load axiom is sufficient to describe the results of these loads. There is also a single writing (or sending) thread $c_s$, which updates these locations in accordance to the invariant, defined as follows: \[ c_s \eqdef \cstore{d}{1} \opseq \cstore{r}{1}.\] Intuitively, it is clear that this thread maintains the invariant, because it only sets the ready flag after first setting the data flag; and no other threads may interfere, resetting the data flag between these two writes. 
+
+The ``daring'' store axiom, however, is not sufficient to show that this thread maintains the invariant $J$. The first store is not problematic: regardless of whether $r' \neq 1$ or $d' = 1$ to begin with, after setting $d$, it will be the case that $d' = 1$, which satisfies the invariant. But an attempt to apply the daring store axiom to the second write will fail, because it is only safe to set the ready flag when it is known that $d = 1$. But this knowledge was lost after the first application of the daring store axiom; again, we only know that one of $r' \neq 1$ and $d' = 1$ holds. 
+
+Suppose, however, we had a modified notion of splitting permissions such that, as before, only locations with full 1 permission are writable, but also in which only locations with permission at least $\frac{1}{2}$ were allowed to have buffered writes. 
+
+\Sketch{
+  
+  \aconn{$J_{\frac{3}{4}}$}
+
+  \acomm{$\cstore{d}{1}_0$}
+
+  \aconn{$J_{\frac{3}{4}} \fseq d \fwrite{0} 1$}
+
+  \acomm{$\cstore{r}{1}_0$}
+
+  \aconn{$J_{\frac{3}{4}} \fseq d \fwrite{0} 1 \fseq r \fwrite{0} 1$}
+
+}
 
 
 % The weak memory logic described in this dissertation would greatly benefit from the addition of a fractional model of permissions. Consider again the concurrent example in Section~\ref{sec:concurrent-example}, in which we consider the parallel composition of a writing thread $c_w$ and a reading thread $c_r$, defined as follows: \begin{align*}
