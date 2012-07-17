@@ -2040,7 +2040,6 @@ By unifying states and models, the semantics of assertions and specifications is
 
 In the case of the \textsc{atomic} inference rule, the situation is even worse: \infrule[atomic]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{(J \fsep Q \fsep \flock{i}) \fseqri \fbar{i}}}{\spec{J}{P}{\clock_i \opseq c \cunlock_i}{Q}} Soundness of this rule relies crucially on the use of the temporal separating implication in the post-condition of the antecedent, in which, in the current model, $P \fseqri \fbar{i}$ denotes the set of states which, when flushed on processor $i$, satisfy $P$. But in the simplified model, the separating implication $P \fseqri \fbar{i}$ does not have the intended meaning.\footnote{Or, really, any coherent or intuitive meaning.} The problem lies in the  incompatibility between the multiplicative separating conjunctions and implication, and the additive semantics of the barrier assertion. We might also consider using an additive implication $P \Leftarrow \fbar{i}$, but neither is this intuitively correct (it describes either flushed states that satisfy $P$ states, or arbitrary non-flushed states), nor is additive implication (along with negation) technically feasible for the reasons previously discussed in Section~\ref{sec:uniprocessor-satisfaction}. 
 
-
 \section{Permissions} 
 \label{sec:splitting-permissions}
 
@@ -2061,6 +2060,11 @@ Using the fractional permission model, we can prove the desired specification of
   \spec{J}{x \stackrel{0.5}{\fpointsto} 1}{\cload{t}{x}}{x \stackrel{0.5}{\fpointsto} 1 \conj t = 1} \\
   \spec{J}{x \stackrel{0.5}{\fpointsto} 1}{\cload{u}{x}}{x \stackrel{0.5}{\fpointsto} 1 \conj u = 1}  
 \end{align*} The parallel composition rule and is then used to derive \[ \spec{J}{x \stackrel{0.5}{\fpointsto} 1 \fsep x \stackrel{0.5}{\fpointsto} 1}{\cload{t}{x}\oppar \cload{u}{x}}{(x \stackrel{0.5}{\fpointsto} 1 \conj t = 1) \fsep (x \stackrel{0.5}{\fpointsto} 1 \conj u = 1)}\] And now the precondition of this specification is equivalent to $x \stackrel{1}{\fpointsto} 1$ and the postcondition to $x \stackrel{1}{\fpointsto} 1 \conj t = 1 \conj u = 1$, as desired. 
+
+An alternative to the fractional model of permissions is the \emph{counting model}. In this model, permissions are integers, the constituent integers are added in the model of a separating conjunction, and the full permission, which is required for writing, is modeled by 0. Conceptually, a points-to assertion with counting permission $n \geq 0$ is thought of as a ``source'' from which $n$ read-only permissions have been derived. A characteristic equivalence of the counting permission model is as follows: \[ e \stackrel{n}{\fpointsto} e' \conj n \geq 0 \iff e \stackrel{n+1}{\fpointsto} e' \fsep e \stackrel{-1}{\fpointsto} e'\] 
+
+Some (traditional, strong-memory) concurrent programs are more amenable to verification using counting permissions versus fractional splitting permissions depending on the interaction among threads. Part of the goal of this dissertation project is to explore what aspects of the memory model---which implicitly and concurrently interacts with all programs---can be hidden or incorporated directly into a weak-memory program logic. From this standpoint, both splitting and counting permissions have been a fruitful source of ideas, some of which are described informally in the following sections. 
+
 
 \subsection{Potential Uses for Splitting Permissions}
 
