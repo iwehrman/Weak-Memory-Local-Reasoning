@@ -2074,8 +2074,7 @@ For example, consider a message-passing program with two shared memory locations
 
 The ``daring'' store axiom, however, is not sufficient to show that this thread maintains the invariant $J$. The first store is not problematic: regardless of whether $r' \neq 1$ or $d' = 1$ to begin with, after setting $d$, it will be the case that $d' = 1$, which satisfies the invariant. But an attempt to apply the daring store axiom to the second write will fail, because it is only safe to set the ready flag when it is known that $d = 1$. But this knowledge was lost after the first application of the daring store axiom; again, we only know that one of $r' \neq 1$ and $d' = 1$ holds. 
 
-Suppose, however, we had a modified notion of splitting permissions such that, as before, only locations with full 1 permission are writable, but also in which only locations with permission at least $\frac{1}{2}$ were allowed to have buffered writes. 
-
+Suppose, however, we had a modified notion of splitting permissions such that, as before, only locations with permission 1 are writable, but also in which only locations with permission not less than $\frac{1}{2}$ are allowed to have buffered writes. Let us parametrize the invariant $J$ by some permission $p$ as follows: \[ J_p \eqdef \exists r' \st \exists d' \st r \stackrel{p}{\fpointsto} r' \fsep d \stackrel{p}{\fpointsto} d' \conj (r' \neq 1 \disj d' = 1). \] This allows us to separate the invariant into a read-only part $J_{\frac{1}{4}}$ that can be shared among the reading threads, and a ``bufferable'' part $J_{\frac{3}{4}}$ that can be incorporated into the private state of the writing thread, yielding the following equivalence: \[ J_1 \sequiv J_{\frac{1}{4}} \fsep J_{\frac{3}{4}}\] The daring store axiom can then be used to acquire temporary, lock-free access to the read-only part of the invariant and thus, when combined with the bufferable part, giving the writing thread sufficient permission to perform the write. A proof sketch is as follows: 
 \Sketch{
   
   \aconn{$J_{\frac{3}{4}}$}
@@ -2087,8 +2086,7 @@ Suppose, however, we had a modified notion of splitting permissions such that, a
   \acomm{$\cstore{r}{1}_0$}
 
   \aconn{$J_{\frac{3}{4}} \fseq d \fwrite{0} 1 \fseq r \fwrite{0} 1$}
-
-}
+} The reason that this proof sketch might be expanded into a full proof---assuming, hypothetically, the existence of a suitable notion of permission---is that the second write can be shown to satisfy the invariant because it takes place in the context of the first write, $d \fwrite{0} 1$. 
 
 
 % The weak memory logic described in this dissertation would greatly benefit from the addition of a fractional model of permissions. Consider again the concurrent example in Section~\ref{sec:concurrent-example}, in which we consider the parallel composition of a writing thread $c_w$ and a reading thread $c_r$, defined as follows: \begin{align*}
