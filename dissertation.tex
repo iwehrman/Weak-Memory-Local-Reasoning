@@ -1957,10 +1957,16 @@ A shortcoming of this derived rule specifically, and the existing locking axioms
 
 We remedy this by providing an alternative, stronger invariant axiom that uses the expansion of the invariant, and relies upon commands being well-locked: \infrule[atomic]{\spec{\femp}{(J \fsep P \fsep \flock{i}) \fseq \fbar{i}}{c}{(J \fsep Q \fsep \flock{i}) \fseqri \fbar{i}}}{\spec{J}{P}{\clock_i \opseq c \cunlock_i}{Q}} (We call this the \textsc{atomic} rule to distinguish it from the \textsc{locked} derived rule, though they apply to the same commands.) This inference rule allows for a stronger invariant, such as in the previous example.
  
-We may also consider two additional ``daring'' inference rules, the soundness of which may well be quite difficult to demonstrate. 
-    \infrule[shared-load]{\spec{\femp}{J \fsep P}{\cload{x}{e}_i}{J \fsep Q}}{\spec{J}{P}{\cload{x}{e}_i}{Q}} 
-    \infrule[shared-store]{\spec{\femp}{J \fsep P}{\cstore{e}{e'}_i}{J \fsep Q}}{\spec{J}{P}{\cstore{e}{e'}_i}{Q}}
+
+
+\paragraph{Daring rules} We may also consider additional ``daring'' inference rules, the soundness of which may well be quite difficult to demonstrate. 
+    \infrule[daring-load]{\spec{\femp}{J \fsep P}{\cload{x}{e}_i}{J \fsep Q}}{\spec{J}{P}{\cload{x}{e}_i}{Q}} 
+    \infrule[daring-store]{\spec{\femp}{J \fsep P}{\cstore{e}{e'}_i}{J \fsep Q}}{\spec{J}{P}{\cstore{e}{e'}_i}{Q}}
 These rules differ from the invariant rule because they allow reasoning about the behavior of individual load and store instructions in which the value of the lock is unspecified. Intuitively, the shared load rule might be shown to be true because a load may only proceed on a live processor, and so will never access shared state while it is being modified by another process, which holds the lock. On the other hand, the shared store axiom might be shown to be true because although a store may take place while another process is modifying the shared state---and hence while the shared state does not satisfy the stated invariant $J$---the buffered write will not commit until the other process has released the lock and repaired the shared state, restoring the invariant.
+
+A problem with the daring store rule is that it requires the invariant $J$ to encompass the newly added buffered write; but heap-only invariants are easier to describe and more general. A possible relaxation of the daring store rule is thus as follows: 
+\infrule[daring-store-2]{\spec{\femp}{J \fsep P}{\cstore{e}{e'}_i}{(J \fseqri \fbar{i}) \fsep Q}}{\spec{J}{P}{\cstore{e}{e'}_i}{Q}}
+This relaxation would allow a daring store if the new write \emph{when flushed} would maintain the invariant. Unfortunately, this rule is almost certainly not sound w.r.t.\ the semantics of specification described in the next section, because it is simply not the case that the state necessarily satisfies the invariant after the store; only that it is somehow observationally equivalent, in that a load of the shared region shall be  compatible with the result of a load that exactly satisfies the stated invariant. Explorations of the soundness of these rules is thus considered future work. 
 
 The daring rules may be needed to reason about, e.g., x86 spinlock implementations. The spinlock is typically acquired using a compare-and-swap instruction, which in this language is simply a locked if-the-else command. The invariant rule and lock axioms thus should be sufficient for demonstrating correctness of spinlock acquisition. But the spinlock is released by writing to a shared memory address without first acquiring the global lock or fencing. This obviates the invariant rule, but not the shared write rule, and so there is yet hope. 
 
@@ -2066,7 +2072,7 @@ An alternative to the fractional model of permissions is the \emph{counting mode
 Some (strong-memory) concurrent programs are more amenable to verification using counting permissions versus fractional splitting permissions depending on the interaction among threads. Part of the goal of this dissertation project is to explore what aspects of the memory model---which implicitly and concurrently interacts with all programs---can be hidden or incorporated directly into a weak-memory program logic. From this standpoint, both splitting and counting permissions have been a fruitful source of ideas, some of which are described informally in the following sections. 
 
 
-\subsection{Potential Uses for Splitting Permissions}
+\subsection{Uses for Splitting Permissions}
 
 A variation on splitting permission could significantly extend the programs about which the concurrent weak-memory logic is capable of reasoning: namely, to more racy programs. Consider a program that performs no locking whatsoever, in which at most one thread at a time may write to a shared region of memory, while the other threads may only read. If the shared invariant relates more than one memory location in a non-trivial way, then the the ``daring'' rules from in Section~\ref{sec:proof-theory}, which allow individual reads and writes to shared memory without requiring that the global lock be acquired first, may be insufficient because it may not be possible to show that individual writes necessarily preserve the invariant.
 
@@ -2125,7 +2131,7 @@ Suppose, however, we had a modified notion of splitting permissions such that, a
 % }
  
 
-\subsection{Potential Uses for Counting Permissions}
+\subsection{Uses for Counting Permissions}
 
 Memory management commands \cite{wmsldetails,lola11}. An asymmetric variant of counting permissions are useful for these commands. 
 
