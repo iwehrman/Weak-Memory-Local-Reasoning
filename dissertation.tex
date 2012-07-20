@@ -1664,10 +1664,11 @@ The set of free variables of an assertion, written $\fv{P}$, is defined as usual
 The meaning of assertions is given by a satisfaction relation $\amod \sentails P$, relating \emph{models} $\amod$ to assertions $P$. A model is a pair $(s,\nu)$ consisting of a stack $s$ and a generalized multiprocessor memory system $\nu$. 
 The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}. For concision, the text of the definition makes use of the following auxiliary set definitions: \begin{align*}
   \mathit{emp} \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \nil} \\ 
-  \mathit{bar}(i) \eqdef & \setof{(h,B,K,\Gamma) \in \mathit{emp}}{i \in \Gamma} \\ 
-  \mathit{lock}(i) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj K = \setprocessors \setminus \set{i}} \\ 
-  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \funup{\arnil}{\ptup{i}{\llit{(\ell,v)}}} \conj K \subseteq \set{i}} \\ 
-  \mathit{flushed}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \ell \mapsto v \conj B = \arnil \conj K = \nil \conj i \in \Gamma} 
+  \mathit{bar}(i) \eqdef & \setof{(h,B,K,\Gamma) \in \mathit{emp}}{i \notin \setprocessors \disj i \in \Gamma} \\ 
+  \mathit{lock}(i) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \arnil \conj i \in \setprocessors \conj K = \setprocessors \setminus \set{i}} \\ 
+  \mathit{pending}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \nil \conj B = \funup{\arnil}{\ptup{i}{\llit{(\ell,v)}}} \conj K \subseteq \set{i}} \\
+  \mathit{flushed}(i,\ell,v) \eqdef & \setof{(h,B,K,\Gamma)}{h = \ell \mapsto v \conj B = \arnil \conj K = \nil \conj i \in \Gamma} \\
+  \mathit{leadsto}(i,l,v) \eqdef & \setof{(h,B,K,\Gamma) \in \mathit{pending}(i,l,v) \cup \mathit{flushed}(i,l,v)}{i \in \setprocessors}
 \end{align*}
 
 \begin{figure}[ht]
@@ -1684,8 +1685,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 		s,\nu & \sentails & \femp & \iffdef & \nu \in \mathit{emp} \\ 
 		s,\nu & \sentails & \fbar{e} & \iffdef & \nu \in \mathit{bar}(\ext{s}(e)) \\ 
 		s,\nu & \sentails & \flock{e} & \iffdef & \nu \in \mathit{lock}(\ext{s}(e))\\ 
-    %s,\nu & \sentails & \fexp{P} & \iffdef & \forall \nu' \st \nu' \taurefines \nu \onlyif \mathit{trim}(\nu') \sentails P \\ 
-		s,\nu & \sentails & e \fwrite{e'} e'' & \iffdef & \nu \in \mathit{pending}(\ext{s}(e'), \ext{s}(e), \ext{s}(e'')) \disj \\ &&&& \nu \in \mathit{flushed}(\ext{s}(e'), \ext{s}(e), \ext{s}(e'')) \\
+		s,\nu & \sentails & e \fwrite{e'} e'' & \iffdef & \nu \in \mathit{leadsto}(\ext{s}(e'), \ext{s}(e), \ext{s}(e''))\\
     s,\nu & \sentails & P \fsep P' & \iffdef & \exists \nu_0,\nu_1 \st \nu \in \nu_0 \msep \nu_1 \conj \\ & & & & \;\;s,\nu_0 \sentails P  \conj s,\nu_1 \sentails P' \\
     s,\nu & \sentails & P \fseq P' & \iffdef & \exists \nu_0,\nu_1 \st \nu = \nu_0 \mseq \nu_1 \conj \\ & & & & \;\;s,\nu_0 \sentails P  \conj s,\nu_1 \sentails P' \\
     s,\nu & \sentails & P \fsepi P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_0 \sentails P \conj \nu_1 \in \nu_0 \msep \nu \onlyif \\ & & & & \;\; s,\nu_1 \sentails P' \\
@@ -1728,9 +1728,11 @@ In the sequential assertion logic we defined the points-to assertion $e \fpoints
   e \fpointsto e' \eqdef \exists x \st e \fwrite{x} e' \fseq \fbar{x}
 \] The intuition behind this abbreviation is that the result of flushing on one processor should be indistinguishable from the result of flushing the same write on a different processor, and hence the choice of a particular process from which the write originated is unimportant. But, in the model described in this document, this is only true of models for which all buffers are complete; and in general models of assertions need not have all buffers complete. As a consequence of the abbreviation above, among the models of $1 \fwrite{0} 1 \fseq 2 \fpointsto 2$ are included some in which the write to location $1$ is buffered on processor 0, whereas there should arguably be none. 
 
-We might instead try a universal quantification instead of an existential one: \[e \fpointsto e' \eqdef \forall x \st e \fwrite{x} e' \fseq \fbar{x} \] But this too is unsuitable, for such formulas are necessarily inconsistent: the quantifier ranges over all integer values, but not all integer values denote processor identifiers; and the matrix of the formula can only be satisfied by models in which the variable denotes a processor identifier. To get around this, we would also have to change the models of the leads-to and barrier assertions to denote empty models (instead of no models) when parametrized with something other than a processor identifier. 
+The correct definition instead temporally conjoins a leads-to formula with another that describes the flushing of \emph{all} buffers: \[ e \fpointsto e \eqdef (\exists x \st e \fwrite{x} e') \fseq (\forall x \st \fbar{x}).\] The left-hand conjunct describes a possibly buffered write on some processor, while the right-hand conjunction describes the result of flushing every processor. Hence, the models of $e \fpointsto e'$ describe only a flushed write with all processors buffer-complete. Note that if $x$ does not denote a processor identifier, then $e \fwrite{x} e'$ is not satisfied by any model, whereas in the same circumstance $\fbar{x}$ is instead satisfied by the same models as $\femp$. 
 
-Most likely, this simply indicates a flaw in the model and logic presented thus far. Immediately, the best solution is to simply add the points-to formula to the assertion language as an atomic formula, and define the intended semantics (in which every buffer is complete) directly: \[ s,(h,B,K,\Gamma) \satisfies e \fpointsto e' \iffdef h = \ext{s}(e) \mapsto \ext{s}(e') \conj B = \arnil \conj K = \nil \conj \Gamma = \setprocessors.\] This could potentially make reasoning about syntactic entailments between assertions more difficult; in the meantime, it still provides the semantic entailments that are more relevant to the current goals of the project. 
+% We might instead try a universal quantification instead of an existential one: \[e \fpointsto e' \eqdef \forall x \st e \fwrite{x} e' \fseq \fbar{x} \] But this too is unsuitable, for such formulas are necessarily inconsistent: the quantifier ranges over all integer values, but not all integer values denote processor identifiers; and the matrix of the formula can only be satisfied by models in which the variable denotes a processor identifier. To get around this, we would also have to change the models of the leads-to and barrier assertions to denote empty models (instead of no models) when parametrized with something other than a processor identifier. 
+
+% Most likely, this simply indicates a flaw in the model and logic presented thus far. Immediately, the best solution is to simply add the points-to formula to the assertion language as an atomic formula, and define the intended semantics (in which every buffer is complete) directly: \[ s,(h,B,K,\Gamma) \satisfies e \fpointsto e' \iffdef h = \ext{s}(e) \mapsto \ext{s}(e') \conj B = \arnil \conj K = \nil \conj \Gamma = \setprocessors.\] This could potentially make reasoning about syntactic entailments between assertions more difficult; in the meantime, it still provides the semantic entailments that are more relevant to the current goals of the project. 
 
 \subsection{Algebra}
 \label{sec:algebra}
@@ -1781,7 +1783,7 @@ As in the sequential assertion logic, each of the separating conjunctions is ass
 	\caption{\label{fig:entailments}Semantic entailments}
 \end{figure}
 
-The first four entailments in Figure~\ref{fig:entailments}---that $\fbar{e}$ strengthens $\femp$, that points-to strengthens leads-to, and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next two entailments follow from their respective abbreviation expansions and by monotonicity of $\conj$. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the principal connective in the consequent, and the other conjunctions are not commutative. 
+The first three entailments in Figure~\ref{fig:entailments}---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. Points-to strengthens leads-to by its abbreviation expansion and monotonicity of the weak temporal separating conjunction, along with the fact that $(\forall x \st \fbar{x}) \sentails \femp$. The next two entailments follow from their respective abbreviation expansions and by monotonicity of $\conj$. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the principal connective in the consequent, and the other conjunctions are not commutative. 
 
 \subsection{Flushing Closure}
 \label{sec:predicates}
@@ -1924,15 +1926,19 @@ Only the invariant rule differs significantly from Concurrent Separation Logic. 
 
 \subsubsection{Derived and Alternative Axioms and Inference Rules}
 
-Observe that the write in the precondition of both the load and store axioms need not be buffered: the placeholder assertion $P$ can be instantiated with an appropriate barrier assertion to indicate that the write has been flushed: 
-\infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq (\fbar{i} \fseq P')}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq (\fbar{i} \fseq P'))\conj x = e'}} It is interesting to note though that this only describes the result of loading a write in memory that originated from the processor performing the load. It does not, for example, allow processor $i$ to load a write that originated on buffer $j$ (with $j \neq i$).
+Observe that the write in the precondition of both the load and store axioms need not be buffered: the placeholder assertion $P$ can be instantiated with an appropriate barrier assertion to indicate that the write has been flushed: \[\spec{J}{(e \fwrite{i} e') \fsseq (\fbar{i} \fseq P')}{\cload{x}{e}_i}{(e \fwrite{i} e') \fsseq (\fbar{i} \fseq P')\conj x = e'}\] It is interesting to note though that this only describes the result of loading a write in memory that originated from the processor performing the load. 
+% It does not, for example, allow processor $i$ to load a write that originated on buffer $j$ (with $j \neq i$).
+We can, however, derive variants of the load and store axioms which allow us to reason about writes flushed by an arbitrary processor in case all buffers are complete---i.e., variants of the load and store axioms that make use of points-to assertions instead of leads-to assertions, as follows: 
+\infax[load-p]{\spec{J}{e \fpointsto e' \fsseq P}{\cload{x}{e}_i}{e \fpointsto e' \fsseq P \conj x = e'}}
+\infax[store-p]{\spec{J}{e \fpointsto e' \fsseq P}{\cload{x}{e}_i}{(e \fpointsto e' \fsseq P) \fsseq e \fwrite{i} e'}} 
+These axioms can be derived by instantiating $P$ by $(\forall x \st \fbar{x}) \fsseq P$ and with the rule of consequence, using the following equivalence: \[ e \fwrite{i} e' \fsseq ((\forall x \st \fbar{x}) \fsseq P) \sequiv ((\exists x \st e \fwrite{x} e') \fseq (\forall x \st \fbar{x})) \fsseq P\]
 
-Another unfortunately wrinkle of the current model is that we are apparently unable to derive axioms for loading and storing in the context of points-to formulas. For that, we must add additional axioms: 
-    \infax[load-p]{\spec{J}{(e \fpointsto e') \fsseq P}{\cload{x}{e}_i}{((e \fpointsto e') \fsseq P)\conj x = e'}}
+% Another unfortunately wrinkle of the current model is that we are apparently unable to derive axioms for loading and storing in the context of points-to formulas. For that, we must add additional axioms: 
+%     \infax[load-p]{\spec{J}{(e \fpointsto e') \fsseq P}{\cload{x}{e}_i}{((e \fpointsto e') \fsseq P)\conj x = e'}}
 
-    \infax[store-p]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e 
-    \fpointsto e'') \fsseq P) \fseq (e \fwrite{i} e')}}
-We must adopt these as additional axioms in the current model because, as discussed in the previous section, there does not seem to be any assertion $P$ for which $e \fwrite{i} e' \fsseq P \sequiv e \fpointsto e'$. This is especially curious because, as we shall describe shortly, the semantics of specifications is restricted to buffer-complete models, and for buffer-complete models it \emph{is} the case that $e \fwrite{i} e' \fsseq \fbar{i} \sequiv e \fpointsto e'$. But it is not yet clear how this observation can be leveraged by the program logic to eliminate these additional axioms. \todo{Maybe there is a suitable assertion: $\forall x \st \fbar{x}$. Must relax semantics so that if $s(x) \notin \setprocessors$ then $\fbar{x} \sequiv \femp$, by changing the comprehension in the def of $\mathit{bar}(i)$ to $i \notin \setprocessors \disj i \in \Gamma$.}
+%     \infax[store-p]{\spec{J}{(e \fpointsto e'') \fsseq P}{\cstore{e}{e'}_i}{((e 
+%     \fpointsto e'') \fsseq P) \fseq (e \fwrite{i} e')}}
+% We must adopt these as additional axioms in the current model because, as discussed in the previous section, there does not seem to be any assertion $P$ for which $e \fwrite{i} e' \fsseq P \sequiv e \fpointsto e'$. This is especially curious because, as we shall describe shortly, the semantics of specifications is restricted to buffer-complete models, and for buffer-complete models it \emph{is} the case that $e \fwrite{i} e' \fsseq \fbar{i} \sequiv e \fpointsto e'$. But it is not yet clear how this observation can be leveraged by the program logic to eliminate these additional axioms. \todo{Maybe there is a suitable assertion: $\forall x \st \fbar{x}$. Must relax semantics so that if $s(x) \notin \setprocessors$ then $\fbar{x} \sequiv \femp$, by changing the comprehension in the def of $\mathit{bar}(i)$ to $i \notin \setprocessors \disj i \in \Gamma$.}
 
 The given axioms for the $\clock$ and $\cunlock$ commands are sound but rather weak insofar as they do not reflect the implicit fencing that is coincident with these commands. The axioms, however, can be strengthened to take this into account as follows: 
   \infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i} \fsep \fbar{i}}}
