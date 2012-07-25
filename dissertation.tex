@@ -2162,9 +2162,9 @@ A final thread of related work by Hoare et al.\ considers algebraic models of co
 
 For example, a variable assignment $\cassign{x}{e}$ might be described as a single event labeled by $\cassign{x}{v}$, where $v$ is the valuation of $e$, with incoming edges labeled with the names, and respective values, of the variables found in the expression $e$, and outgoing edges labeled by $x$ and the value $v$. In this case, the incoming edges represented data flows needed to evaluate the expression $e$, and the outgoing edges represent data flows of the new value of $x$ that can be used to evaluate later expressions. Another example is the sequential composition of commands $\cseq{c_0}{c_1}$, which are modeled by graphs that can be partitioned such that there are no ``backward'' edges from an event of $c_1$ to an event of $c_2$. 
 
-Graphical models are a simple but amazingly expressive formalism. Recent work has shown how they can be used to give various weak-memory semantics to concurrent programs \cite{DBLP:series/natosec/HoareW11}. 
+Graphical models are a simple but amazingly expressive formalism. Recent work has shown how they can be used to give various weak-memory semantics to concurrent programs \cite{DBLP:series/natosec/HoareW11}. They can also be used to show the soundness of rely/guarantee-style program logics \cite{DBLP:journals/ipl/WehrmanHO09}. There, assertions are modeled by sets of graphical models just the same as programs, thus leading to significantly  simplified soundness proofs. These proofs were later simplified further by modeling the program logics with algebraic characterizations of suitable graphical models called Concurrent Kleene Algebras \cite{DBLP:conf/RelMiCS/HoareMSW09,DBLP:conf/concur/HoareMSW09}. 
 
- Concurrent Kleene Algebra \cite{DBLP:conf/RelMiCS/HoareMSW09,DBLP:conf/concur/HoareMSW09} Locality bimonoids \cite{DBLP:conf/concur/HoareHMOPS11} 
+ Locality bimonoids \cite{DBLP:conf/concur/HoareHMOPS11} 
 
 The programming language is local w.r.t.\ all the separating conjunctions defined; locality w.r.t.\ sequential composition doesn't seem to be important in the work above.  
 
