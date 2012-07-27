@@ -1,0 +1,899 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
+%%% File: utthesis2.sty, version 2.0ame, February 2003
+%%%
+%%% Based on: utthesis.sty, version 2.0, January 1995
+%%% =============================================
+%%% Copyright (c) 1995 by Dinesh Das.  All rights reserved.
+%%%
+%%% Modified by Bert Kay in November 1996.  
+%%% My comments contain the string  ``BKay''.
+%%%
+%%% Modified by James A. Bednar in March 1999.
+%%% My comments contain the string  ``JAB''.
+%%%
+%%% Extended by James A. Bednar in February 2002, based on 
+%%% portions of utdiss2-02.sty released on 29 November 2001
+%%% by Craig McCluskey (mccluskey@mail.utexas.edu).
+%%% His comments contain the string ``cwm''.
+%%%
+%%% Modified by Ayman M. El-Khashab in February 2003, to fix
+%%% problems caused by old latex code (particularly of the doublespace
+%%% package) as well as problems with pdf bookmarks in the abstract,
+%%% TOC, list of figures/tables.
+%%% My comments contain the string ``AME''
+%%%
+%%% Modified by John Baird in April 2005, to fix bugs in single and
+%%% 1.5 spacing.
+%%% His comments contain the string ``JB''
+%%%
+%%% This file is free and can be modified or distributed as long as
+%%% you meet the following conditions:
+%%%
+%%% (1) This copyright notice is kept intact on all modified copies.
+%%% (2) If you modify this file, you MUST NOT use the original file name.
+%%%
+%%% This file defines macros used for preparing theses for
+%%% The University of Texas at Austin.  It has been tested with LaTeX2e.
+%%% I do NOT guarantee that it will meet all requirements of the
+%%% Graduate School; however, if you find that something violates the
+%%% specifications, please send me email at <ddas@cs.utexas.edu> and
+%%% I will try to fix it.
+%%%
+%%% Usage:
+%%% ======
+%%%
+%%% To use this file with LaTeX2e, make sure your TEXINPUTS environment
+%%% variable contains the directory in which this file is located.
+%%% Include this file as a package in the preamble:
+%%%
+%%% \documentclass[...]{report}
+%%% \usepackage{utthesis}
+%%%
+%%% On non-UNIX systems, there might be different environment variables
+%%% that might need to be set.  I know nothing about such machines,
+%%% however; consult your local guru for details.
+%%%
+%%% A template for a thesis is provided in the file "utthesis.doc", available
+%%% from the same place where you obtained this file.
+%%%
+%%% Command Names:
+%%% ==============
+%%%
+%%% ALL command names used in this file that are used to format the
+%%% thesis begin with "thesis" (e.g., \thesisauthor).  All of these
+%%% commands can be changed by the user using \renewcommand, e.g.,
+%%%
+%%% \renewcommand{\thesisauthor}{First M. Last}
+%%%
+%%% after loading the package in LaTeX2e.
+%%%
+%%% The following is a list of all thesis-related variables used together
+%%% with their default values:
+%%%
+%%% \thesisauthor    %% Name of the author; defaults to "Ima Student".
+%%% \thesismonth     %% Month of graduation; defaults to "May".
+%%% \thesisyear      %% Year of graduation; defaults to "1994".
+%%% \thesistitle     %% Full title of dissertation; defaults to "Title".
+%%% \thesistitletypesize
+%%%                  %% Typesize used to typeset \thesistitle; defaults
+%%%                  %% to \Large.
+%%% \thesisauthorpreviousdegrees
+%%%                  %% Previous degrees of author; defaults to "Degree"
+%%% \thesissupervisor%% Name of thesis supervisor; defaults to "Supervisor"
+%%% \thesisauthoraddress
+%%%                  %% Permanent address of author; defaults to "USA"
+%%% \thesisapprovedby%% Approval of dissertation committee; defaults to
+%%%                  %% "Approved by".
+%%% \thesisapprovedbytypesize
+%%%                  %% Typesize used to typeset \thesisapprovedby; defaults
+%%%                  %% to \large.
+%%% \thesiscopyrightholder
+%%%                  %% Name of copyright holder; defaults to \thesisauthor.
+%%% \thesistypist    %% Name of thesis typist; defaults to "the author".
+%%% \thesistype      %% Type of thesis; defaults to "Dissertation".
+%%% \thesistypetypesize
+%%%                  %% Typesize used to typeset \thesistype; defaults to
+%%%                  %% \large.
+%%% \thesisdegree    %% Degree for which thesis is submitted; defaults to
+%%%                  %% "Doctor of Philosophy".
+%%% \thesisdegreetypesize
+%%%                  %% Typesize used to typeset \thesisdegree; defaults to
+%%%                  %% \large.
+%%% \thesisdegreeabbreviation
+%%%                  %% Abbreviation of \thesisdegree; defaults to "Ph.D.".
+%%% \thesiscommitteesize
+%%%                  %% Number of members in thesis committee; defaults to 5.
+%%% \thesiscommittee %% Name of thesis committee; defaults to
+%%%                  %% "Dissertation Committee:".
+%%% \thesiscommitteetypesize
+%%%                  %% Typesize used to typeset \thesiscommittee; defaults
+%%%                  %% to \large.
+%%% \thesisvitahead  %% Title of the vita page; defaults to "Vita".
+%%% \thesisvitaheadtypesize
+%%%                  %% Typesize used to typeset \thesisvitahead; unused.
+%%% \thesisacknowledgmenthead
+%%%                  %% Title of the acknowledgments page; defaults to
+%%%                  %% "Acknowledgments".
+%%% \thesisacknowledgmentheadtypesize
+%%%                  %% Typesize used to typeset \thesisacknowledgmenthead;
+%%%                  %% unused.
+%%% \thesisacknowledgmentsigname
+%%%                  %% Signature on the acknowledgments page; defaults to
+%%%                  %% \thesisauthor.
+%%% \thesisacknowledgmentsignametypesize
+%%%                  %% Typesize used to typeset \thesisacknowledgmentsigname;
+%%%                  %% defaults to \large.
+%%% \thesisacknowledgmentsigplace
+%%%                  %% Address used on the acknowledgments page; defaults
+%%%                  %% to "The University of Texas at Austin \\ \thesismonth
+%%%                  %% \thesisyear".
+%%% \thesisstudent   %% Name of author with previous degrees; defaults to
+%%%                  %% "\thesisauthor, \thesisauthorpreviousdegrees".
+%%% \thesisstudenttypesize
+%%%                  %% Typesize used to typeset \thesisstudent; defaults
+%%%                  %% to \large.
+%%% \thesisdedication%% Person or thing dedicated to; defaults to
+%%%                  %% "To myself". :-)
+%%%
+%%% Most of the default values will satisfy the Graduate School's
+%%% requirements; however, at a minimum, the user SHOULD redefine the
+%%% following commands:
+%%%
+%%% \thesisauthor
+%%% \thesismonth
+%%% \thesisyear
+%%% \thesistitle
+%%% \thesisauthorpreviousdegrees
+%%% \thesissupervisor
+%%% \thesisauthoraddress
+%%%
+%%% In addition to the above variables, the following commands are
+%%% provided to generate the optional sections of the thesis:
+%%%
+%%% \thesiscopyrightpage
+%%%                  %% Generates the copyright page.
+%%% \thesistitlepage %% Generates the title page.
+%%% \thesissignaturepage
+%%%                  %% Generates the signature page.
+%%% \thesisdedicationpage
+%%%                  %% Generates the dedication page.
+%%%
+%%% There are also a few environments to generate paragraph-like text:
+%%%
+%%% thesisacknowledgments
+%%%                  %% Text of acknowledgments.
+%%% thesisabstract   %% Text of abstract.
+%%% thesisauthorvita %% Text of author's vita.
+%%%
+%%% Bells and Whistles:
+%%% ===================
+%%%
+%%% The following commands are provided purely for playing around with.
+%%% They should be used in the document preamble (before \begin{document}).
+%%%
+%%% \thesisdraft     %% Prints a timestamp at the top of each page.  This
+%%%                  %% must be invoked in the document preamble (before
+%%%                  %% \begin{document}).
+%%% \leftchapter, \centerchapter, \rightchapter
+%%%                  %% These commands generate left-justified, centered,
+%%%                  %% and right-justified chapter headings, respectively.
+%%% \singlespace, \oneandhalfspace, \doublespace
+%%%                  %% These define the line spacing to single-space,
+%%%                  %% one-and-one-half space, and double-space
+%%%                  %% respectively.  Note that the minimum spacing
+%%%                  %% required by the Graduate School is \oneandhalfspace,
+%%%                  %% but \singlespace is useful, e.g., when using
+%%%                  %% \thesisdraft.
+%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% JAB/AME
+\typeout{****************************************************************}
+\typeout{** UT Austin Thesis Style File, version 2.0ame, February 2003   }
+\typeout{** Written by Dinesh Das                                        }
+\typeout{**            Dept. of Computer Sciences                        }
+\typeout{**            The University of Texas at Austin                 }
+\typeout{** Modified by Bert Kay, James A. Bednar, and Ayman El-Khashab  }
+\typeout{****************************************************************}
+
+%%%
+%%% Set up page layout parameters.
+%%%
+\setlength{\textheight}{7.75in} %{8in}- 1/4"        BKay
+\setlength{\oddsidemargin}{0.62in}  %{0.5in} + 1/8" BKay
+\setlength{\evensidemargin}{0.62in} %{0.5in}        BKay
+\setlength{\textwidth}{5.50in}
+\setlength{\topmargin}{0.62in} %{0.5in}+1/8"        BKay
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0in}
+\setlength{\parindent}{12mm}
+
+%%%
+%%% Set up default values.
+%%%
+\newcommand{\@universityname}{The University of Texas at Austin}
+\newcommand{\@publicationno}{Publication No.\ \line(1,0){40} \\[10mm]}
+\newcommand{\thesisauthor}{Ima Student}
+\newcommand{\thesismonth}{May}
+\newcommand{\thesisyear}{1994}
+\newcommand{\thesistitle}{Title}
+\newcommand{\thesistitletypesize}{\Large}
+\newcommand{\thesisauthorpreviousdegrees}{Degree}
+\newcommand{\thesissupervisor}{Supervisor}
+\newcommand{\thesiscosupervisor}{}
+\newcommand{\thesiscommitteemembera}{}
+\newcommand{\thesiscommitteememberb}{}
+\newcommand{\thesiscommitteememberc}{}
+\newcommand{\thesiscommitteememberd}{}
+\newcommand{\thesiscommitteemembere}{}
+\newcommand{\thesiscommitteememberf}{}
+\newcommand{\thesiscommitteememberg}{}
+\newcommand{\thesiscommitteememberh}{}
+\newcommand{\thesiscommitteememberi}{}
+\newcommand{\thesisauthoraddress}{USA}
+\newcommand{\thesisapprovedby}{Approved by}
+\newcommand{\thesisapprovedbytypesize}{\large}
+\newcommand{\thesiscopyrightholder}{\thesisauthor}
+\newcommand{\thesistypist}{the author}
+\newcommand{\thesistype}{Dissertation}
+\newcommand{\thesistypetypesize}{\large}
+\newcommand{\thesistypesize}{\large}
+\newcommand{\thesisdegree}{Doctor of Philosophy}
+\newcommand{\thesisdegreetypesize}{\large}
+\newcommand{\thesisdegreeabbreviation}{Ph.D.}
+\newcommand{\thesiscommitteesize}{5}
+\newcommand{\thesiscommittee}{Dissertation Committee:}
+\newcommand{\thesiscommitteetypesize}{\large}
+\newcommand{\thesisvitahead}{Vita}
+\newcommand{\thesisvitaheadtypesize}{\Large}
+\newcommand{\thesisacknowledgmenthead}{Acknowledgments}
+\newcommand{\thesisacknowledgmentheadtypesize}{\Large}
+\newcommand{\thesisacknowledgmentsigname}{\thesisauthor}
+\newcommand{\thesisacknowledgmentsignametypesize}{\large}
+\newcommand{\thesisacknowledgmentsigplace}%
+    {{\slshape
+       \renewcommand{\arraystretch}{1.0}
+       \begin{tabular}{l}
+         \@universityname \\
+         \thesismonth\ \thesisyear
+       \end{tabular}}}
+\newcommand{\thesisstudent}{\thesisauthor, \thesisauthorpreviousdegrees}
+\newcommand{\thesisstudenttypesize}{\large}
+\newcommand{\thesisdedication}{To myself}
+
+%%%
+%%% Command for masters theses.  \phdthesis is provided for symmetry.
+%%%
+\newcommand{\mastersthesis}{
+    \renewcommand{\thesistype}{Thesis}
+    \renewcommand{\@publicationno}{}
+    \renewcommand{\thesisdegree}{Master of Arts}
+    \renewcommand{\thesisdegreeabbreviation}{M.A.}
+    \renewcommand{\thesiscommitteesize}{2}
+    \renewcommand{\thesiscommittee}{Supervising Committee:}}
+\newcommand{\phdthesis}{}
+
+%%%
+%%% Set up other commands.
+%%%
+
+\newcommand{\@emptycommand}{} %% JAB  Used when testing if a command is defined but empty
+\newcommand{\@defaultbaselinestretch}{1.5}
+\newcommand{\@base}[1]{\renewcommand{\baselinestretch}{#1}}
+
+%%% AME: Changed to use setspace environments
+%%% JB: Fixed typos in single and 1.5 spacing
+\newcommand{\singlespace}{\singlespacing}
+\newcommand{\oneandhalfspace}{\onehalfspacing}
+\newcommand{\doublespace}{\doublespacing}
+
+\newcommand{\@thesistitle}{\textbf{\thesistitletypesize \thesistitle}}
+\newcommand{\@thesisapprovedby}%
+    {\textbf{\thesisapprovedbytypesize \thesisapprovedby}}
+\newcommand{\@thesistype}{\textbf{\thesistypetypesize \thesistype}}
+\newcommand{\@thesisdegree}{\textbf{\thesisdegreetypesize \thesisdegree}}
+\newcommand{\@thesisdegreeabbreviation}{\thesisdegreeabbreviation}
+\newcommand{\@thesiscommittee}%
+    {\textbf{\thesiscommitteetypesize \thesiscommittee}}
+\newcommand{\@thesisvitahead}{\thesisvitahead}
+\newcommand{\@thesisacknowledgmenthead}%
+    {\thesisacknowledgmenthead}
+\newcommand{\@thesisacknowledgmentsigname}%
+    {\textsc{\thesisacknowledgmentsignametypesize \thesisacknowledgmentsigname}}
+\newcommand{\@thesisacknowledgmentsigplace}{\thesisacknowledgmentsigplace}
+\newcommand{\@thesisstudent}{\textbf{\thesisstudenttypesize \thesisstudent}}
+
+%%%
+%%% Indent the first paragraph after a sectioning command.
+%%%
+%%% \let\@afterindentfalse\@afterindenttrue
+%%% \@afterindenttrue
+
+%%%
+%%% Set up default page numbering and line spacing.
+%%%
+\newcommand{\@textpagenumbering}{arabic}
+\newcommand{\@preamblepagenumbering}{roman}
+\newcommand{\@textpagestyle}{plain}
+\newcommand{\@preamblepagestyle}{plain}
+\pagenumbering{\@preamblepagenumbering}
+\@base{\@defaultbaselinestretch}
+
+\newcommand{\@chaptertype}{\chaptername}
+\newcommand{\@appendix}{0}
+
+%%%
+%%% Command to generate copyright page.
+%%%
+\newcommand{\thesiscopyrightpage}{
+    \thispagestyle{empty}
+    \strut \vfill
+    \begin{center}
+      \begin{spacing}{2}
+      Copyright \\ by \\ \thesiscopyrightholder \\ \thesisyear
+      \end{spacing}
+    \end{center}
+    \vfill \strut
+    \newpage}
+
+%%%
+%%% Command to generate title page.
+%%%
+\newcommand{\thesistitlepage}{
+    \thispagestyle{empty}
+    \begin{spacing}{2}
+    \begin{center}
+      % Commented-out by JAB 08Mar99 -- didn't leave any room for two-line title
+      %\strut \vfill    % Added BKay 17Oct96 -- title was too high on the page
+      \@thesistitle \\[8mm]
+      by \\[4mm]
+      \@thesisstudent \\
+      \vspace{26mm}
+      \textbf{\thesistypetypesize \thesistype} \\
+      Presented to the Faculty of the Graduate School of \\
+      \@universityname \\
+      in Partial Fulfillment \\
+      of the Requirements \\
+      for the Degree of \\[4mm]
+      \textbf{\thesisdegreetypesize \thesisdegree} \\
+      \vspace{26mm}
+      \textbf{\Large \@universityname} \\[4mm]
+      \thesismonth \ \thesisyear
+    \end{center}
+    \end{spacing}
+    \newpage}
+
+%%%
+%%% Command to generate old-style signature page, which as
+%%% of 2/2002 still seems to be used in Master's thesis.
+%%%
+\newcommand{\thesissignaturepage}{
+    \thispagestyle{empty}
+    \begin{spacing}{2}
+    \strut \vfill
+    \begin{center}
+      \@thesistitle
+    \end{center}
+    \vspace{50mm}
+    \mbox{} \hfill \begin{minipage}{67mm}
+                     \begin{spacing}{1}
+                     \@thesisapprovedby\hfill\mbox{} \\
+                     \@thesiscommittee \\[15mm]
+                     \end{spacing}
+                     \setlength{\unitlength}{1mm}
+                     \begin{picture}(67,70)(0,0)
+                       \multiput(0,70)(0,-10)
+                         {\thesiscommitteesize}{\line(1,0){67}}
+                     \end{picture}
+                   \end{minipage}
+    \vfill \strut
+    \end{spacing}
+    \newpage}
+
+%%%
+%%% Generates a signature line with the given name
+%%% Adapted from 26 Aug 2001 cwm by JAB
+%%%
+\newcommand{\thesissigline}[1]{%
+  \leftline{\hbox to 2.5in{}\hrulefill}
+  \endgraf
+  \vspace*{-18pt}
+  \leftline{\hbox to 2.53in{}{#1}}}
+
+%%%
+%%% Generates signature lines for the committee
+%%% Adapted from 26 Aug 2001 cwm by JAB
+%%% Accepts up to two supervisors and eight other members
+%%%
+\newcommand{\thesiscertificationsignaturelines}{
+     \ifx\thesissupervisor\@emptycommand\relax\else
+        \thesissigline{\thesissupervisor, Supervisor}
+     \fi
+     \ifx\thesiscosupervisor\@emptycommand\relax\else
+        \thesissigline{\thesiscosupervisor, Supervisor}
+     \fi
+     \ifx\thesiscommitteemembera\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteemembera}
+     \fi
+     \ifx\thesiscommitteememberb\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberb}
+     \fi
+     \ifx\thesiscommitteememberc\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberc}
+     \fi
+     \ifx\thesiscommitteememberd\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberd}
+     \fi
+     \ifx\thesiscommitteemembere\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteemembere}
+     \fi
+     \ifx\thesiscommitteememberf\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberf}
+     \fi
+     \ifx\thesiscommitteememberg\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberg}
+     \fi
+     \ifx\thesiscommitteememberh\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberh}
+     \fi
+     \ifx\thesiscommitteememberi\@emptycommand\relax\else
+        \thesissigline{\thesiscommitteememberi}
+     \fi
+     }
+
+%%%
+%%% Committee Certification Page
+%%%
+%%% Adapted from 26 Aug 2001 cwm by JAB
+%%%
+\newlength{\@tmplength}
+\newcommand{\thesiscertificationpage}{
+    \thispagestyle{empty}
+    \centerline{The Dissertation Committee for \thesisauthor}
+    \centerline{certifies that this is the approved version of the following dissertation:}
+    \vspace*{75pt}
+    \setlength\@tmplength\baselineskip
+    \baselineskip=16.5pt plus .5pt minus .2 pt
+    \baselineskip=28.5pt plus .5pt minus .2 pt
+    \begin{center}
+    \large\bf\@thesistitle
+    \end{center}
+    \vspace*{55pt}
+    \leftline{\hbox to 2.5in{}Committee:\hfill}
+    %\bigskip\medskip\smallskip
+    \bigskip
+    \thesiscertificationsignaturelines
+    \setlength\baselineskip\@tmplength
+    \clearpage}
+
+
+%%%
+%%% Environment to generate abstract page.
+%%%
+\newenvironment{thesisabstract}
+    {\chapter*{}
+     \addcontentsline{toc}{chapter}{Abstract}
+     \vspace*{0mm}
+     \begin{center}
+       \setlength{\unitlength}{1mm}
+       \begin{spacing}{2}
+       \@thesistitle \\[10mm]
+       \end{spacing}
+       \begin{spacing}{\@defaultbaselinestretch}
+       \@publicationno
+       \thesisauthor, \thesisdegreeabbreviation \\
+       \@universityname, \thesisyear \\[10mm]
+       \end{spacing}
+       Supervisor: \thesissupervisor \\
+     \end{center}
+     \vspace{5mm}
+     \begin{spacing}{\@defaultbaselinestretch} \noindent}
+    {\end{spacing} \newpage}
+
+%%%
+%%% Command to generate dedication page.
+%%%
+\newcommand{\thesisdedicationpage}{
+    \thispagestyle{empty}
+    \strut \vfill
+    \begin{spacing}{\@defaultbaselinestretch}
+    \begin{center}
+      \thesisdedication
+    \end{center}
+    \end{spacing}
+    \vfill \strut
+    \newpage}
+
+%%%
+%%% Environment to generate acknowledgments page.
+%%%
+\newenvironment{thesisacknowledgments}
+    {%\doublespace\small\normalsize
+     \chapter*{\@thesisacknowledgmenthead
+         \@mkboth{\uppercase{\@thesisacknowledgmenthead}}
+                 {\uppercase{\@thesisacknowledgmenthead}}}
+     \addcontentsline{toc}{chapter}{\@thesisacknowledgmenthead}
+     \begin{spacing}{\@defaultbaselinestretch}}
+    {\end{spacing} \par \vspace{20mm}
+     \raggedleft \@thesisacknowledgmentsigname \\[10mm]
+     \raggedright \@thesisacknowledgmentsigplace \newpage}
+
+%%%
+%%% Environment to generate vita page.
+%%%
+\newenvironment{thesisauthorvita}
+    {\clearpage
+     \chapter*{\@thesisvitahead
+         \@mkboth{\uppercase{\@thesisvitahead}}
+                 {\uppercase{\@thesisvitahead}}}
+    \addcontentsline{toc}{chapter}{\@thesisvitahead}
+    \begin{spacing}{\@defaultbaselinestretch}}
+    {\end{spacing} \par \vspace{18mm}  %{20mm}
+     \noindent Permanent Address:
+       \begin{minipage}[t]{90mm}
+         \thesisauthoraddress
+       \end{minipage}
+     \par \vspace{13mm} %{15mm}
+     \noindent This \lowercase\expandafter{\thesistype} was
+       typeset with \LaTeXe\footnote{\LaTeXe{} is an extension of \LaTeX.
+       \LaTeX{} is a collection of macros for \TeX.  \TeX{} is a
+       trademark of the American Mathematical Society.  The macros used in
+       formatting this \lowercase\expandafter{\thesistype} were written
+       by Dinesh Das, Department of Computer Sciences, The University
+       %% AME: added other acks
+       of Texas at Austin, and extended by Bert Kay, James A. Bednar, and Ayman El-Khashab.
+	  } by \thesistypist.}
+
+\newcommand{\@chapteralignment}{\centering}
+\renewcommand{\chapter}{\clearpage
+   \ifnum\@appendix=1
+     \renewcommand{\@chaptertype}{\appendixname}
+   \else
+     \renewcommand{\@chaptertype}{\chaptername}
+   \fi
+   \thispagestyle{plain}%
+   \global\@topnum\z@
+   \@afterindentfalse
+   \secdef\@chapter\@schapter
+   }
+\renewcommand\appendix{\par
+  \setcounter{chapter}{0}%
+  \setcounter{section}{0}%
+  \renewcommand{\@chapapp}{\appendixname}%
+  \renewcommand{\thechapter}{\Alph{chapter}}
+  \renewcommand{\@appendix}{1}}
+
+%%%
+%%% Define chapter heading placement commands.
+%%%
+\newcommand{\leftchapter}{
+    \renewcommand{\@chapteralignment}{\raggedright}}
+\newcommand{\centerchapter}{
+    \renewcommand{\@chapteralignment}{\centering}}
+\newcommand{\rightchapter}{
+    \renewcommand{\@chapteralignment}{\raggedleft}}
+
+%%%
+%%% Command from report.cls, (c) LaTeX3 Project.
+%%%
+\def\@chapter[#1]#2{\ifnum \c@secnumdepth >\m@ne
+                      \refstepcounter{chapter}%
+                      \typeout{\@chapapp\space\thechapter.}%
+                      \addcontentsline{toc}{chapter}%
+                          {\@chaptertype{} \protect\numberline{\thechapter}#1}%
+                    \else
+                      \addcontentsline{toc}{chapter}{\@chaptertype{} #1}
+                    \fi
+                    \ifnum\value{chapter}=1
+                      \ifnum\@appendix=0
+                        \pagestyle{\@textpagestyle}
+                        \pagenumbering{\@textpagenumbering}
+                      \fi
+                    \fi
+                    \chaptermark{#1}%
+                    \addtocontents{lof}{\protect\addvspace{10\p@}}%
+                    \addtocontents{lot}{\protect\addvspace{10\p@}}%
+                    \if@twocolumn
+                      \@topnewpage[\@makechapterhead{#2}]%
+                    \else
+                      \@makechapterhead{#2}%
+                      \@afterheading
+                    \fi
+                    }
+
+%%%
+%%% Command from report.cls, (c) LaTeX3 Project.
+%%%
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \@chapteralignment \reset@font
+    \ifnum \c@secnumdepth >\m@ne
+      \huge\bfseries \@chapapp{} \thechapter
+      \par
+      \vskip 20\p@
+    \fi
+    \Huge \bfseries #1\par
+    \nobreak
+    \vskip 40\p@
+  }}
+\def\@makeschapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \@chapteralignment
+    \reset@font
+    \Huge \bfseries  #1\par
+    \nobreak
+    \vskip 40\p@
+  }}
+
+%%%
+%%% Command from report.cls, (c) LaTeX3 Project.
+%%%
+%%% I uncommented this because the version of this environment in
+%%% /lusr/tex/texmf/tex/latex2e/report.cls doesn't have the /addtocontentsline
+%%% call.  This ends up failing to add a Bibliography entry to the Table
+%%% of contents.  I duplicated the report.cls version  and added the 
+%%% /addtocontentsline myself since the commented-out version in this
+%%% file didn't seem to work  BKay 17Oct96.
+\renewenvironment{thebibliography}[1]
+     {\chapter*{\bibname
+        \@mkboth{\MakeUppercase\bibname}{\MakeUppercase\bibname}}%
+      \addcontentsline{toc}{chapter}{\bibname}
+      \list{\@biblabel{\@arabic\c@enumiv}}%
+           {\settowidth\labelwidth{\@biblabel{#1}}%
+            \leftmargin\labelwidth
+            \advance\leftmargin\labelsep
+            \@openbib@code
+            \usecounter{enumiv}%
+            \let\p@enumiv\@empty
+            \renewcommand\theenumiv{\@arabic\c@enumiv}}%
+      \sloppy\clubpenalty4000\widowpenalty4000%
+      \sfcode`\.\@m}
+     {\def\@noitemerr
+       {\@latex@warning{Empty `thebibliography' environment}}%
+      \endlist}
+
+%%%
+%%% Command from report.cls, (c) LaTeX3 Project.
+%%%
+\renewcommand\listoftables{%
+    \clearpage  %%% AME 
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\listtablename
+      \@mkboth{\uppercase{\listtablename}}{\uppercase{\listtablename}}}%
+    \addcontentsline{toc}{chapter}{\listtablename}
+    \@starttoc{lot}%
+    \if@restonecol\twocolumn\fi
+    }
+\renewcommand\listoffigures{%
+    \clearpage  %%% AME 
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\listfigurename
+      \@mkboth{\uppercase{\listfigurename}}%
+              {\uppercase{\listfigurename}}}%
+    \addcontentsline{toc}{chapter}{\listfigurename}
+    \@starttoc{lof}%
+    \if@restonecol\twocolumn\fi
+    }
+\renewcommand\tableofcontents{%
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\contentsname
+        \@mkboth{\uppercase{\contentsname}}{\uppercase{\contentsname}}}%
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi
+    }
+
+%%%
+%%% Command to print draft version of the thesis.
+%%%
+\newcommand{\thesisdraft}{
+    \setlength{\topmargin}{0in}
+    \setlength{\headheight}{0.2in}
+    \setlength{\headsep}{0.25in}
+    \renewcommand{\@textpagestyle}{myheadings}
+    \def\ps@myheadings{%
+     \let\@oddfoot\@empty\let\@evenfoot\@empty
+     \def\@oddhead{\textsl{Draft of \timestamp}\hfil\thepage}%
+     \let\@mkboth\@gobbletwo
+     \let\chaptermark\@gobble
+     \let\sectionmark\@gobble}
+    }
+
+%%%
+%%% Code to compute current timestamp.  Some parts by Martin Minow.
+%%%
+\newcount\hour \newcount\minute
+\hour=\time  \divide \hour by 60
+\minute=\time
+\loop \ifnum \minute > 59 \advance \minute by -60 \repeat
+\def\thesistime{\ifnum \hour<13 \number\hour:%
+                      \ifnum \minute<10 0\fi
+                      \number\minute
+                      \ifnum \hour<12 \ am\else \ pm\fi
+         \else \advance \hour by -12 \number\hour:%
+                      \ifnum \minute<10 0\fi
+                      \number\minute \ pm\fi}
+
+\def\thesisdate{\ifcase\month\or
+January\or February\or March\or April\or May\or June\or
+July\or August\or September\or October\or November\or December\fi
+\space\number\day, \number\year}
+
+\newcount\dow
+\newcount\leap
+\newcount\x
+\newcount\y
+
+%leap = year + (month - 14)/12
+\leap=\month \advance\leap by -14 \divide\leap by 12
+  \advance\leap by \year
+
+%dow = (13 * (month + 10 - (month + 10)/13*12) - 1)/5
+\dow=\month \advance\dow by 10
+  \y=\dow \divide\y by 13 \multiply\y by 12
+  \advance\dow by -\y \multiply\dow by 13 \advance\dow by -1 \divide\dow by 5
+
+%dow += day + 77 + 5 * (leap % 100)/4
+\advance\dow by \day \advance\dow by 77
+  \x=\leap \y=\x \divide\y by 100 \multiply\y by 100 \advance\x by -\y
+  \multiply\x by 5 \divide\x by 4 \advance\dow by \x
+
+%dow += leap / 400
+\x=\leap \divide\x by 400 \advance\dow by \x
+
+%dow -= leap / 100 * 2;
+%dow = (dow % 7)
+\x=\leap \divide\x by 100 \multiply\x by 2 \advance\dow by -\x
+  \x=\dow \divide\x by 7 \multiply\x by 7 \advance\dow by -\x
+
+\def\thesisdayofweek{\ifcase\dow
+Sunday\or Monday\or Tuesday\or
+Wednesday\or Thursday\or Friday\or Saturday\fi}
+
+\def\timestamp{\thesistime, \thesisdayofweek, \thesisdate}
+
+%%%
+%%% Spacing commands
+%%%
+%%% Most from setspace.sty by Geoffrey Tobin 
+%%% 
+%%%
+
+\newcommand{\setstretch}[1]{%   %%% AME setup to use setspace macros
+  \def\baselinestretch{#1}%
+  \@currsize
+}
+
+\newcommand{\SetSinglespace}[1]{%
+  \def\setspace@singlespace{#1}%
+}
+
+\SetSinglespace{1}
+
+\newcommand{\singlespacing}{%
+  \setstretch {\setspace@singlespace}%  normally 1
+  \vskip \baselineskip  % Correction for coming into singlespace
+}
+
+\newcommand{\onehalfspacing}{%
+  \setstretch{1.25}%  default
+  \ifcase \@ptsize \relax % 10pt
+    \setstretch {1.25}%
+  \or % 11pt
+    \setstretch {1.213}%
+  \or % 12pt
+    \setstretch {1.241}%
+  \fi
+}
+
+\newcommand{\doublespacing}{%
+  \setstretch {1.667}%  default
+  \ifcase \@ptsize \relax % 10pt
+    \setstretch {1.667}%
+  \or % 11pt
+    \setstretch {1.618}%
+  \or % 12pt
+    \setstretch {1.655}%
+  \fi
+}
+
+
+%%%
+%%% AME:  This is to correct spacing after the tabular env.
+%%% according to the maintainers of setspace
+%%%
+
+\def\@setsize#1#2#3#4{%
+  % Modified 1993.04.07--GDG per KPC
+  \@nomath#1%
+  \let\@currsize#1%
+  \baselineskip #2%
+  \baselineskip \baselinestretch\baselineskip
+  \parskip \baselinestretch\parskip
+  \setbox\strutbox \hbox{%
+    \vrule height.7\baselineskip
+           depth.3\baselineskip
+           width\z@}%
+  \skip\footins \baselinestretch\skip\footins
+  \normalbaselineskip\baselineskip#3#4}
+
+
+%%%
+%%% Adjust the spacing for floats (reset to single space)
+%%%
+
+\let\latex@xfloat=\@xfloat
+\def\@xfloat #1[#2]{%
+  \latex@xfloat #1[#2]%
+  \def\baselinestretch{\setspace@singlespace}%
+  \normalsize
+}
+
+
+%%% 
+%%% Footnotes, AME, did not bring over minipage footnotes
+%%% 
+
+\long\def\@footnotetext#1{%
+  \insert\footins{%
+    \def\baselinestretch {\setspace@singlespace}%
+    \reset@font\footnotesize
+    \interlinepenalty\interfootnotelinepenalty
+    \splittopskip\footnotesep
+    \splitmaxdepth \dp\strutbox \floatingpenalty \@MM
+    \hsize\columnwidth
+    \@parboxrestore
+    \protected@edef\@currentlabel{%
+      \csname p@footnote\endcsname\@thefnmark
+    }%
+    \color@begingroup
+      \@makefntext{%
+        \rule\z@\footnotesep\ignorespaces#1\@finalstrut\strutbox}%
+    \color@endgroup}}
+
+%%%
+%%% AME Fix the spacing around display math
+%%%
+\newcommand{\displayskipstretch}{\baselinestretch}
+\newcommand{\setdisplayskipstretch}[1]{\renewcommand{\displayskipstretch}{#1}}
+\everydisplay\expandafter{%
+  \the\everydisplay
+  \abovedisplayskip \displayskipstretch\abovedisplayskip
+  \belowdisplayskip \displayskipstretch\belowdisplayskip
+  \abovedisplayshortskip \displayskipstretch\abovedisplayshortskip
+  \belowdisplayshortskip \displayskipstretch\belowdisplayshortskip
+}
+
+%%%
+%%% AME Modified to use the setspace style commands
+%%% 
+
+\newcommand{\restore@spacing}{%
+    \par
+    \vskip \parskip
+    \vskip \baselineskip
+  \endgroup
+  \vskip -\parskip
+  \vskip -\baselineskip
+}
+
+\newenvironment{spacing}[1]{%
+  \par
+  \begingroup             
+  \setstretch {#1}%
+}{ 
+  \restore@spacing
+}
+

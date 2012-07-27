@@ -1,4 +1,32 @@
-\documentclass[11pt]{report}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
+%%% File: utthesis2.doc, version 2.0jab, February 2002
+%%%
+%%% Based on: utthesis.doc, version 2.0, January 1995
+%%% =============================================
+%%% Copyright (c) 1995 by Dinesh Das.  All rights reserved.
+%%% This file is free and can be modified or distributed as long as
+%%% you meet the following conditions:
+%%%
+%%% (1) This copyright notice is kept intact on all modified copies.
+%%% (2) If you modify this file, you MUST NOT use the original file name.
+%%%
+%%% This file contains a template that can be used with the package
+%%% utthesis.sty and LaTeX2e to produce a thesis that meets the requirements
+%%% of the Graduate School of The University of Texas at Austin.
+%%%
+%%% All of the commands defined by utthesis.sty have default values (see
+%%% the file utthesis.sty for these values).  Thus, theoretically, you
+%%% don't need to define values for any of them; you can run this file
+%%% through LaTeX2e and produce an acceptable thesis, without any text.
+%%% However, you probably want to set at least some of the macros (like
+%%% \thesisauthor).  In that case, replace "..." with appropriate values,
+%%% and uncomment the line (by removing the leading %'s).
+%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[11pt]{report}         %% LaTeX2e document.
+\usepackage {utthesis2}              %% Preamble.
 
 \usepackage[bookmarks=true,bookmarksopen=true]{hyperref}
 \usepackage{url}
@@ -8,40 +36,165 @@
 \usepackage{proof}
 \usepackage[backgroundcolor=white,linecolor=black]{todonotes}
 \usepackage{tocbibind}
-
-
-% \usepackage{setspace}
-% \doublespacing
+%\usepackage{natbib}
+\usepackage{bcprules}
 
 \synctex=1
 
 \include{notation}
 \include{definitions}
 
-\setcounter{secnumdepth}{3}
-\setcounter{tocdepth}{3}
+%\setcounter{secnumdepth}{3}
+%\setcounter{tocdepth}{3}
 
-\begin{document} 
+% \mastersthesis                     %% Uncomment one of these; if you don't
+\phdthesis                         %% use either, the default is \phdthesis.
 
-	\settimeformat{ampmtime}
-	\author{Ian Wehrman} 
-	\title{Weak-Memory Local Reasoning\\Dissertation Draft\footnote{This is a draft. Please do not distribute without permission.}} 
-	\date{\today, \currenttime}
-	\maketitle
+\thesisdraft                       %% Uncomment this if you want a draft
+                                     %% version; this will print a timestamp
+                                     %% on each page of your thesis.
 
-% \tableofcontents
+\leftchapter                       %% Uncomment one of these if you want
+% \centerchapter                     %% left-justified, centered or
+% \rightchapter                      %% right-justified chapter headings.
+                                     %% Chapter headings includes the
+                                     %% Contents, Acknowledgments, Lists
+                                     %% of Tables and Figures and the Vita.
+                                     %% The default is \centerchapter.
 
-% \section*{Preface}
+% \singlespace                       %% Uncomment one of these if you want
+% \oneandhalfspace                   %% single-spacing, space-and-a-half
+% \doublespace                       %% or double-spacing; the default is
+                                     %% \oneandhalfspace, which is the
+                                     %% minimum spacing accepted by the
+                                     %% Graduate School.
 
-% This goal of this document is to bring you, the reader, up-to-date on the status of my dissertation project. I am interested in doing so because I wish to convince you that this project, while far from complete, constitutes sufficient evidence of my doctoral training. 
+\renewcommand{\thesisauthor}{Ian Anthony Wehrman}    %% Your official UT name.
 
-% Surely the most persuasive way for me to convince you of the completeness of my training would be to present a finished project, complete with formal definitions, lemmas and corresponding proofs. Unfortunately, having worked toward this goal for so long, I no longer expect to reach this status in a reasonable amount of time. It may happen tomorrow, or in another year, or perhaps never. I have many times felt that the end was in sight, only to discover some as-yet-unconsidered aspect of the problem to be inconsistent with my earlier efforts and assumptions, sending me back to reconsider the entirety of the development. 
+\renewcommand{\thesismonth}{October}     %% Your month of graduation.
 
-% Nonetheless, I have made progress on this problem of which I am genuinely proud. In some instances that progress can be explained  mathematically; elsewhere only informal or intuitive justification can be given for the technical decisions I have made. The reason for the incompleteness of the project after so much time has, I believe, as more to do with the size of the problem than its inherent difficulty. (To that end, see Figure~\ref{fig:dependency-graph}.) Indeed, I am more confident than ever that the approach I have pursued to the problem of local reasoning about weak-memory programs can be brought to a satisfying and enlightening conclusion. But, because of the many components of the project that must stand together in relative harmony, I simply do not know how much longer it will take me to arrive at such a conclusion. 
+\renewcommand{\thesisyear}{2012}      %% Your year of graduation.
 
-% With those caveats in mind, I do feel ``close'' to having the definitions needed for an program logic that I can prove sound. This logic may be weaker than I had hoped, but I have yet to carefully explore its capabilities and limitations. (It is hard to do this, after all, when the syntax, semantics and proof theory of the logic itself is in flux, as it essentially has been since inception.) Whether or not that is the case, I hope you will agree after reading this document that significant progress has been made toward that milestone, and that the contributions I have made are indicative of satisfactory training.
+\renewcommand{\thesistitle}{Weak-Memory Local Reasoning}     %% The title of your thesis; use
+                                     %% mixed-case.
+
+\renewcommand{\thesisauthorpreviousdegrees}{B.Sc., M.Sc.}
+                                     %% Your previous degrees, abbreviated;
+                                     %% separate multiple degrees by commas.
+
+\renewcommand{\thesissupervisor}{Warren A.\ Hunt, Jr.}
+                                     %% Your thesis supervisor; use mixed-case
+                                     %% and don't use any titles or degrees.
+
+\renewcommand{\thesiscosupervisor}{J Strother Moore}
+                                     %% Your PhD. thesis co-supervisor; if any.
+                                     %% Use mixed case and don't use any titles
+                                     %% or degrees. Uncomment if you
+                                     %% have a co-supervisor.
+                                     %% (Ignored for Master's)
+
+\renewcommand{\thesiscommitteemembera}{Josh Berdine}
+\renewcommand{\thesiscommitteememberb}{E.\ Allen Emerson}
+\renewcommand{\thesiscommitteememberc}{Donald S. Fussell}
+\renewcommand{\thesiscommitteememberd}{C.\ A.\ R.\ Hoare}
+% \renewcommand{\thesiscommitteemembere}{}
+% \renewcommand{\thesiscommitteememberf}{}
+% \renewcommand{\thesiscommitteememberg}{}
+% \renewcommand{\thesiscommitteememberh}{}
+% \renewcommand{\thesiscommitteememberi}{}
+                                     %% Define your other committee members here;
+                                     %% use mixed case and don't use any titles
+                                     %% or degrees.  Uncomment as many
+                                     %% as neccessary. (Ignored for Master's)
+
+\renewcommand{\thesisauthoraddress}{ian@wehrman.org}
+                                     %% Your permanent address; use "\\" for
+                                     %% linebreaks.
+
+\renewcommand{\thesisdedication}{For somebody.}
+                                     %% Your dedication, if you have one; use
+                                     %% "\\" for linebreaks.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
+%%% The following commands are all optional, but useful if your requirements
+%%% are different from the default values in utthesis.sty.  To use them,
+%%% simply uncomment (remove the leading %) the line(s).
+
+\renewcommand{\thesiscommitteesize}{6}
+                                     %% Uncomment this only if your thesis
+                                     %% committee does NOT have 5 members
+                                     %% for \phdthesis or 2 for \mastersthesis.
+                                     %% Replace the "..." with the correct
+                                     %% number of members.
+
+% \renewcommand{\thesisdegree}{...}  %% Uncomment this only if your thesis
+                                     %% degree is NOT "DOCTOR OF PHILOSOPHY"
+                                     %% for \phdthesis or "MASTER OF ARTS"
+                                     %% for \mastersthesis.  Provide the
+                                     %% correct FULL OFFICIAL name of
+                                     %% the degree.
+
+% \renewcommand{\thesisdegreeabbreviation}{...}
+                                     %% Use this if you also use the above
+                                     %% command; provide the OFFICIAL
+                                     %% abbreviation of your thesis degree.
+
+% \renewcommand{\thesistype}{...}    %% Use this ONLY if your thesis type
+                                     %% is NOT "Dissertation" for \phdthesis
+                                     %% or "Thesis" for \mastersthesis.
+                                     %% Provide the OFFICIAL type of the
+                                     %% thesis; use mixed-case.
+
+% \renewcommand{\thesistypist}{...}  %% Use this to specify the name of
+                                     %% the thesis typist if it is anything
+                                     %% other than "the author".
+
+%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\thesiscopyrightpage                 %% Generate the copyright page.
+
+\thesiscertificationpage             %% Generate the PhD. certification page.
+
+\thesistitlepage                     %% Generate the title page.
+
+%\thesissignaturepage                %% Generate the Master's signature page.
+
+\thesisdedicationpage                %% Generate the dedication page.
+
+\begin{thesisacknowledgments}
+Here are some acknowledgements. 
+\end{thesisacknowledgments}
+
+\begin{thesisabstract}
+    Program logics are formal logics designed to facilitate specification and correctness reasoning for software programs. Separation logic, a recent program logic for C-like programs, has found great success in automated verification due in large part to its embodiment of the principle of local reasoning, in which specifications and proofs are restricted to just those resources---variables, shared memory addresses, locks, etc.---used by the program during execution. Existing program logics make the strong assumption that all threads agree on the values of shared memory at all times. But, on modern computer architectures, this assumption is unsound for certain shared-memory concurrent programs: namely, those with races. Typically races are considered to be errors, but some programs, like fine-grained concurrent data structures, are necessarily racy. Verification of these difficult programs must take into account the weaker model of memory provided by the architecture on which they execute. This dissertation projecvt seeks to explicate a local reasoning principle tailored for the x86-like architectures. This principle is demonstrated with a new program logic for fine-grained concurrent C-like programs, which incorporates ideas from separation logic. The goal of the logic is to allow verification of racy programs like concurrent data structures for which no general-purpose high-level verification techniques exist. 
+\end{thesisabstract}
+
+\tableofcontents                     %% Generate table of contents.
+% \listoftables                      %% Uncomment this to generate list
+                                     %% of tables.
+\listoffigures                     %% Uncomment this to generate list
+                                     %% of figures.
+
+% \chapter{...}                        %% Begin your thesis text here; follow
+%                                      %% the report style and group your text
+%                                      %% in chapters, sections, etc.
+
+% \chapter{...}                        %% More chapters.
+
+% \addcontentsline {toc}{chapter}{Bibliography} 
+%                                      %% Force Bibliography to appear in contents
+
+% \begin{thebibliography}{..}          %% Start your bibliography here; you can
+% \bibitem{...} ...                    %% also use the \bibliography command
+% \end{thebibliography}                %% to generate your bibliography.
+
 
 \chapter{Introduction}
+\label{ch:introduction}
 
 Most concurrent software verification techniques rely on a
 surprisingly strong assumption: namely, that all processes agree on
@@ -59,6 +212,7 @@ There are, however, useful and interesting programs for which races do not indic
 The verification literature offers little insight into the problem of verifying concurrent data structures and other inherently racy programs. This is because a model of a contemporary memory adds serious complication to an already difficult problem, but also because until recently formal specifications of common architectures' memory models did not exist publicly. (Or, perhaps, privately.) Fortunately, the latter problem has been alleviated with recent safety specifications for the x86, Power and ARM memory models \cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for these architectures, the path toward a solution to the correctness problem of concurrent data structures and other important programs now lies essentially unimpeded.
 
 \section{An Illustrative Example}
+\label{sec:intro-ex}
 
 \begin{figure}[h]
 \centering
@@ -101,6 +255,7 @@ There are, however, conditions under which these architectures guarantee a progr
 A less drastic semantics-altering transformation is to add fence instructions directly after the processes' store operations; this too results in an implementation of Dekker's algorithm that preserves mutual exclusion. The fences ensure that the processes do not attempt their loads until after their respective stores have completed. But proving that this modified program is correct requires an argument quite different from the one above: the loads in this program race with their opposite stores, and so DRF guarantees cannot be applied to recover sequential consistency. Hence, any correctness argument for this modified program must be cognizant of the peculiarities of the underlying memory model. Indeed, correctness arguments for an x86-like memory model are completely different for a correctness argument for an ARM-like memory model.
 
 \section{Project Description}
+\label{sec:project-description}
 
 This dissertation project does not, by far, solve the verification problem for racy concurrent programs executing on a weak memory models generally. Its more modest goal is instead to step toward this by developing a \emph{program logic} for the verification, by proof, of partial correctness properties of certain programs that interact with a particular weak model of memory. Implicit in this is the goal to explicate a \emph{local reasoning principle} for a weak memory model. Traditional correctness reasoning and specification is global: the entire system must be accounted for, which makes scaling to large programs difficult. Local reasoning dictates instead that reasoning and specification be restricted to just those resources---program variables, shared-memory addresses, locks, etc.---that are accessed or modified by the program during execution.
 
@@ -111,6 +266,7 @@ The particular weak memory model explored in this dissertation is x86-like; in p
 In this project, local reasoning is explored in the context of an x86-like memory model in particular by developing two program logics that embodies such a principle: a logic for purely sequential programs that execute on a single processor; and a more general logic for concurrent programs that execute on multiple processors in parallel. The sequential fragment of this logic is loosely based on separation logic, a recent Hoare-style logic which has spurred a revolution in high-level program reasoning due to the simplicity with which it handles pointers using a local reasoning principle. The concurrent extension of the logic is similarly based on a concurrent extension to separation logic. 
 
 \subsection{Components and Dependencies}
+\label{sec:components}
 
 The various components of the program logics described in this dissertation and their explicit dependencies are pictured in the (transitively reduced) graph of Figure~\ref{fig:dependency-graph}. The components are represented by shapes that indicate their approximate type: semantic objects by octagons; formal languages by squares; semantic relationships by ovals; deduction systems by hexagons; and key properties by trapezoids. 
 
@@ -134,6 +290,7 @@ Ideally there would also be a proof theory of assertions and a corresponding sou
 The specification language encompasses the programming and assertions languages, and its semantics is given in terms of the semantics of programs and assertions. The proof theory of specifications relies on the existence of a suitable proof theory of assertions for determining entailments. The soundness of the specification logic relies on the soundness of the proof theory of assertions as well as the semantics of programs and assertions. Specification of sequential programs are described in Section~\ref{sec:sequential-specifications}; specifications of concurrent programs are described in Section~\ref{sec:specifications}.
 
 \subsection{Contributions and Status}
+\label{sec:contributions}
 
 The significant contributions of this dissertation project are as follows:
 
@@ -155,6 +312,7 @@ The languages, models and deduction system described above are completely and fo
 Finally, beyond these technical omissions, it must be admitted that this dissertation gives little indication of how proofs ought to proceed in the logic; only a handful of small examples will be given later on. This is because the logic has evolved with soundness to the x86 memory memory model foremost in mind, instead of as a logical system of interest independent of its potential models. Although the examples presented do indicate that the logic is capable of highly non-trivial program reasoning, the extent of its capability is not yet well understood, and remains as perhaps the most important aspect of future work. 
 
 \chapter{Background}
+\label{ch:background}
 
 This chapter describes background material necessary to understand the technical content of this dissertation, beginning with mathematical preliminaries and frequently used notation in Section~\ref{sec:preliminaries}, followed by an overviews of research on program logics in Section~\ref{sec:program-logics} and memory consistency models in Section~\ref{sec:memory-models}. 
 
@@ -307,6 +465,7 @@ Separation logic embodies the principle of local reasoning with its \emph{small 
 Besides having been used to give human-readable proofs to a variety of algorithms that manipulate complex pointer-based data structures (e.g., the Schorr-Waite graph-marking algorithm \cite{Yang-thesis}), useful fragments of separation logic have been automated as part of program verifiers and static analyses, which have been successfully applied to programs with tens of thousands of lines of source code~\cite{DBLP:conf/fmco/BerdineCO05,DBLP:conf/cav/YangLBCCDO08,DBLP:conf/cav/BerdineCI11}.
 
 \subsection{Concurrent Program Logics}
+\label{ch:concurrent-program-logics}
 
 Research into logics for concurrent programs has progressed independently from research into logics for increasingly expressive sequential programs. Major efforts are summarized below. 
 
@@ -353,19 +512,19 @@ After a great deal of investigation, experimentation and discussion with manufac
 The model identified by Owens et al.~is essentially a \emph{total-store order} (TSO) model which, as the name implies, indicates that there is a single total order, agreed upon by all processors, that organizes store events. Their x86-TSO model is described as a collection of legal traces of memory events, defined both axiomatically and operationally. The latter, informally, is described in terms of \emph{write buffers}: per-processor FIFO queues of ``writes'' (i.e., location-value pairs). The informal semantics of store events entails buffering a new write in the processor's write buffer; the semantics of load events entails returning the value of the most recent buffered write to the intended location in the processor's write buffer or, if no such buffered write exists, in the shared memory. 
  
 Formally, the operational model is given with a labeled transition relation between machine states. These states are four-tuples $(R,m,B,l)$ in which: \begin{itemize}
-	\item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ represents a register file for each processor;
-	\item $m : \setlocations \pfun \setvalues$ represents a shared memory; 
-	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ represents a write buffer for each processor; 
-	\item $l : \setprocessors^\bot$ represents a global lock. 
+      \item $R : \setprocessors \tfun \setidentifiers \pfun \setvalues$ represents a register file for each processor;
+      \item $m : \setlocations \pfun \setvalues$ represents a shared memory; 
+      \item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ represents a write buffer for each processor; 
+      \item $l : \setprocessors^\bot$ represents a global lock. 
 \end{itemize}
 
 Transitions (labeled by memory events) between states indicate the possibility and effect of those memory events. For example, in any state $(R,m,B,l)$, processor $p$ may write a value $v$ into its register $i$; i.e., it may update the state such that $R_p(i) = v$. Similarly, if $R_p(i) = v$ then $p$ may read value $v$ from its register $i$. A summary of the other events processor $p$ may perform is as follows: \begin{itemize}
-	\item it may load from its write buffer the most recent value of a location---or, if a write to that location is not found in its write buffer, from memory---if the lock is either available ($i.e.$, the lock value is $\bot$) or is held by $p$, but not if some other processor $q \neq p$ holds the lock;
-	\item it may store a value to a memory location by adding a new write to the head of its write buffer regardless of the status of the lock; 
-	\item it may flush (or, synonymously in this document, commit) the least recent write in its buffer to memory if it holds the lock or the lock is available;  
-	\item it may fence if its buffer is empty;
-	\item it may acquire the lock (i.e., change the lock value in the current state to $p$) if the lock is available; 
-	\item it may release the lock (i.e., change the lock value in the current state to $\bot$) if it holds the lock.
+      \item it may load from its write buffer the most recent value of a location---or, if a write to that location is not found in its write buffer, from memory---if the lock is either available ($i.e.$, the lock value is $\bot$) or is held by $p$, but not if some other processor $q \neq p$ holds the lock;
+      \item it may store a value to a memory location by adding a new write to the head of its write buffer regardless of the status of the lock; 
+      \item it may flush (or, synonymously in this document, commit) the least recent write in its buffer to memory if it holds the lock or the lock is available;  
+      \item it may fence if its buffer is empty;
+      \item it may acquire the lock (i.e., change the lock value in the current state to $p$) if the lock is available; 
+      \item it may release the lock (i.e., change the lock value in the current state to $\bot$) if it holds the lock.
 \end{itemize}
 
 The x86-TSO memory model includes all the sequentially consistent executions, as well as others. For example, the sequentially consistent execution from the previous section: \[ (0,w,f_0,1), (1,w,f_1,1), (1,r,f_0,1), (0,r,f_1,1), \] is shown valid (informally) under the x86-TSO model as follows. Assume that no processors hold the lock. The first thread may perform its store operation by enqueuing a write $(f_0,1)$ in its buffer, and then immediately flushing that write to memory; and then similarly for the second thread, which enqueues a write $(f_1,1)$ and then immediately flushes it to memory. If then the second thread then reads location $f_0$ it finds value 1 (because it has no other writes to $f_0$ in its buffer); and similarly if the first thread then reads location $f_1$ it finds value 1 for the same reason. 
@@ -391,7 +550,8 @@ In this chapter we describe a program logic for a sequential, single-processor, 
 
 A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously \cite{wmsldetails}. 
 
-\section{An Example Proof}
+\section{An Example Sequential Proof}
+\label{sec:ex-seq-proof}
 
 Consider the following simple sequential program $c$, which loads the value at an address $x$ into variable $t$, writes the value $t+1$ into address $y$, and then flushes that write back to memory with a fence instruction: \[ c \eqdef \cload{t}{x} \opseq \cstore{y}{t+1} \opseq \cfence.\] This sequential program will fail with a memory error unless the value of $x$, from which the program loads, is a properly allocated memory address, as well as the value $y$, to which the program writes. Any provable specification of this program must require this of $x$ and $y$ initially. If the value of $x$ and $y$ are indeed allocated addresses, and the value in memory at address $x$ is initially some value $z$, then upon termination the write buffer will be empty and the value in memory at location $y$ will be $z+1$. 
 
@@ -528,7 +688,7 @@ For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ 
 By induction on the structure of the expression $e$. 
 \end{proof}
 
-\section{Programs}
+\section{Sequential Programs}
 \label{sec:sequential-programs}
 
 In this chapter, programs are identified with \emph{sequential commands}, which consist of compositions of \emph{primitive commands} for testing, accessing and modifying state. 
@@ -674,7 +834,7 @@ The reflexive-transitive closure of the command evaluation relation, written $c,
         \cwhile{b}{c} \eqdef & \cseq{\cloop{(\cseq{\cassume{b}}{c})}}{\cassume{!b}}
     \end{align*}
 \end{minipage}}
-    \caption{\label{fig:sequential-command-abbreviations} Command abbreviations}
+    \caption{\label{fig:sequential-command-abbreviations} Sequential command abbreviations}
 \end{figure}
 
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) For example, $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
@@ -816,18 +976,18 @@ In Section~\ref{sec:locality} we also described a particular strategy for showin
 
 In each case, the proof follows from the fact that if $\mu \in \mu_0 \bullet \mu_1$ and $\mu' \taurefines \mu$ then there exists $\mu'_0$ and $\mu'_1$ such that $\mu'_0 \taurefines \mu_0$, $\mu'_1 \taurefines \mu_1$ and $\mu' \in \mu'_0 \bullet \mu'_1$. 
 
-\section{Assertions}
+\section{Sequential Assertions}
 \label{sec:uniprocessor-assertions}
 
-Uniprocessor assertions denote sets of uniprocessor machine states, and will later be used to express the pre- and post-conditions of commands in the specification logic. The language of uniprocessor assertions is given by the following grammar: \begin{align*}
+Sequential assertions denote sets of uniprocessor machine states, and will later be used to express the pre- and post-conditions of commands in the specification logic. The language of sequential assertions is given by the following grammar: \begin{align*}
     \setassertions~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\ & \femp \bnfbar e \fwriteu e' \bnfbar \fbaru \bnfbar (P \fsep P') \bnfbar  (P \fseq P')
 \end{align*} 
 The informal meaning of the assertions above are as follows. The lifting of a boolean expression ($\bexpt$, $\bexpf$, $x = y$, etc.)\ to an atomic formula, disjunction, conjunction and quantifiers have the same basic meaning as in first-order logic: models for which the boolean expression $b$ evaluates to 1; the models that satisfy either $P$ or $P'$, etc. The assertion $\femp$ describes states with an empty memory system (i.e., both an empty heap and an empty write buffer). $e \fwriteu e'$ describes a single write to location $e$ with value $e'$, either buffered or flushed to memory. $\fbaru$ describes empty states in which preceding writes must have been committed to memory. The assertion $(P \fsep P')$ describes spatial separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-spatial-separation}. The assertion $(P \fseq P')$ describes temporal separation of the states of $P$ and $P'$, as described in Section~\ref{sec:sequential-temporal-separation}. 
 
-\subsection{Satisfaction}
+\subsection{Sequential Satisfaction}
 \label{sec:uniprocessor-satisfaction}
 
-The meaning of uniprocessor assertions is given by a satisfaction relation $\amod \satisfies P$, relating \emph{uniprocessor models} $\amod$ to uniprocessor assertions $P$. A model is a triple $(s,\mu,\gamma)$, in which $(s,\mu)$ is a uniprocessor state, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. We call the pairs $(\mu,\gamma)$ that are part of a uniprocessor model $\amod$ \emph{generalized uniprocessor memory systems}, and refer to them by the symbol $\nu$.
+The meaning of sequential assertions is given by a satisfaction relation $\amod \satisfies P$, relating \emph{uniprocessor models} $\amod$ to sequential assertions $P$. A model is a triple $(s,\mu,\gamma)$, in which $(s,\mu)$ is a uniprocessor state, as defined in Section~\ref{sec:sequential-programs}, and $\gamma$ is a boolean value. Informally, $\gamma$ can be interpreted as indicating whether or not writes earlier than those explicitly described by the memory system $\mu$ must necessarily have been committed to memory. Note that the boolean $\gamma$ is used in models of assertions but not in the definition of states because it is irrelevant to the execution of programs, and is only used to give meaning to assertions. We furthermore require that if the heap component of the memory system is non-empty---i.e., describes some writes that have flushed to memory---then $\gamma = \bvt$. This is because any writes that precede those explicitly described by the state must be flushed to memory, because they precede writes that have been flushed to memory. Because it deals with the flushing status of writes that precede those of a given state, the boolean $\gamma$, which we refer to as the \emph{buffer-completeness flag}, is particularly important for modeling the $\fbaru$ assertion and the temporal separating conjunction. We call the pairs $(\mu,\gamma)$ that are part of a uniprocessor model $\amod$ \emph{generalized uniprocessor memory systems}, and refer to them by the symbol $\nu$.
 
 \begin{definition}
   A \emph{generalized uniprocessor memory system} is a triple $(h, b, \gamma)$, where \begin{itemize}
@@ -859,7 +1019,7 @@ The set of all models is abbreviated $\setmodels$, and the satisfaction relation
     \end{array}
     \]
 \end{minipage}}
-    \caption{\label{fig:uniprocessor-satisfaction-relation} The uniprocessor satisfaction relation}
+    \caption{\label{fig:uniprocessor-satisfaction-relation} The sequential satisfaction relation}
 \end{figure}
 
 The meaning of the standard first-order logic formulas is as usual (i.e., classical). A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}(e'))$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The  two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into models that satisfy the constituent conjunctions. 
@@ -953,7 +1113,7 @@ Consider, as a significant example, the set of states that satisfy the atomic fo
         $(\nil,\llit{(1,3)},\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $\bot$ \\
         $(1 \mapsto 3,\lnil,\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$ & $(1 \mapsto 4,\lnil,\bvt)$\\ 
     \end{tabular}
-    \caption{\label{fig:leads-to-seq-example}Assertion semantics example}
+    \caption{\label{fig:leads-to-seq-example}Sequential assertion semantics example}
 \end{figure}
 
 The requirement that assertions denote sets of states that are closed w.r.t.~flushing also explains why we have chosen atomic formulas that describe an empty buffer, $\fbaru$, as well as an empty heap and empty buffer, $\femp$. A conceivable alternative might be to use one atomic formula to describe empty heaps, say with arbitrary buffers, say $\mathbf{heapemp}$, and another to describe empty buffers with arbitrary heaps. (Then the assertion $\femp$ could be defined as a simple conjunction.) But $\mathbf{heapemp}$ is unsuitable because it does not describe a set of states that is closed under flushing. For if any write is flushed from a buffer in a state with an empty heap, the resulting state would have a heap that is nonempty. 
@@ -964,7 +1124,7 @@ Let us call the complement of a closed set an \emph{open} set.\footnote{In fact,
 
 Also note that it is important to define the satisfaction relation so that closure of atomic formulas is immediate and closure is preserved by each connective, as opposed to closing the entire relation at once. For example, if $\pred{e \fwriteu e'}$ were not closed w.r.t.~flushing, then \[\pred{e \fwriteu e' \fseq \fbaru} = \pred{e \fwriteu e'} \mseq \pred{\fbaru} = \nil,\] and hence so too would be its flushing closure.  
 
-\subsection{Assertion Abbreviations}
+\subsection{Sequential Assertion Abbreviations}
 \label{sec:uniprocessor-abbreviations} 
 
 In this section we extend the language of assertions with additional constructs whose meaning can be defined in terms of the assertions already described. 
@@ -998,7 +1158,7 @@ Note that, if defined directly, the converse relation $P \fsep\!\!\!\relbar Q$ w
 The right-side temporal implication, and its characterizing entailment,  is especially useful when used with the $\fbaru$ assertion. In particular, the formula $Q \fseqri \fbaru$ describes states which, if flushed, would satisfy $Q$. For example, $x \fpointsto 1 \fseqri \fbaru$ describes states with any number of buffered writes to address $x$, with the final one having value 1. One consequence is that: \[(x \fwriteu 2) \fseq (x \fwriteu 1) \sentails (x \fpointsto 1) \fseqri \fbaru.\] The ability to express such sets of states will be of crucial importance to the program logic for concurrent programs described in the following chapter. 
 
 
-\subsection{Algebra}
+\subsection{Sequential Algebra}
 \label{sec:sequential-algebra}
 
 A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:sequential-equivalences} and~\ref{fig:sequential-entailments}, respectively. If a formula contains instances of $\bullet$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the four separating conjunctions. 
@@ -1017,7 +1177,7 @@ A few additional semantic equivalences and entailments are shown in Figures~\ref
         P \fsseq \fbaru \sequiv & P \fseq \fbaru 
     \end{align*}
     \end{minipage}}
-    \caption{\label{fig:sequential-equivalences}Semantic equivalences}
+    \caption{\label{fig:sequential-equivalences}Sequential semantic equivalences}
 \end{figure}
 
 Each of the separating conjunctions is associative and has $\femp$ as a unit. Furthermore, the spatial separating conjunction is also commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbaru$, and $\fbaru$ also distributes fully through the separating conjunctions. Finally we note that the strong and weak temporal separating conjunction of a barrier assertion are equivalent because the models of $\fbaru$ have no allocated locations, which are what distinguish the two temporal conjunctions. 
@@ -1039,18 +1199,18 @@ Each of the separating conjunctions is associative and has $\femp$ as a unit. Fu
         (P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''')
     \end{align*}
     \end{minipage}}
-    \caption{\label{fig:sequential-entailments}Semantic entailments}
+    \caption{\label{fig:sequential-entailments}Sequential semantic entailments}
 \end{figure}
 
 The first three entailments---that $\fbaru$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. The next three entailments follow from their respective abbreviation expansions and by monotonicity. The three separating conjunctions naturally form a sort of lattice, and they satisfy (the second- and third-to-last entailments) what are known as small exchange laws \cite{DBLP:conf/concur/HoareHMOPS11}; the full exchange law (the final entailment) only holds for the spatial and strong temporal conjunctions. The full exchange law does not hold for the other combinations of separating conjunctions because, e.g., it implies commutativity of the main connective in the consequent, and the other conjunctions are not commutative. 
 
 
-\section{Specifications}
+\section{Sequential Specifications}
 \label{sec:sequential-specifications}
 
 A \emph{sequential program specification} is a three-tuple, written as follows: \[ \triple{P}{c}{Q}, \] where $c$ is a command and $P,Q$ are assertions, referred to as the \emph{precondition} and \emph{postcondition}, respectively. The specifications considered here assert \emph{partial correctness} of a command, which means that any specification of a nonterminating command is true. Their informal meaning is roughly analogous to that of separation logic: if $c$ is evaluated in a state that satisfies $P$ then: \emph{1)} it does not abort, and \emph{2)} if it evaluates fully, it terminates in a state that satisfies $Q$. 
 
-\subsection{Proof Theory}
+\subsection{Sequential Proof Theory}
 \label{sec:sequential-proof-theory}
 
 We now present a proof theory for deriving true sequential program specifications. The axioms and inference rules are strongly inspired by Separation Logic; the axioms and inference rules of Hoare Logic are included verbatim. 
@@ -1082,7 +1242,7 @@ We now present a proof theory for deriving true sequential program specification
         \vspace{1em}
 
     \end{minipage}}
-    \caption{\label{fig:sequential-axioms}Axioms}
+    \caption{\label{fig:sequential-axioms}Sequential axioms}
 \end{figure}
 
 The axioms of the logic are given in Figure~\ref{fig:sequential-axioms}.\footnote{The axioms and inference rules of the proof theory are of course correctly referred to as axiom schemas and rule schemas, because they must be instantiated metalogically with particular formulas, commands and expressions.} The axiom for $\cskip$ indicates its evaluation preserves any precondition into a postcondition. The fact that assertions denote down-closed sets of states is crucial for the soundness of this rule, because a configuration $\cskip,\sigma$ may well have non-trivial transitions. That is, it may be the case that, for some $\sigma \satisfies P$, that $\cskip,\sigma \step \cskip,\sigma'$ with $\sigma' \neq \sigma$. In this case it is clear from the operational semantics of commands that $\sigma' \taurefines \sigma$, and so $\sigma' \satisfies P$ as well because assertions denote sets that are closed w.r.t.\ the flushing relation. 
@@ -1158,7 +1318,8 @@ Another example of a useful derived rule is a ``global'' $\cfence$ axiom, which 
 
 We can also use the sequential separating implication to give an alternative axiom for the fence command for backwards reasoning: \[ \infer[\textsc{backwards-fence}]{\triple{P \fseqri \fbaru}{\cfence}{P}}{} \] This axiom describes a sufficiently weak\footnote{It seems likely that $P \fseqri \fbaru$ is in fact the weakest precondition, but this has not been proved.} precondition for the operation of the $\cfence$ command in terms of an arbitrary postcondition $P$.
 
-\subsection{Semantics of Specifications}
+\subsection{Semantics of Sequential Specifications}
+\label{sec:seq-specification-semantics}
 
 Following Vafeiadis \cite{V11}, the formal semantics of specifications is given by a family of predicates, $\safe{n}{c,s,\mu,Q}$, parametrized by $n \in \setnaturals$, that relate a command $c$, state $(s,\mu)$ and postcondition $Q$ according to the informal explanation above. Once these predicates are defined, we define truth of specifications as follows: \[ \truetriple{P}{c}{Q} \iffdef \forall (s,\mu) \in \setstates, n \in \setnaturals \st s,\mu,\bvt \sentails P \onlyif \safe{n}{c,s,\mu,Q}.\]
 Note that we only consider models that satisfy the precondition with complete write buffers---i.e., with $\gamma = \bvt$. 
@@ -1189,7 +1350,7 @@ Note that the two conditions for locality---the safety monotonicity and frame pr
 
 This chapter describes a program logic for a parallel programming language modeled w.r.t.\ a weak-memory multiprocessor system model. This is a significant generalization of the program logic for a sequential language described in Chapter~\ref{ch:uniprocessor}. 
 
-\section{An Example Proof}
+\section{An Example Concurrent Proof}
 \label{sec:concurrent-example}
 
 Consider the following simple program, $c_s$, which updates a single memory location while holding a global memory lock: \[ c_s \eqdef \clock_0 \opseq \cstore{d}{1}_0 \opseq \cunlock_0. \] Each primitive command in this program is annotated with the processor identifier $0$, which indicates that, on a multiprocessor machine, it will be executed on the $0^{\mathrm{th}}$ processor. The program first acquires a global lock with the $\clock$
@@ -1288,7 +1449,7 @@ The specification for $c_r$ can be proved similarly to that of $c'_s$. The locke
 }
 This completes the proof of the concurrent program specification of Equation~\ref{eq:conc-ex-spec-rev}.
 
-\section{Programs}
+\section{Concurrent Programs}
 \label{sec:programming-language}
 
 In this section we describe a simplified C-like structured programming language with concurrency. The primitive commands closely resemble the basic memory events described by the memory model, while the composite commands are typical for high-level languages. In particular, note that this is not an assembly language. This particular language of commands was chosen to be simple to reason about, but also at a suitable level of detail for describing concurrent data structures. Such algorithms are typically expressed using high level constructs like loops and if-then-else statements, along with basic atomic constructs like compare-and-swap, indication of where fencing is required, etc. 
@@ -1298,7 +1459,7 @@ The concurrent language differs from the sequential language described in Sectio
 In this setting, programs are identified with \emph{commands}, which consist of various compositions of \emph{primitive commands} for accessing and modifying state. In order to restrict the scope of the project, dynamic memory management commands (e.g., memory allocation and disposal) have been omitted.\footnote{This commands were considered in earlier iterations of this project \cite{wmsldetails,lola11}, and are discussed in Section~\ref{sec:permissions}}
 
 The primitive commands for the concurrent language are, roughly, a superset of those for the sequential language, as described in Section~\ref{sec:sequential-programs}: \begin{align*} \pcomms~p \bnfdef & \cskip \bnfbar \cassume{b} \bnfbar \cassert{b} \bnfbar \cassign{x}{e} \bnfbar \cload{x}{e} \bnfbar \\ 
-	& \cstore{e}{e'} \bnfbar \cfence \bnfbar \clock \bnfbar \cunlock 	
+      & \cstore{e}{e'} \bnfbar \cfence \bnfbar \clock \bnfbar \cunlock  
 \end{align*} Compared to the primitives in the sequential language, the $\clock$ and $\cunlock$ commands are new to the concurrent language, and serve to manipulate a single, global lock, which can either be free (available) or busy (held by a particular processor). 
 
 The formal semantics of a successful execution step by a primitive command $p$ is given as a transition relation, parametrized by a processor identifier $i$, between some machine states $\sigma$ and $\sigma'$: \[ p : \sigma \pstep{i} \sigma'. \] Such a quadruple may be informally interpreted to mean that when primitive $p$ is executed on processor $i$ in machine state $\sigma$, it may evaluate in a single, atomic step to yield state $\sigma'$. (A formal interpretation will be given later in the context of a formal semantics of full commands.) This differs from the relation used to describe the semantics of the primitives in the sequential language, described in Section~\ref{sec:sequential-programs}, by requiring that the processor on which the primitive is to execute be specified explicitly. 
@@ -1308,9 +1469,9 @@ A primitive command, in state $\sigma$ on processor $i$, may alternatively abort
 To define the combined primitive evaluation relation formally, we must first define the notions of \emph{memory system} and \emph{machine state}. 
 \begin{definition}
 A \emph{multiprocessor memory system} is a triple $(h,B,K)$, where: \begin{itemize}
-	\item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
-	\item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; and
-	\item $K : \powerset{\setprocessors}$ is a set of blocked processors.
+      \item $h : \setlocations \pfun \setvalues$ is a \emph{heap}, i.e., a partial function that represents the allocated locations of shared memory and their values; 
+      \item $B : \setprocessors \tfun \listof{(\setlocations \times \setvalues)}$ is an array of write buffers; and
+      \item $K : \powerset{\setprocessors}$ is a set of blocked processors.
 \end{itemize} 
 \end{definition} 
 The set of multiprocessor memory systems is abbreviated as $\setmemorysystems$.
@@ -1328,54 +1489,53 @@ The machine model described here is thus more general than the model used to des
 The definition of the semantic relation for primitive commands, which is given w.r.t.\ machine states, is given in Figure~\ref{fig:primitive-semantics} below. The memory systems are in general partial, though some primitives require completeness. The semantics of the primitives that are shared with the sequential language is  similar to the description given in Section~\ref{sec:sequential-programs}. The assume, assert and assignment primitives are exactly the same; the load, store and fence primitives operate w.r.t.\ the \emph{specified} buffer within the buffer array $B$, as opposed to the single buffer $b$ present in the uniprocessor state used to describe the sequential semantics. The $\clock$ command, w.r.t.\ processor $i$, changes an empty blocked set to one in which every processor except for $i$ is blocked (i.e., $\setprocessors \setminus \set{i}$), which indicates that $i$ alone holds the global lock. Furthermore, the $\clock$ command is only enabled when the buffer of the processor on which it executes is empty, which is analogous to an implicit fence instruction. Conversely, the $\cunlock$ primitive changes a state in which every processor but $i$ is blocked to one in which no processor is blocked (i.e., $\nil$). And, like the $\clock$ command, the $\cunlock$ primitive includes an implicit fence. 
 
 \begin{figure}[p]
-	\centering
+      \centering
 
-	\begin{minipage}{\columnwidth}
+      \begin{minipage}{\columnwidth}
 
-		\infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} : (s,h,B,K) \pstep{i} (s,h,B,K)}
+            \infrule[p-assume]{\text{ if  $\ext{s}(b) = 1$}}{\cassume{b} : (s,h,B,K) \pstep{i} (s,h,B,K)}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} : (s,h,B,K) \pstep{i} (s,h,B,K)}
+            \infrule[p-assert]{\text{ if  $\ext{s}(b) = 1$}}{\cassert{b} : (s,h,B,K) \pstep{i} (s,h,B,K)}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} :(s,h,B,K) \pstep{i} \abort}
+            \infrule[p-assert-a]{\text{ if  $\ext{s}(b) = 0$}}{\cassert{b} :(s,h,B,K) \pstep{i} \abort}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[p-assign]{}{\cassign{x}{e} :(s,h,B,K) \pstep{i} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,K)}
+            \infrule[p-assign]{}{\cassign{x}{e} :(s,h,B,K) \pstep{i} (\funup{s}{\ptup{x}{\ext{s}(e)}},h,B,K)}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,K)}
+            \infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,K)}
 
-		\vspace{1em}
+            \vspace{1em}
 
+            \infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} \abort}
+            
+            \vspace{1em}
 
-		\infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} \abort}
-		
-		\vspace{1em}
+            \infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \llit{\ext{s}(e),\ext{s}(e')}}},K)}
+            
+            \vspace{1em}
 
-		\infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \llit{\ext{s}(e),\ext{s}(e')}}},K)}
-		
-		\vspace{1em}
+            \infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} \abort}
+            
+            \vspace{1em}
 
-		\infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} \abort}
-		
-		\vspace{1em}
+            \infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence :(s,h,B,K) \pstep{i} (s,h,B,K)}
+            
+            \vspace{1em}
 
-		\infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence :(s,h,B,K) \pstep{i} (s,h,B,K)}
-		
-		\vspace{1em}
+            \infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\setprocessors \setminus \set{i})}
+            
+            \vspace{1em}
 
-		\infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\setprocessors \setminus \set{i})}
-		
-		\vspace{1em}
-
-		\infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock :(s,h,B,\setprocessors \setminus \set{i}) \pstep{i} (s,h,B,\nil)}
-	\end{minipage}
-	\caption{\label{fig:primitive-semantics} Semantics of primitive commands}
+            \infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock :(s,h,B,\setprocessors \setminus \set{i}) \pstep{i} (s,h,B,\nil)}
+      \end{minipage}
+      \caption{\label{fig:primitive-semantics} Semantics of concurrent primitive commands}
 \end{figure}
 
 Structured commands consist of either a primitive command; a sequential or concurrent composition of commands; a nondeterministic choice between commands; or an iteration of a command. We assume that, as commands, primitive commands are annotated with the name of the processor on which they are to be executed. Presumably, the components of a sequential command will all be scheduled to execute on the same processor, but this is not required and the semantics handles all cases uniformly. This generality is not likely to be practically useful for sequential composition, but is important to the semantics of concurrent composition, as will be discussed shortly. 
@@ -1391,73 +1551,73 @@ The semantics of commands also encompasses ``silent'' transitions, which represe
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below. 
 
 \begin{figure}[ht]
-	\centering
+      \centering
 
-	\infrule[c-prim]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \sigma'$ and $\sigma' \in \setstates$}}{p_e,\sigma \step \cskip,\sigma'}
+      \infrule[c-prim]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \sigma'$ and $\sigma' \in \setstates$}}{p_e,\sigma \step \cskip,\sigma'}
 
-	\vspace{1em}
+      \vspace{1em}
 
-	\begin{tabular}{ll}
-	\begin{minipage}{.43\columnwidth}
+      \begin{tabular}{ll}
+      \begin{minipage}{.43\columnwidth}
 
-		\infrule[c-prim-a]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \abort$}}{p_e,\sigma \step \abort}
+            \infrule[c-prim-a]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \abort$}}{p_e,\sigma \step \abort}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-tau]{\text{if $\sigma \taustep \sigma'$}}{c,\sigma \step c,\sigma'}
+            \infrule[c-tau]{\text{if $\sigma \taustep \sigma'$}}{c,\sigma \step c,\sigma'}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-seq]{c,\sigma \step c_0,\sigma'}{(\cseq{c}{c'}),\sigma \step (\cseq{c_0}{c'}),\sigma'}
+            \infrule[c-seq]{c,\sigma \step c_0,\sigma'}{(\cseq{c}{c'}),\sigma \step (\cseq{c_0}{c'}),\sigma'}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-seq-a]{c,\sigma \step \abort}{(\cseq{c}{c'}),\sigma \step \abort}
+            \infrule[c-seq-a]{c,\sigma \step \abort}{(\cseq{c}{c'}),\sigma \step \abort}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-seq-s]{}{(\cseq{\cskip}{c'}),\sigma \step c',\sigma}
+            \infrule[c-seq-s]{}{(\cseq{\cskip}{c'}),\sigma \step c',\sigma}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-ch-1]{}{(\cchoice{c}{c'}),\sigma \step c,\sigma}
+            \infrule[c-ch-1]{}{(\cchoice{c}{c'}),\sigma \step c,\sigma}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-ch-2]{}{(\cchoice{c}{c'}),\sigma \step c',\sigma}
+            \infrule[c-ch-2]{}{(\cchoice{c}{c'}),\sigma \step c',\sigma}
 
 \end{minipage} & 
 \begin{minipage}{.52\columnwidth}
 
-		\infrule[c-par-1]{c,\sigma \step c_0,\sigma'}{(\cpar{c}{c'}),\sigma \step (\cpar{c_0}{c'}),\sigma'}
+            \infrule[c-par-1]{c,\sigma \step c_0,\sigma'}{(\cpar{c}{c'}),\sigma \step (\cpar{c_0}{c'}),\sigma'}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-par-1a]{c,\sigma \step \abort}{(\cpar{c}{c'}),\sigma \step \abort}
+            \infrule[c-par-1a]{c,\sigma \step \abort}{(\cpar{c}{c'}),\sigma \step \abort}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-par-1s]{}{(\cpar{\cskip}{c'}),\sigma \step c',\sigma}
+            \infrule[c-par-1s]{}{(\cpar{\cskip}{c'}),\sigma \step c',\sigma}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-par-2]{c',\sigma \step c_0,\sigma'}{(\cpar{c}{c'}),\sigma \step (\cpar{c}{c_0}),\sigma'}
+            \infrule[c-par-2]{c',\sigma \step c_0,\sigma'}{(\cpar{c}{c'}),\sigma \step (\cpar{c}{c_0}),\sigma'}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-par-2a]{c',\sigma \step \abort}{(\cpar{c}{c'}),\sigma \step \abort}
+            \infrule[c-par-2a]{c',\sigma \step \abort}{(\cpar{c}{c'}),\sigma \step \abort}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-par-2s]{}{(\cpar{c}{\cskip}),\sigma \step c,\sigma}
+            \infrule[c-par-2s]{}{(\cpar{c}{\cskip}),\sigma \step c,\sigma}
 
-		\vspace{1em}
+            \vspace{1em}
 
-		\infrule[c-loop]{}{\cloop{c},\sigma \step (\cchoice{\cskip}{(\cseq{c}{\cloop{c}})}),\sigma}
+            \infrule[c-loop]{}{\cloop{c},\sigma \step (\cchoice{\cskip}{(\cseq{c}{\cloop{c}})}),\sigma}
 
 \end{minipage}
 \end{tabular}
-	\caption{\label{fig:command-semantics} Semantics of commands}
+      \caption{\label{fig:command-semantics} Semantics of concurrent commands}
 \end{figure} 
 
 The reflexive-transitive closure of command evaluation semantics, written $c,\sigma \rtstep \mathcal{C}$, is defined as usual. 
@@ -1476,7 +1636,7 @@ The reflexive-transitive closure of command evaluation semantics, written $c,\si
     \ccas{e}{f,g,g'} \eqdef & \cwith{e}{(\cseq{\cload{x}{f}}{\cifthenelse{x = g}{\cstore{f}{g'}}{\cassign{r}{0}}})}
   \end{align*}
 \end{minipage}}
-  \caption{\label{fig:command-abbreviations} Command abbreviations}
+  \caption{\label{fig:command-abbreviations} Concurrent command abbreviations}
 \end{figure}
 
 It is interesting to note that the execution of the ``locked'' command $\cwith{e}{c}$ is not atomic. Threads on other processors may concurrently read and write variables (i.e., registers) during the execution of $\cwith{e}{c}$, and also perform store operations, which add new writes to the write buffer. What threads on other processors may \emph{not} do is load from memory---whether from their respective buffers or from the shared memory---or update main memory by flushing their buffers. It is conceivable that a theorem could be proved that shows the operational semantics presented in this section is equivalent to one in which locked commands have a truly atomic semantics, but this has not been attempted. 
@@ -1582,6 +1742,7 @@ In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty gene
 \end{proposition}
 
 \subsubsection{Strong Temporal Separation}
+\label{sec:strong-temporal-separation}
 
 As in the sequential case, we may define a strong variant of temporal separation---that requires both spatial and temporal separation---as the intersection of spatial and temporal separators. For $\nu_0 = (\mu_0,\Gamma_0)$ and $\nu_1 = (\mu_1,\Gamma_1)$, the strong temporal separation $\nu_0 \msseq \nu_1$ is defined as follows: \[ \nu_0 \msseq \nu_1 \eqdef \begin{cases}
   \nu_0 \mseq \nu_1 & \text{if $\mu_0 \compat_\seqsym \mu_1$ and $\mu_0 \compat_\sepsym \mu_1$} \\ 
@@ -1645,21 +1806,21 @@ In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty gene
   \end{itemize}
 \end{proposition}
 
-\section{Assertions}
+\section{Concurrent Assertions}
 \label{sec:assertions}
 \label{sec:multiprocessor-assertions}
 
 Assertions are used to describe certain sets of multiprocessor models---and hence multiprocessor states and memory systems---and are used to write the pre- and post-conditions of commands in the specification logic. The core language is defined by the following grammar: \begin{align*}
-	\asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
-	& \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar (P \fsep P') \bnfbar (P \fsepi P')  \bnfbar \\ 
-	&  (P \fseq P') \bnfbar (P \fseqli P') \bnfbar (P \fseqri P')
+      \asserts~P \bnfdef & b \bnfbar (P \disj P') \bnfbar (P \conj P') \bnfbar (\exists x \st P) \bnfbar (\forall x \st P) \bnfbar \\
+      & \femp \bnfbar \fbar{e} \bnfbar \flock{e} \bnfbar e \fwrite{e'} e'' \bnfbar (P \fsep P') \bnfbar (P \fsepi P')  \bnfbar \\ 
+      &  (P \fseq P') \bnfbar (P \fseqli P') \bnfbar (P \fseqri P')
 \end{align*} 
 
 The informal meaning of these assertions are as follows. The lifting of a boolean expression to an atomic formula, disjunction, conjunction and quantification have the usual meaning. $\femp$ describes states with an empty heap and all write buffers empty. $\fbar{e}$ describes states in which just the $e$th buffer is empty. $\flock{e}$ asserts that processor $e$ holds the lock. $e \fwrite{e'} e''$ describes a single write to location $e$ with value $e''$, either buffered on processor $e$ or flushed to memory. The temporal separating conjunction $(P \fseq P')$ describes per-write buffer concatenation of writes. The spatial separating conjunction $(P \fsep P')$ requires disjointness of the locations described by $P$ and $P'$, and interleaves the described writes on each write buffer instead of concatenating them. The spatial separating implication $(P \fsepi P')$ and the left and right temporal separating implications $(P \fseqli P')$ and $(P \fseqri P')$ are analogous to the separating implications defined earlier in Section~\ref{sec:separating-implications}. 
 
 The set of free variables of an assertion, written $\fv{P}$, is defined as usual. For example, $\fv{\exists z \st x \fwrite{z} y \fseq \fbar{z}} = (\fv{x \fwrite{z} y} \cup \fv{\fbar{z}}) \setminus \set{z} = (\set{x,y,z} \cup \set{z}) \setminus \set{z} = \set{x,y}$. 
 
-\subsection{Satisfaction}
+\subsection{Concurrent Satisfaction}
 
 The meaning of assertions is given by a satisfaction relation $\amod \sentails P$, relating \emph{models} $\amod$ to assertions $P$. A model is a pair $(s,\nu)$ consisting of a stack $s$ and a generalized multiprocessor memory system $\nu$. 
 The satisfaction relation is defined by recursion on the structure of $P$ below in Figure~\ref{fig:satisfaction-relation}. For concision, the text of the definition makes use of the following auxiliary set definitions: \begin{align*}
@@ -1672,29 +1833,29 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
 \end{align*}
 
 \begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-	\[
-	\begin{array}{lllll}
-		s,\nu & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
-		s,\nu & \sentails & P \disj Q & \iffdef & s,\nu \sentails P \disj s,\nu \sentails Q \\
-		s,\nu & \sentails & P \conj Q & \iffdef & s,\nu \sentails P \conj s,\nu  \sentails Q \\
-		s,\nu & \sentails & \exists x \st P & \iffdef & \exists v \in \setvalues \st \funup{s}{\ptup{x}{v}},\nu \sentails P \\
-		s,\nu & \sentails & \forall x \st P & \iffdef & \forall v \in \setvalues \st \funup{s}{\ptup{x}{v}},\nu \sentails P \\
-		s,\nu & \sentails & \femp & \iffdef & \nu \in \mathit{emp} \\ 
-		s,\nu & \sentails & \fbar{e} & \iffdef & \nu \in \mathit{bar}(\ext{s}(e)) \\ 
-		s,\nu & \sentails & \flock{e} & \iffdef & \nu \in \mathit{lock}(\ext{s}(e))\\ 
-		s,\nu & \sentails & e \fwrite{e'} e'' & \iffdef & \nu \in \mathit{leadsto}(\ext{s}(e'), \ext{s}(e), \ext{s}(e''))\\
+      \centering
+      \resizebox{\columnwidth}{!}{
+      \begin{minipage}{\columnwidth}
+      \[
+      \begin{array}{lllll}
+            s,\nu & \sentails & b & \iffdef & \ext{s}(b) = 1 \\
+            s,\nu & \sentails & P \disj Q & \iffdef & s,\nu \sentails P \disj s,\nu \sentails Q \\
+            s,\nu & \sentails & P \conj Q & \iffdef & s,\nu \sentails P \conj s,\nu  \sentails Q \\
+            s,\nu & \sentails & \exists x \st P & \iffdef & \exists v \in \setvalues \st \funup{s}{\ptup{x}{v}},\nu \sentails P \\
+            s,\nu & \sentails & \forall x \st P & \iffdef & \forall v \in \setvalues \st \funup{s}{\ptup{x}{v}},\nu \sentails P \\
+            s,\nu & \sentails & \femp & \iffdef & \nu \in \mathit{emp} \\ 
+            s,\nu & \sentails & \fbar{e} & \iffdef & \nu \in \mathit{bar}(\ext{s}(e)) \\ 
+            s,\nu & \sentails & \flock{e} & \iffdef & \nu \in \mathit{lock}(\ext{s}(e))\\ 
+            s,\nu & \sentails & e \fwrite{e'} e'' & \iffdef & \nu \in \mathit{leadsto}(\ext{s}(e'), \ext{s}(e), \ext{s}(e''))\\
     s,\nu & \sentails & P \fsep P' & \iffdef & \exists \nu_0,\nu_1 \st \nu \in \nu_0 \msep \nu_1 \conj \\ & & & & \;\;s,\nu_0 \sentails P  \conj s,\nu_1 \sentails P' \\
     s,\nu & \sentails & P \fseq P' & \iffdef & \exists \nu_0,\nu_1 \st \nu = \nu_0 \mseq \nu_1 \conj \\ & & & & \;\;s,\nu_0 \sentails P  \conj s,\nu_1 \sentails P' \\
     s,\nu & \sentails & P \fsepi P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_0 \sentails P \conj \nu_1 \in \nu_0 \msep \nu \onlyif \\ & & & & \;\; s,\nu_1 \sentails P' \\
     s,\nu & \sentails & P \fseqli P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_0 \sentails P \conj \nu_1 = \nu_0 \mseq \nu \onlyif \\ & & & & \;\; s,\nu_1 \sentails P' \\
     s,\nu & \sentails & P \fseqri P' & \iffdef & \forall \nu_0,\nu_1 \st s,\nu_1 \sentails P' \conj \nu_0 = \nu \mseq \nu_1 \onlyif \\ & & & & \;\; s,\nu_0 \sentails P
-	\end{array}
-	\]
+      \end{array}
+      \]
 \end{minipage}}
-	\caption{\label{fig:satisfaction-relation} The satisfaction relation}
+      \caption{\label{fig:satisfaction-relation} The concurrent satisfaction relation}
 \end{figure}
 
 The classical atomic formulas and logical operations are defined as usual. The $\femp$ assertion describes generalized memory systems with empty heaps, empty write buffers, and with no processors blocked. The $\fbar{i}$ assertion additionally requires that $i$ be buffer-complete. The $\flock{i}$ assertion is like $\femp$, but requires that all processors except for $i$ be blocked. The leads-to assertion $e \fwrite{i} f$ is modeled by two classes of generalized memory systems: those that are \emph{pending}, with an empty heap, a single buffered write, and in which at most $i$ is blocked; and those that are \emph{flushed}, with a single-point heap, all buffers empty, and in which no processors are blocked. The separating conjunctions and implications are defined with the semantic functions described in Section~\ref{sec:separation}.  
@@ -1710,12 +1871,12 @@ Similarly, even if the semantics were relaxed so that $\flock{i} \fsep \flock{i}
 \end{remark}
 
 We write $\pred{P}$ for the set of models that satisfy $P$,\[ \pred{P} \eqdef \setof{\amod}{\amod \sentails P},\] and also $P \sentails P'$ and $P \sequiv P'$ for semantic entailment and equivalence, respectively: \begin{align*}
-	P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
-	P \sequiv P' \iffdef \pred{P} = \pred{P'}.
+      P \sentails P' \iffdef \pred{P} \subseteq \pred{P'} \\
+      P \sequiv P' \iffdef \pred{P} = \pred{P'}.
 \end{align*} 
 
 
-\subsection{Additional Assertions} 
+\subsection{Additional Concurrent Assertions} 
 
 As before, we shall define the strong temporal separating conjunction as the additive conjunction of spatial and temporal separating conjunctions: \[ P \fsseq P' \eqdef (P \fsep P') \conj (P \fseq P').\]
 
@@ -1734,40 +1895,40 @@ The correct definition instead temporally conjoins a leads-to formula with anoth
 
 % Most likely, this simply indicates a flaw in the model and logic presented thus far. Immediately, the best solution is to simply add the points-to formula to the assertion language as an atomic formula, and define the intended semantics (in which every buffer is complete) directly: \[ s,(h,B,K,\Gamma) \satisfies e \fpointsto e' \iffdef h = \ext{s}(e) \mapsto \ext{s}(e') \conj B = \arnil \conj K = \nil \conj \Gamma = \setprocessors.\] This could potentially make reasoning about syntactic entailments between assertions more difficult; in the meantime, it still provides the semantic entailments that are more relevant to the current goals of the project. 
 
-\subsection{Algebra}
+\subsection{Concurrent Algebra}
 \label{sec:algebra}
 
 A few additional semantic equivalences and entailments are shown in Figures~\ref{fig:equivalences} and~\ref{fig:entailments}, respectively. If a formula contains instances of $\bullet$ or $\circ$, then that is short-hand for the same formula in which the $\bullet$ has been consistently replaced by any of the separating conjunctions. 
 
 \begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-	\begin{align*}
-		P  \bullet \femp \sequiv & P \\
-		\femp \bullet P \sequiv & P \\
-		(P \bullet P') \bullet P'' \sequiv & P \bullet (P' \bullet P'') \\
-		P \fsep P' \sequiv & P' \fsep P \\
+      \centering
+      \resizebox{\columnwidth}{!}{
+      \begin{minipage}{\columnwidth}
+      \begin{align*}
+            P  \bullet \femp \sequiv & P \\
+            \femp \bullet P \sequiv & P \\
+            (P \bullet P') \bullet P'' \sequiv & P \bullet (P' \bullet P'') \\
+            P \fsep P' \sequiv & P' \fsep P \\
     P \bullet \flock{e} \sequiv & \flock{e} \bullet P \\
     \flock{e} \gensym \flock{f} \sequiv & \bexpf \\ 
     \fbar{e} \gensym \fbar{e} \sequiv & \fbar{e} \\ 
-		(P \gensym P') \fseq \fbar{e} \sequiv & (P \fseq \fbar{e}) \gensym (P' \fseq \fbar{e}) \\ 
+            (P \gensym P') \fseq \fbar{e} \sequiv & (P \fseq \fbar{e}) \gensym (P' \fseq \fbar{e}) \\ 
     P \fsseq \fbar{e} \sequiv & P \fseq \fbar{e} \\ 
     \flock{e} \fseq \fbar{e} \sequiv & \flock{e} \fsep \fbar{e}\\ 
     e \fwrite{e'} e'' \fsep e \fwrite{f'} f'' \sequiv & \bexpf \\ 
     e \fwrite{e'} e'' \fseq e \fwrite{e'} f \fseq \fbar{e'} \sequiv & e \fwrite{e'} f \fseq \fbar{e'}
- 	\end{align*}
-	\end{minipage}}
-	\caption{\label{fig:equivalences}Semantic equivalences}
+      \end{align*}
+      \end{minipage}}
+      \caption{\label{fig:equivalences}Concurrent semantic equivalences}
 \end{figure}
 
 As in the sequential assertion logic, each of the separating conjunctions is associative and has $\femp$ as a unit. And the spatial separating conjunction is again commutative. The separating conjunctions are additive w.r.t.\ the barrier assertion $\fbar{e}$, and $\fbar{e}$ also distributes fully through the separating conjunctions. Again, the strong and weak temporal separating conjunctions of barrier assertions are equivalent. The separating conjunctions are multiplicative w.r.t.\ the lock assertion $\flock{e}$ and also symmetric. $\fbar{e}$ also commutes with $\flock{e}$, even for the sequential conjunctions. Note that the result of flushing successive writes to the same location is equivalent to flushing just the most recent write. 
 
 \begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-	\begin{align*}
+      \centering
+      \resizebox{\columnwidth}{!}{
+      \begin{minipage}{\columnwidth}
+      \begin{align*}
         \fbar{e} \sentails & \femp \\ 
         P \bullet P' \sentails & P'' \bullet P' & \text{if $P \sentails P''$} \\
         P \bullet P' \sentails & P \bullet P'' & \text{if $P' \sentails P''$}
@@ -1778,9 +1939,9 @@ As in the sequential assertion logic, each of the separating conjunctions is ass
         P \bullet (P' \circ P'') \sentails & (P \bullet P') \circ P'' & \text{for $P \bullet P' \sentails P \circ P'$} \\
         (P \circ P') \bullet P'' \sentails & P \circ (P' \bullet P'') & \text{for $P \bullet P' \sentails P \circ P'$} \\
         (P \fsep P') \fsseq (P'' \fsep P''') \sentails & (P \fsseq P'') \fsep (P' \fsseq P''')
- 	\end{align*}
- 	\end{minipage}}
-	\caption{\label{fig:entailments}Semantic entailments}
+      \end{align*}
+      \end{minipage}}
+      \caption{\label{fig:entailments}Concurrent semantic entailments}
 \end{figure}
 
 The first three entailments in Figure~\ref{fig:entailments}---that $\fbar{e}$ strengthens $\femp$ and monotonicity of the separating conjunctions---follow directly from the definition of the satisfaction relation. Points-to strengthens leads-to by its abbreviation expansion and monotonicity of the weak temporal separating conjunction, along with the fact that $(\forall x \st \fbar{x}) \sentails \femp$. The next two entailments follow from their respective abbreviation expansions and by monotonicity of $\conj$. The three separating conjunctions naturally form a sort of lattice, and they satisfy the small exchange laws. The full exchange law only holds for the spatial and strong temporal conjunctions. The law does not hold for the other separating conjunctions because, e.g., it implies commutativity of the principal connective in the consequent, and the other conjunctions are not commutative. 
@@ -1827,49 +1988,49 @@ An effect of this is that \emph{assertions are oblivious to the nondeterministic
 
 Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language and hence also of the program logic. 
 
-\section{Specifications}
+\section{Concurrent Specifications}
 \label{sec:specifications}
 \label{sec:multiprocessor-specifications}
 
 The language of specifications is given by the following schema: \[ \spec{J}{P}{c}{Q}, \] where $c$ is a command and $J,P,Q$ are assertions, referred to as the \emph{invariant}, \emph{precondition} and \emph{postcondition}, respectively. 
 
-\subsection{Proof Theory}
+\subsection{Concurrent Proof Theory}
 \label{sec:proof-theory}
 
 The axioms of the logic are given in Figure~\ref{fig:axioms}.
 
 \begin{figure}[ht]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
-		\infax[skip]{\spec{J}{P}{\cskip_i}{P}} 
-		\vspace{1em}
-		
-		\infax[assume]{\spec{J}{!b \disj P}{\cassume{b}_i}{P}}
-		\vspace{1em}
-		
-		\infax[assert]{\spec{J}{b \conj P}{\cassert{b}_i}{P}}
-		\vspace{1em}
-		
-		\infax[assign]{\spec{J}{P\subst{e}{x}}{\cassign{x}{e}_i}{P}}
-		\vspace{1em}
-		
-		\infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq P}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq P)\conj x = e'}}
-		\vspace{1em}
+      \centering
+      \resizebox{\columnwidth}{!}{
+      \begin{minipage}{\columnwidth}
+            \infax[skip]{\spec{J}{P}{\cskip_i}{P}} 
+            \vspace{1em}
+            
+            \infax[assume]{\spec{J}{!b \disj P}{\cassume{b}_i}{P}}
+            \vspace{1em}
+            
+            \infax[assert]{\spec{J}{b \conj P}{\cassert{b}_i}{P}}
+            \vspace{1em}
+            
+            \infax[assign]{\spec{J}{P\subst{e}{x}}{\cassign{x}{e}_i}{P}}
+            \vspace{1em}
+            
+            \infax[load]{\spec{J}{(e \fwrite{i} e') \fsseq P}{\cload{x}{e}_i}{((e \fwrite{i} e') \fsseq P)\conj x = e'}}
+            \vspace{1em}
 
-		\infax[store]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e 
-		\fwrite{i} e'') \fsseq P) \fseq (e \fwrite{i} e')}}
-		\vspace{1em}
-		
-		\infax[fence]{\spec{J}{\femp}{\cfence_i}{\fbar{i}}}
-		\vspace{1em}
-		
-		\infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i}}}
-		\vspace{1em}
-		
-		\infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\femp}}
-	\end{minipage}}
-	\caption{\label{fig:axioms}Axioms}
+            \infax[store]{\spec{J}{(e \fwrite{i} e'') \fsseq P}{\cstore{e}{e'}_i}{((e 
+            \fwrite{i} e'') \fsseq P) \fseq (e \fwrite{i} e')}}
+            \vspace{1em}
+            
+            \infax[fence]{\spec{J}{\femp}{\cfence_i}{\fbar{i}}}
+            \vspace{1em}
+            
+            \infax[lock]{\spec{J}{\femp}{\clock_i}{\flock{i}}}
+            \vspace{1em}
+            
+            \infax[unlock]{\spec{J}{\flock{i}}{\cunlock_i}{\femp}}
+      \end{minipage}}
+      \caption{\label{fig:axioms} Concurrent axioms}
 \end{figure}
 
 The axioms for $\cskip$, $\cassume{b}$, $\cassert{b}$ and $\cassign{x}{e}$ are as in Hoare logic, identical to the corresponding axioms of the sequential program logic except for the presence of the (arbitrary) invariant $J$. The load and store axioms are also similar to those of the sequential program logic, but the writes described by the pre- and post-condition are annotated with the processor identifier that annotates the command, which indicates the processor on which the writes are buffered. And similarly for the fence command, which introduces a barrier assertion annotated with the appropriate processor identifier. Finally, the lock and unlock commands produce and consume, respectively, a lock assertion annotated by the appropriate processor identifier. 
@@ -1877,38 +2038,38 @@ The logical and structural inference rules of the logic are given in Figure~\ref
 
 Unlike the sequential logic, there is no conjunction rule in the concurrent logic. This is because there is a known connection~\cite{DBLP:journals/entcs/GotsmanBC11} between the soundness of the conjunction rule and a semantic property called \emph{precision}, which we have not yet identified in this model. 
 \begin{figure}[p]
-	\centering
-	\resizebox{\columnwidth}{!}{
-	\begin{minipage}{\columnwidth}
+      \centering
+      \resizebox{\columnwidth}{!}{
+      \begin{minipage}{\columnwidth}
 
-		\infrule[disj]{\spec{J}{P}{c}{Q} \text{~~~} \spec{J}{P'}{c}{Q}}{\spec{J}{P \disj P'}{c}{Q}}
-		\vspace{0.8em}
+            \infrule[disj]{\spec{J}{P}{c}{Q} \text{~~~} \spec{J}{P'}{c}{Q}}{\spec{J}{P \disj P'}{c}{Q}}
+            \vspace{0.8em}
 
-		\infrule[ex]{\spec{J}{P}{c}{Q} \text{~~~} x \notin \fv{c,Q}}{\spec{J}{\exists x \st P}{c}{Q}}
-		\vspace{0.8em}
+            \infrule[ex]{\spec{J}{P}{c}{Q} \text{~~~} x \notin \fv{c,Q}}{\spec{J}{\exists x \st P}{c}{Q}}
+            \vspace{0.8em}
 
-		\infrule[frame-sp]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fsep P}{c}{R \fsep Q}}
-		\vspace{0.8em}
+            \infrule[frame-sp]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fsep P}{c}{R \fsep Q}}
+            \vspace{0.8em}
 
-		\infrule[frame-tm]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fseq P}{c}{R \fseq Q}}
-		\vspace{0.8em}
+            \infrule[frame-tm]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fseq P}{c}{R \fseq Q}}
+            \vspace{0.8em}
 
-		\infrule[frame-stm]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fsseq P}{c}{R \fsseq Q}}
-		\vspace{0.8em}
+            \infrule[frame-stm]{\spec{J}{P}{c}{Q} \text{~~~} \mod{c} \cap \fv{R} = \nil}{\spec{J}{R \fsseq P}{c}{R \fsseq Q}}
+            \vspace{0.8em}
 
-		\infrule[cons]{P \sentails P' \text{~~~}\spec{J}{P'}{c}{Q'} \text{~~~} Q' \sentails Q}{\spec{J}{P}{c}{Q}}
+            \infrule[cons]{P \sentails P' \text{~~~}\spec{J}{P'}{c}{Q'} \text{~~~} Q' \sentails Q}{\spec{J}{P}{c}{Q}}
     \vspace{0.8em}
 
-		\infrule[seq]{\spec{J}{P}{c}{R} \text{~~~} \spec{J}{R}{c'}{Q}}{\spec{J}{P}{\cseq{c}{c'}}{Q}}
-		\vspace{0.8em}
+            \infrule[seq]{\spec{J}{P}{c}{R} \text{~~~} \spec{J}{R}{c'}{Q}}{\spec{J}{P}{\cseq{c}{c'}}{Q}}
+            \vspace{0.8em}
 
-		\infrule[choice]{\spec{J}{P}{c}{Q} \text{~~~} \spec{J}{P}{c'}{Q}}{\spec{J}{P}{\cchoice{c}{c'}}{Q}}
-		\vspace{0.8em}
+            \infrule[choice]{\spec{J}{P}{c}{Q} \text{~~~} \spec{J}{P}{c'}{Q}}{\spec{J}{P}{\cchoice{c}{c'}}{Q}}
+            \vspace{0.8em}
 
-		\infrule[loop]{\spec{J}{P}{c}{P}}{\spec{J}{P}{\cloop{c}}{P}}
-		\vspace{0.8em}
+            \infrule[loop]{\spec{J}{P}{c}{P}}{\spec{J}{P}{\cloop{c}}{P}}
+            \vspace{0.8em}
 
-	 	\infrule[conc]{ \spec{J}{P_i}{c_i}{Q_i} \text{~~~} \fv{P_i,c_i,Q_i} \cap \mod{c_{1-i}} = \nil \text{for~} i \in \set{0,1}}{\spec{J}{P_0 \fsep P_1}{\cpar{c_0}{c_1}}{Q_0 \fsep Q_1}}
+            \infrule[conc]{ \spec{J}{P_i}{c_i}{Q_i} \text{~~~} \fv{P_i,c_i,Q_i} \cap \mod{c_{1-i}} = \nil \text{for~} i \in \set{0,1}}{\spec{J}{P_0 \fsep P_1}{\cpar{c_0}{c_1}}{Q_0 \fsep Q_1}}
     \vspace{0.8em}
 
     \infrule[share]{\spec{J}{P}{c}{Q}}{\spec{\femp}{J \fsep P}{c}{J \fsep Q}}
@@ -1916,8 +2077,8 @@ Unlike the sequential logic, there is no conjunction rule in the concurrent logi
 
     \infrule[inv]{\spec{\femp}{J \fsep P \fsep \flock{i}}{c}{J \fsep Q \fsep \flock{i}}}{\spec{J}{P \fsep \flock{i}}{c}{Q \fsep \flock{i}}}
 
-	\end{minipage}}
-	\caption{\label{fig:inference-rules}Inference rules}
+      \end{minipage}}
+      \caption{\label{fig:inference-rules} Concurrent inference rules}
 \end{figure}
 
 The structural rules for sequential composition, nondeterministic choice, loops and concurrency are similar in spirit to those in Concurrent Separation Logic. In particular, the concurrency rule requires syntactic agreement between the two processes on the shared invariant, and the strong interleaving separating conjunction is used to partition the local states. Note that both this conjunction and the concurrent composition command are commutative. The sharing rule allows us to infer that, if a portion of the state is invariant w.r.t.\ the assertion $J$, then $J$ may also be assumed to hold initially and upon termination. 
@@ -1975,7 +2136,7 @@ This relaxation would allow a daring store if the new write \emph{when flushed} 
 
 The daring rules may be needed to reason about, e.g., x86 spinlock implementations. The spinlock is typically acquired using a compare-and-swap instruction, which in this language is simply a locked if-the-else command. The invariant rule and lock axioms thus should be sufficient for demonstrating correctness of spinlock acquisition. But the spinlock is released by writing to a shared memory address without first acquiring the global lock or fencing. This obviates the invariant rule, but not the shared write rule, and so there is yet hope. 
 
-\subsection{Semantics}
+\subsection{Semantics of Concurrent Specifications}
 \label{sec:specification-semantics}
 
 A specification asserts the partial correctness of a command. Its informal meaning is roughly analogous to that of Concurrent Separation Logic: if $c$ is evaluated in a state that satisfies $J \fsep P$, then: \emph{1)} it does not abort, \emph{2)} it maintains the invariant $J$ during execution, and \emph{3)} if it evaluates fully, it terminates in a state that satisfies $J \fsep Q$. 
@@ -2015,16 +2176,18 @@ Third, because there is no inherent notion of atomicity in this language and mem
 
 
 \subsection{Soundness}
+\label{sec:soundness}
+
 
 For the sake of a soundness theorem about the proof system described above, we say that a \emph{proof} is a tree of specifications, in which the leaves are instances of axiom schemas, and the internal specification nodes are instances of the conclusion of some inference rule, with the children of that node as instances of the hypotheses of the inference rule. We write $\overline{\spec{J}{P}{c}{Q}}$ to indicate that there exists some proof for which the root of the tree is labeled with $\spec{J}{P}{c}{Q}$. The soundness theorem asserts that provable specifications are true: 
 
 \begin{theorem}[Soundness]
   \label{thm:soundness}
-	$\proofof{\spec{J}{P}{c}{Q}}$ only if $\truespec{J}{P}{c}{Q}$. 
+      $\proofof{\spec{J}{P}{c}{Q}}$ only if $\truespec{J}{P}{c}{Q}$. 
 \end{theorem}
 
 \begin{proof}
-	By induction on the structure of an arbitrary proof tree, using the soundness lemmas in Section~\ref{sec:soundness-proofs}. 
+      By induction on the structure of an arbitrary proof tree, using the soundness lemmas in Section~\ref{sec:soundness-proofs}. 
 \end{proof}
 
 \chapter{Loose Ends}
@@ -2120,12 +2283,14 @@ Absent a succeeding barrier, allocation is perfectly natural; it simply adds a n
 The meaning of the free command absent a preceding barrier is less clear. We axiomatize a conservative semantics: if a location has at most one value in the system, it may be deallocated. In particular, we make no attempt to describe the outcome of deallocation without a barrier when there are multiple pending writes. Perhaps in this case the command should fault, or perhaps all pending writes should be removed from the system, leaving writes to other locations unaffected. In any case, the following axiom describes the conservative semantics and does not allow anything to be proved in the less clear cases: \infax[free]{\spec{J}{e \stackrel{0}{\fwrite{i}} -}{\cfree{e}_i}{\femp}} Symmetric to the case for allocation, the write in the precondition has full permission, which in this case prevents earlier writes to the same location from being framed on from the left, yielding a double disposal. By using the rule of consequence, the precondition may be strengthened from a leads-to assertion to a points-to assertion, thus axiomatizing disposal of shared memory.
 
 \section{Shared Variables}
+\label{sec:shared-variables}
 
 In Concurrent Separation Logic, threads may communicate not just through the heap, but through shared variables as well. Elaborate rules govern these interactions, which must be well synchronized, to ensure soundness of the logics. Even for traditional, strong-memory logics, this is notoriously difficult; indeed, a counter-example to the soundness of CSL was recently (and quite unintentionally) discovered by the author---and described in detail by Brookes along with a minor revision to the logic to avoid the problem \cite{Brookes20115}, and also by Reddy accompanying a more radical revision to the logic \cite{DBLP:conf/popl/ReddyR12}---which exploited a subtle problem with the inference rules that govern variable communication. 
 
 In the weak-memory logic described in this dissertation, communication via variables is completely prohibited---the rule for concurrent composition explicitly requires that the modified variables of each thread are distinct from the free variables of the others. This is a conservative condition that rules out many interesting programs, with the goal of simplifying the program logic and focusing the project on the study of communication via the weak memory system. Furthermore, there is reason to believe that allowing variable communication in the weak-memory logic would be even more subtle and problematic than in traditional logics. Of course, communication among threads executed on different processors can only happen by loading and storing through the memory system, and there is little reason to think that variable assignment is, in general, a suitable abstraction of this process. It seems likely though that under some conditions---namely, when shared-variable assignments are consistently protected by fence or lock instructions---it is possible to reason soundly about programs with such interaction, but it remains to be determined exactly what those conditions are. 
 
 \section{Invariant Expansion}
+\label{sec:expansion}
 
 In the semantics of specifications given in Section~\ref{sec:specification-semantics}, the shared invariant component $J$ of a specification $\spec{J}{P}{c}{Q}$ is interpreted rather literally: if the lock is not held, then there must be a portion of the complete state which satisfies $J$ exactly. To reason about the specification of commands that accesses shared state, it is therefore necessary to prove always that, once the shared access is finished, there is some portion of the state that satisfies the invariant. For many programs, however, this is difficult for the following reason. It is often most convenient to specify the the shared invariant by describing the legal values in the heap---i.e., with spatial conjunctions of points-to formulas. But points-to formulas do not simply constraint values of the heap; they also specify emptiness of write buffers. Consequently, a program which buffers writes to the shared state without first acquiring the lock cannot possibly satisfy a heap-only shared invariant. For example, even a very simple invariant like $x \fpointsto 1$ is cannot be satisfied by the program $\cstore{x}{1}_i$ because it is not the the case that: \[ x \fpointsto 1 \fseq x \fwrite{i} 1 \sentails x \fpointsto 1. \] It seems clear, however, that in at least some circumstances the above command ought to satisfy its simple specification because, observationally, a process cannot distinguish a state that satisfies $x \fpointsto 1 \fseq x \fwrite{i} 1$ from one that satisfies the specification $x \fpointsto 1$. In both cases the address $x$ is allocated, and the result of loading $x$ on any processor is $1$. Also note that the command does not satisfy the more liberal specification $x \fpointsto 1 \fseq x \fwrite{i}$ for the same reason, which is that the following entailment is not true: \[ x \fpointsto 1 \fseq x \fwrite{i} 1 \fseq x \fwrite{i} 1 \sentails x \fpointsto 1 \fseq x \fwrite{i} 1. \]
 
@@ -2138,18 +2303,21 @@ While this semantics and invariant rule seems, in principle, superior to those p
 Furthermore, in those situations for which access to shared state is mediated by the global lock, such a relaxed semantics is undesirable. When the threads of a program take care to serialize their access to shared resources, flushing their buffers before and after such accesses, it is an entirely unnecessary complication to assume otherwise. Ideally a semantics and proof theory would be found which allows reasoning about both kinds of programs, but that remains as future work. 
 
 \chapter{Related Work}
+\label{ch:related-work}
 
 Technical inspiration for this project comes primarily from work on separation logic \cite{DBLP:conf/lics/Reynolds02,DBLP:conf/csl/OHearnRY01,DBLP:journals/bsl/OHearnP99} and abstract separation logic \cite{DBLP:conf/lics/CalcagnoOY07}, as well as concurrent separation logic  \cite{DBLP:journals/tcs/OHearn07,DBLP:journals/tcs/Brookes07}, which this program logic resembles insofar as it strives to enable local (instead of global) reasoning about shared-state invariants (instead of two-place state relations). Earlier iterations of the machine and programming language models was influenced by work on graphical models \cite{DBLP:journals/ipl/WehrmanHO09,DBLP:conf/RelMiCS/HoareMSW09,DBLP:journals/jlp/HoareMSW11} and the pomset model of true concurrency from Pratt \cite{DBLP:conf/popl/Pratt82,DBLP:conf/concur/Pratt84}. The style of semantics of specifications, and the associated soundness proof, is taken almost directly from Vafeiadis' recent soundness proof of concurrent separation logic \cite{V11}. Vafeiadis' excellent dissertation has also been an invaluable guide \cite{VafeiadisDissertation}. 
 
 The following sections discuss other work related to the topic of weak-memory program reasoning and verification. 
 
 \section{Weak-Memory Program Transformations}
+\label{sec:program-transformations}
 
 The approach to weak-memory program reasoning that is perhaps technically simplest is based on program transformations. The basic idea is to use existing techniques to reason about programs that have been modified to directly incorporate the behavior of the memory model on which they are to be executed. For example, in the context of x86, programs would be modified to include as additional state a series of in-memory FIFO queues which represent write buffers, each load and store operation is replaced by calls to subroutines which respectively search the process's queue for an appropriate write and append a new write to the process's queue, and finally an additional thread is composed in parallel which commits writes, with arbitrary timing, from the encoded buffers to memory. This is essentially the tack taken by relatively early work in this area by Ridge \cite{DBLP:conf/tphol/Ridge07}, in which he uses the Isabell/HOL framework and logic to reason directly about operational semantics of modified Caml programs. In particular, a mechanically verified proof in this style is presented for Peterson's mutual exclusion algorithm \cite{DBLP:journals/ipl/Peterson81}. The potential drawback to the program transformation approach is the difficulty of applying a local reasoning principle and, thus, a useful frame rule. Because Ridge uses higher-order logic to reason about the semantics directly, those proofs are undertaken without a frame rule. 
 
 It is also conceptually possible to use a separation logic with a strong-memory locality principle and associated frame rule to reason about transformed programs. In the author's early experiments, this approach seemed cumbersome at best. With write buffers encoded as program state, the locations of the writes are encoded as data. This encoding obviates the notion of ``separation'' that makes separation logic so useful, since it is always possible to frame onto a specification writes which, when flushed, violate the intended specification. And because the nondeterministic flushing of writes is not embedded into the logic, it must be encoded as a disjunction of possible buffered states and reasoned about on a case-by-case basis. 
 
 \section{Program Logics for Weak-Memory Reasoning}
+\label{sec:other-weak-memory-program-logics}
 
 Also of note are two works that present solutions to the same weak-memory reasoning problem, both developed much more fully than the logic described in this dissertation. First is Ridge's rely-guarantee program logic for the x86-TSO memory model \cite{DBLP:conf/vstte/Ridge10}. Ridge's logic is formalized in HOL and has been demonstrated with proofs of a number of interesting algorithms, including Simpsons's 4-slot non-blocking buffer. In contrast to this dissertation project, Ridge's is a logic for the x86 assembly language, whereas the logic described in Chapter~\ref{ch:multiprocessor} targets a higher level, structured language. Additionally, Ridge's logic is not inherently local, and offers nothing like the frame rule of separation logic. 
 
@@ -2158,6 +2326,7 @@ A second work of note is Cohen and Schirmer's \cite{DBLP:conf/itp/CohenS10} redu
 Related but less relevant to the current problem, compared to the previous two papers, is work by Ferreira, Feng and Shao which gives soundness proofs for concurrent separation logic in a variety relaxed-memory settings \cite{DBLP:conf/esop/FerreiraFS10}. As with the original soundness proof by Brooks \cite{DBLP:journals/tcs/Brookes07}, their theorem applies to well locked programs only, which are necessarily sequentially consistent. 
 
 \section{Algebraic Models of Concurrency}
+\label{sec:algebraic-models-of-concurrency}
 
 A final thread of related work by Hoare et al.\ considers algebraic models of concurrent programs and logics for reasoning about such programs \cite{DBLP:journals/ipl/WehrmanHO09}. The thread begins with the introduction of \emph{graphical models}, a true-concurrency model, like Pratt's pomset model \cite{DBLP:conf/popl/Pratt82,DBLP:conf/concur/Pratt84} or Winskel's event structures \cite{DBLP:conf/ac/Winskel86}. Graphical models are a simple but amazingly expressive formalism; recent work has even shown how they can be used to give weak-memory semantics of various kinds to concurrent programs \cite{DBLP:series/natosec/HoareW11}. 
 
@@ -2176,6 +2345,8 @@ The laws of Concurrent Kleene Algebras are further relaxed in a broader study of
 % E.g., \cite{Girard95logic}. Also non-commutative linear logic, e.g., \cite{DBLP:conf/tlca/RetoreL97} Phase semantics of Linear Logic? 
 
 \chapter{Conclusion}
+\label{ch:conclusion}
+
 Why bother building a program logic? The original motivation was as follows. Although program logics are reasonable systems in which to construct hand proofs of arbitrary program properties, they have more recently been shown to be amenable to automation of relatively shallow properties, like memory safety or shape properties. But existing logics can not be soundly applied to certain fine-grained concurrent programs like concurrent data structures. This is because these programs are typically not well locked and contain races, and so cannot rely on the underlying computer architecture to ensure that their interaction with memory is sequentially consistent. Sequential consistency however is a deep assumption in most existing program logics, hence their inapplicability.
 
 As further motivation, concurrent data structures are inarguably important to computer science given the decline of single-threaded processor performance improvements and the concomitant proliferation of hardware parallelism. At the same time, correctness arguments for concurrent data structures are subtle enough to make informal reasoning extremely difficult. Additionally, these programs are of only modest size, which perhaps gives cause for optimism about their amenability to automated or semi-automated verification. Altogether, this would appear to be an excellent opportunity for the application of an automated formal method. 
@@ -2192,9 +2363,6 @@ Furthermore, this work faces the problem of local reasoning about the behavior o
 
 Although one could imagine changing or improving many aspects of this logic, it is far from clear how one might proceed to relax its definition further still to incorporate non-sequentially consistent programs given the local reasoning requirement. One is lead to wonder whether these two requirements of the logic---both that it directly describes weak-memory systems, and that it admits a useful principle of local reasoning---are not just at odds, but even mutually inconsistent. The apparent failure of this logic to accomplish both goals simultaneously is not, of course, a cogent argument for the impossibility of this task, but it does hint toward the difficulty of doing so. 
 
-\bibliography{dissertation}
-\bibliographystyle{abbrv} 
-
 \appendix
 
 \chapter{Proofs}
@@ -2204,10 +2372,10 @@ Although one could imagine changing or improving many aspects of this logic, it 
 
 The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
 
-\begin{proposition}
+\begin{lemma}
   \label{lem:separation-tau}
   If $\nu \in \nu_1 \fhash \nu_2$ and $\nu \modstep \nu'$, then either there exists $\nu'_1$ such that $\nu' \in \nu'_1 \fhash \nu_2$, or there exists $\nu'_2$ such that $\nu' \in \nu_1 \fhash \nu'_2$.
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
   Without loss of generality, assume $\nu = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\nu' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\nu_1 = (s,h_1,B_1,k_1)$ and $\nu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
@@ -2217,10 +2385,10 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
   In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\nu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\nu_2 \modstep \nu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\nu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \nu_1 \fhash \nu_2$. 
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
   \label{lem:separation-refinement}
   If $\nu \in \nu_1 \fhash \nu_2$ and $\nu' \taurefines \nu$ then there exists $\nu'_1,\nu'_2$ such that $\nu'_1 \taurefines \nu_1$, $\nu'_2 \taurefines \nu_2$ and $\nu' \in \nu'_1 \fhash \nu'_2$. 
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
   By induction on the number of $\tau$ steps from $\nu$ to $\nu'$. The base case is trivial. Otherwise, assume that $\nu'' \taurefines \nu$ and $\nu'' \taustep \nu'$, and by the induction hypothesis that there exists $\nu''_1,\nu''_2$ such that $\nu''_1 \taurefines \nu_1$, $\nu''_2 \taurefines \nu_2$ and $\nu'' \in \nu''_1 \fhash \nu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
@@ -2230,67 +2398,67 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \label{sec:soundness-proofs}
 Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
 
-\begin{proposition}
-	\label{lem:skip-safe}
-	For all $n \in \setnaturals$, if $\sigma \sentails P$ then $\safe{n}{\cskip,\sigma,J,P}$. 
-\end{proposition}
+\begin{lemma}
+      \label{lem:skip-safe}
+      For all $n \in \setnaturals$, if $\sigma \sentails P$ then $\safe{n}{\cskip,\sigma,J,P}$. 
+\end{lemma}
 
 \begin{proof}
-	By induction on $n$. The base case is trivial. For the induction step, we show $\safe{n+1}{\cskip,\sigma,J,P}$ under the assumption that $\safe{n}{\cskip,\sigma,J,P}$. 
-	\begin{enumerate}
-		\item Because $c = \cskip$, we must show that $\sigma \sentails P$. But this is true by hypothesis. 
+      By induction on $n$. The base case is trivial. For the induction step, we show $\safe{n+1}{\cskip,\sigma,J,P}$ under the assumption that $\safe{n}{\cskip,\sigma,J,P}$. 
+      \begin{enumerate}
+            \item Because $c = \cskip$, we must show that $\sigma \sentails P$. But this is true by hypothesis. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\lockcomplete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \abort$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
+            \item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\lockcomplete{\sigma_0}$ and either $\sigma_J \sentails J$ or $\locked{\sigma_1}$. We must show that $\cskip,\sigma_0 \nrightarrow \abort$. But the only evaluation step possible from configuration $\cskip,\sigma_0$ is by \textsc{c-tau}, which never aborts. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\lockcomplete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \step c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
+            \item Let $\sigma_0,\sigma_J,\sigma_F,c_1,\sigma_1$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash \sigma)$, $\lockcomplete{\sigma_0}$, either $\sigma_J \sentails J$ or $\locked{\sigma_0}$, and $\cskip,\sigma_0 \step c_1,\sigma_1$. We must show $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_F \taurefines \sigma_F$, either $\sigma'_J \sentails \sigma_J$ or $\locked{\sigma_1}$, and $\safe{n}{c_1,\sigma_1,J,P}$.
 
-		The only evaluation step possible from $\cskip,\sigma_0$ is by \textsc{c-tau}, hence $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau}, there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$, $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma'_J \sentails J$ if $\sigma_J \sentails J$. Similarly, $\sigma' \sentails P$ because $\sigma \sentails P$ and $\sigma' \taurefines \sigma$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,\sigma',J,P}$. 
-	\end{enumerate}
+            The only evaluation step possible from $\cskip,\sigma_0$ is by \textsc{c-tau}, hence $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-tau}, there exists $\sigma'_J,\sigma'_F,\sigma'$ such that $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$, $\sigma'_J \taurefines \sigma_J$, $\sigma'_F \taurefines \sigma_F$, $\sigma' \taurefines \sigma$. By Lemma~\ref{lem:flushing-closure}, $\sigma'_J \sentails J$ if $\sigma_J \sentails J$. Similarly, $\sigma' \sentails P$ because $\sigma \sentails P$ and $\sigma' \taurefines \sigma$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,\sigma',J,P}$. 
+      \end{enumerate}
 \end{proof}
 
-\begin{proposition}
-	\label{lem:skip-sound}
-	$\truespec{J}{P}{\cskip}{P}$. 
-\end{proposition}
+\begin{lemma}
+      \label{lem:skip-sound}
+      $\truespec{J}{P}{\cskip}{P}$. 
+\end{lemma}
 
 \begin{proof}
-	Immediate from Lemma~\ref{lem:skip-safe}. 
+      Immediate from Lemma~\ref{lem:skip-safe}. 
 \end{proof}
 
-\begin{proposition}
-	\label{lem:load-safe}
-	For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, if $x \notin \fv{e,e',e'',P}$ then $\safe{n}{\cload{x}{e}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
-\end{proposition}
+\begin{lemma}
+      \label{lem:load-safe}
+      For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, if $x \notin \fv{e,e',e'',P}$ then $\safe{n}{\cload{x}{e}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
+\end{lemma}
 
 \begin{proof}
-	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
+      By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
 
-	\begin{enumerate}
-		\item The command is not equal to $\cskip$, so this part holds vacuously. 
+      \begin{enumerate}
+            \item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-		\item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort. 
+            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort. 
 
-		\item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
+            \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
-		In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fsseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. 
+            In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fsseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$. 
 
-		In the case of \textsc{c-prim} and \textsc{p-load}, $c' = \cskip$, $s' = \funup{s}{\ptup{x}{v}}$ and $\mu_1 = \mu_0$, assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_j$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $(s',\mu'_J) \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$. Finally, $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$ follows from Lemma~\ref{lem:skip-safe} because $(s',\mu') = (\funup{s}{\ptup{x}{v}},\mu) \sentails ((e \fwrite{e'} e'') \fsseq P \conj x = e'')$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fsseq P)$ with $x \notin \fv{e,e',e'',P}$. 
-	\end{enumerate}
+            In the case of \textsc{c-prim} and \textsc{p-load}, $c' = \cskip$, $s' = \funup{s}{\ptup{x}{v}}$ and $\mu_1 = \mu_0$, assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_j$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $(s',\mu'_J) \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$. Finally, $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$ follows from Lemma~\ref{lem:skip-safe} because $(s',\mu') = (\funup{s}{\ptup{x}{v}},\mu) \sentails ((e \fwrite{e'} e'') \fsseq P \conj x = e'')$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fsseq P)$ with $x \notin \fv{e,e',e'',P}$. 
+      \end{enumerate}
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:load-sound}
     $\truespec{J}{x \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{x \fwrite{e'} e'' \fsseq P \conj x = e''}$ if $x \notin \fv{e,e',e'',P}$. 
-\end{proposition} 
+\end{lemma} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:load-safe}. 
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:store-safe}
     For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. 
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
     By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2330,19 +2498,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \end{enumerate}
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:store-sound}
     $\truespec{J}{\left(e \fwrite{e'} e''\right) \fseq P}{\cstore{e}{f}_{e'}}{\left(e \fwrite{e'} e''\right) \fseq P \fseq \left(e \fwrite{e'} f\right)}$. 
-\end{proposition} 
+\end{lemma} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:store-safe}. 
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:lock-safe}
     For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \femp$, \\ $\safe{n}{\clock_{e},s,\mu,J,\flock{e}}$. 
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
   By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2361,19 +2529,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \end{enumerate}
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:lock-sound}
     $\truespec{J}{\femp}{\clock_{e}}{\flock{e}}$. 
-\end{proposition} 
+\end{lemma} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:lock-safe}. 
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:unlock-safe}
     For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \flock{e}$, \\ $\safe{n}{\cunlock_{e},s,\mu,J,\femp}$. 
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
   By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2392,61 +2560,60 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \end{enumerate}
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
     \label{lem:unlock-sound}
     $\truespec{J}{\flock{e}}{\cunlock_{e}}{\femp}$. 
-\end{proposition} 
+\end{lemma} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:unlock-safe}. 
 \end{proof}
 
-\begin{proposition}
-	\label{lem:weak-interleaving-safe}
-	If $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, then $\safe{n}{c, \sigma_R \fhash \sigma,J,R \fhash Q}$. 
-\end{proposition}
+\begin{lemma}
+      \label{lem:weak-interleaving-safe}
+      If $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, then $\safe{n}{c, \sigma_R \fhash \sigma,J,R \fhash Q}$. 
+\end{lemma}
 
 \begin{proof}
-	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,\sigma,\sigma_R,J,Q,R$, that whenever $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, it is also the case that $\safe{n}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$ holds. We also assume that $\safe{n+1}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, and show that \\ 
-	$\safe{n+1}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$. To show this, we must establish three conditions. 
+      By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,\sigma,\sigma_R,J,Q,R$, that whenever $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, it is also the case that $\safe{n}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$ holds. We also assume that $\safe{n+1}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, and show that \\ 
+      $\safe{n+1}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$. To show this, we must establish three conditions. 
 
-	\begin{enumerate}
-		\item Suppose $c = \cskip$. By assumption, $\sigma_R \sentails R$, $\defined{\sigma_R \fhash \sigma}$, and if $c = \cskip$ then $\sigma \sentails Q$, and so $\sigma \sentails Q$. Hence $\sigma_R \fhash \sigma \sentails R \fhash Q$. 
+      \begin{enumerate}
+            \item Suppose $c = \cskip$. By assumption, $\sigma_R \sentails R$, $\defined{\sigma_R \fhash \sigma}$, and if $c = \cskip$ then $\sigma \sentails Q$, and so $\sigma \sentails Q$. Hence $\sigma_R \fhash \sigma \sentails R \fhash Q$. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \abort$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
+            \item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \abort$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
 
-		\item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \step c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
-			\item $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
-			\item $\sigma'_F \taurefines \sigma_F$, 
-			\item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
-			\item $\safe{n}{c',\sigma',J,R \fhash Q}$. 
-		\end{enumerate}
+            \item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \step c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
+                  \item $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
+                  \item $\sigma'_F \taurefines \sigma_F$, 
+                  \item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
+                  \item $\safe{n}{c',\sigma',J,R \fhash Q}$. 
+            \end{enumerate}
 
-		We instantiate part 3 of assumption $\safe{n+1}{c,\sigma,J,Q}$ with $\sigma_J$, $\sigma_F \fhash \sigma_R$, $\sigma_1$ and $c'$, which gives us $\sigma'_J, \sigma'_{FR}, \sigma'$ such that: \begin{enumerate}[(a)]
-			\item $\sigma_1 \in \sigma'_J \fsep (\sigma'_{FR} \fhash \sigma')$
-			\item $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$
-			\item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
-			\item $\safe{n}{c',\sigma',J,Q}$.
-		\end{enumerate}	
+            We instantiate part 3 of assumption $\safe{n+1}{c,\sigma,J,Q}$ with $\sigma_J$, $\sigma_F \fhash \sigma_R$, $\sigma_1$ and $c'$, which gives us $\sigma'_J, \sigma'_{FR}, \sigma'$ such that: \begin{enumerate}[(a)]
+                  \item $\sigma_1 \in \sigma'_J \fsep (\sigma'_{FR} \fhash \sigma')$
+                  \item $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$
+                  \item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
+                  \item $\safe{n}{c',\sigma',J,Q}$.
+            \end{enumerate}   
 
-		By Lemma~\ref{lem:separation-refinement} and $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$, there exists $\sigma'_F,\sigma'_R$ such that $\sigma'_F \taurefines \sigma_F$, $\sigma'_R \taurefines \sigma_R$ and $\sigma'_{FR} \in \sigma'_F \fhash \sigma'_R$. 
+            By Lemma~\ref{lem:separation-refinement} and $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$, there exists $\sigma'_F,\sigma'_R$ such that $\sigma'_F \taurefines \sigma_F$, $\sigma'_R \taurefines \sigma_R$ and $\sigma'_{FR} \in \sigma'_F \fhash \sigma'_R$. 
 
-		From $\sigma'_R \taurefines \sigma_R$ and $\sigma_R \sentails R$, it follows that $\sigma'_R \sentails R$. 
+            From $\sigma'_R \taurefines \sigma_R$ and $\sigma_R \sentails R$, it follows that $\sigma'_R \sentails R$. 
 
-		Next, we wish to apply the inductive hypothesis to $\safe{n}{c',\sigma',J,Q}$ to show that $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$) and $\defined{\sigma'_R \fhash \sigma'}$. 
+            Next, we wish to apply the inductive hypothesis to $\safe{n}{c',\sigma',J,Q}$ to show that $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$) and $\defined{\sigma'_R \fhash \sigma'}$. 
 
-		Returning to our original task, we exhibit $\sigma'_J$, $\sigma'_F$ and $\sigma'_R \fhash \sigma'$. By associativity and monotonicity it follows that \[ \sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash (\sigma'_R \fhash \sigma')).\] We already showed that $\sigma'_F \taurefines \sigma_F$. Either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$ by assumption. Finally $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$ by the inductive hypothesis above. 
-
-	\end{enumerate}
+            Returning to our original task, we exhibit $\sigma'_J$, $\sigma'_F$ and $\sigma'_R \fhash \sigma'$. By associativity and monotonicity it follows that \[ \sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash (\sigma'_R \fhash \sigma')).\] We already showed that $\sigma'_F \taurefines \sigma_F$. Either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$ by assumption. Finally $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$ by the inductive hypothesis above. 
+      \end{enumerate}
 \end{proof}
 
-\begin{proposition}
+\begin{lemma}
   \label{lem:general-separation-sound}
-	If $\truespec{J}{P}{c}{Q}$ and $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
-\end{proposition}
+      If $\truespec{J}{P}{c}{Q}$ and $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
+\end{lemma}
 
 \begin{proof}
-	Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
+      Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:soundness}]
@@ -2485,4 +2652,11 @@ Assertions (as invariants) & $I,J$ \\
 \caption{Symbols and the objects they denote\label{fig:objects-and-symbols}}
 \end{figure}
 
-\end{document} 
+\bibliography{dissertation}
+\bibliographystyle{abbrv} 
+
+\begin{thesisauthorvita}
+Here is my vita. 
+\end{thesisauthorvita}
+
+\end{document}                       %% Done.
