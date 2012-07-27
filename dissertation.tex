@@ -58,7 +58,7 @@ There are, however, useful and interesting programs for which races do not indic
 
 The verification literature offers little insight into the problem of verifying concurrent data structures and other inherently racy programs. This is because a model of a contemporary memory adds serious complication to an already difficult problem, but also because until recently formal specifications of common architectures' memory models did not exist publicly. (Or, perhaps, privately.) Fortunately, the latter problem has been alleviated with recent safety specifications for the x86, Power and ARM memory models \cite{DBLP:conf/tphol/OwensSS09,DBLP:conf/popl/2009damp}. So, for these architectures, the path toward a solution to the correctness problem of concurrent data structures and other important programs now lies essentially unimpeded.
 
-\section{A Motivating Example}
+\section{An Illustrative Example}
 
 \begin{figure}[h]
 \centering
@@ -149,7 +149,7 @@ The languages, models and deduction system described above are completely and fo
 \begin{enumerate}
   \item There is no proof system for the assertion language. Omitting this component of the project was an early, intentional decision for two reasons. First, a proof system is necessary for practical application of the specification logic---and in particular automation of the specification logic---but is not critical for the study of the specification language. In practice, syntactic entailment is a practically important approximation of semantic entailment, but in principle simply having a well defined notion of semantic entailment is sufficient. Second, it is hypothesized that the traditional inference rules of first-order logic are sound for the assertion language defined here---as is the case for related theories of similar logics---and also that there is no complete set of rules---as this language encompasses, e.g., arithmetic. The task of finding a suitable proof system for the assertion can thus be seen as a purely practical issue.
 
-  \item There is not a total soundness proof for the specification logic. Although the logic is hypothesized to be sound w.r.t.\ the model described later in the document, this is of course a serious drawback. Most of the relevant lemmas have been proved previously with various, preliminary versions of the model. There are no known problems with the model that are blocking a soundness proof beyond sheer size of the proof as derived from the complexity of the model. Indeed, the proofs are mostly straightforward inductions. Throughout the document, key intermediate properties that are expected to hold are noted along with proof sketches. 
+  \item The soundness proof for the specification logic is incomplete. Although the logic is hypothesized to be sound w.r.t.\ the model described later in the document, this is of course a serious drawback. Most of the relevant lemmas have been proved previously with various, preliminary versions of the model. There are no known problems with the model that are blocking a soundness proof beyond sheer size of the proof as derived from the complexity of the model. Indeed, the proofs are mostly straightforward inductions. Throughout the document, key intermediate properties (marked as propositions) that are expected to hold are noted along with, in some cases, proof sketches. 
 \end{enumerate}
 
 Finally, beyond these technical omissions, it must be admitted that this dissertation gives little indication of how proofs ought to proceed in the logic; only a handful of small examples will be given later on. This is because the logic has evolved with soundness to the x86 memory memory model foremost in mind, instead of as a logical system of interest independent of its potential models. Although the examples presented do indicate that the logic is capable of highly non-trivial program reasoning, the extent of its capability is not yet well understood, and remains as perhaps the most important aspect of future work. 
@@ -193,7 +193,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
   f(x) & \text{otherwise.}
 \end{cases} \] An obvious property is that, if $g(a) = b$, for some $b \in B$, then also $(f \override g)(a) = b$. Some additional properties follow in Lemma~\ref{lem:override}. 
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:override}
     Let $f,g,h : A \pfun B$. 
     \begin{enumerate}
@@ -202,7 +202,7 @@ For (possibly partial) functions $f,g : A \pfun B$, we we write $f \override g$ 
         \item $\dom{f \override g} = \dom{f} \cup \dom{g}$. 
         \item If $\dom{f} \cap \dom{g} = \nil$ then $f \override g = f \uplus g$, and hence $f \override g = g \override f$. 
     \end{enumerate}
-\end{lemma}
+\end{proposition}
 
 \subsection{Lists}
 \label{sec:lists}
@@ -227,7 +227,7 @@ The set of \emph{interleavings} of lists $m,n$, written $m \merge n$, is defined
 We now define a subset of the interleavings of lists of pairs from $A \times B$ that play an analogous role to function overriding. The result of overriding a list $m$ with another $n$, written $m \override n$, is defined as follows: \[ l \in m \override n \iffdef \funof{l} = \funof{m} \override \funof{n}.\] As with function overriding, list overriding has the property that, if $\funof{n}(a) = b$, for some $b \in B$, and $l \in m \override n$, then $\funof{l}(a) = b$. Because all elements of $m \override n$ have the same lookup function, we may safely extend the list lookup notation as follows: \[ \funof{m \override n} \eqdef \fun{x} \funof{l}(x),\] for arbitrary $l \in m \override n$. 
 
 As for function overriding, list overriding has the basic property that, if $a \in \dom{\funof{n}}$, then $\funof{n}(a) = \funof{n \override m}(a)$. It also has the other following analogous properties, as noted by Lemma~\ref{lem:list-override}. 
-\begin{lemma}
+\begin{proposition}
     \label{lem:list-override}
     Let $l,m,n : \listof{A \times B}$. 
     \begin{enumerate}
@@ -237,7 +237,7 @@ As for function overriding, list overriding has the basic property that, if $a \
         \item If $\dom{\funof{m}} \cap \dom{\funof{n}} = \nil$ then $m \override n = m \merge n$, and hence $m \override n = n \override m$. 
         \item $(m \lapp n) \in (m \override n) \subseteq (m \merge n)$.
     \end{enumerate}
-\end{lemma}
+\end{proposition}
 
 
 \subsection{Universes}
@@ -519,10 +519,10 @@ The set of \emph{free variables} of a (boolean) expression $e$, written $\fv{e}$
 \end{align*}
 
 For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ if, for all $x \in X$, $s(x) = s'(x)$. The following basic lemma uses this relation to connect the static and dynamic semantics of expressions. 
-\begin{lemma}
+\begin{proposition}
 \label{lem:exp-stcong}
     If $s \stcong{\fv{e}} s'$ then $\ext{s}(e) = \ext{s'}(e)$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
 By induction on the structure of the expression $e$. 
@@ -804,7 +804,7 @@ For example, the set $S_0 \eqdef \setof{(s,\nil,\llit{(\ell,v)})}{s \in \setstac
 Because the sets $\range{C}$ are closed, we may focus our attention on showing the correctness of $C$ w.r.t.\ sets $S$ that are also closed. For if $S$ does not have this special structure, then either it will not be the case that $\range{C} \subseteq S$ (if, e.g., $C \rtstep \cskip,\sigma \step \cskip,\sigma'$ with $\sigma \in S$ but $\sigma' \notin S$), or it will be possible to demonstrate a stronger property of the configuration; namely that $\range{C} \subset S'$, for some closed set of states $S' \subseteq S$. 
 
 In Section~\ref{sec:locality} we also described a particular strategy for showing that $\range{C} \subseteq S$, which we called local reasoning. That relied on the ability to consider the set $S$ as a composition of sets $S_0$ and $S_1$; i.e., for some notion of separation $\bullet$, it must be the case that $S = S_0 \bullet S_1$. Because we choose to restrict our attention to closed sets, it should be the case that the notion of separation preserves the property of being closed: if $S_0$ and $S_1$ are down-closed w.r.t.\ the flushing order, then $S$ ought to be as well. And, in fact, for the three notions of separation introduced in Sections~\ref{sec:sequential-spatial-separation},~\ref{sec:sequential-temporal-separation}~and~\ref{sec:sequential-spatiotemporal-separation}, this turns out to be the case. 
-\begin{lemma}
+\begin{proposition}
     \label{lem:separation-preserves-closure}    
     If $S_0$ and $S_1$ are closed w.r.t.\ the flushing order, then so are: 
     \begin{enumerate}
@@ -812,7 +812,7 @@ In Section~\ref{sec:locality} we also described a particular strategy for showin
         \item $S_0 \sseq S_1$; and 
         \item $S_0 \shash S_1$.
     \end{enumerate}
-\end{lemma}
+\end{proposition}
 
 In each case, the proof follows from the fact that if $\mu \in \mu_0 \bullet \mu_1$ and $\mu' \taurefines \mu$ then there exists $\mu'_0$ and $\mu'_1$ such that $\mu'_0 \taurefines \mu_0$, $\mu'_1 \taurefines \mu_1$ and $\mu' \in \mu'_0 \bullet \mu'_1$. 
 
@@ -883,10 +883,10 @@ The set of free variables of an assertion $P$, written $\fv{P}$, is defined as u
 \end{align*}
 
 The following lemma, analogous to Lemma~\ref{lem:exp-stcong}, relates the set of free variables of an assertion and the stack-component of the states that satisfy it:
-\begin{lemma}
+\begin{proposition}
 \label{lem:assertion-stcong}
     If $s \stcong{\fv{P}} s'$ then $s,\nu \satisfies P$ iff $s',\nu \satisfies P$. 
-\end{lemma}
+\end{proposition}
 \begin{proof}
 By induction on the structure of $P$, using Lemma~\ref{lem:exp-stcong} in the base cases. 
 \end{proof}
@@ -904,11 +904,11 @@ Assertions can thus be thought of as syntactic constructs that denote sets of un
   \end{align*} 
 \end{definition} It is easy to see that this defines a partial order on generalized memory systems. Furthermore, the set of models denoted by assertions is closed with respect to this order. 
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:assertions-denote-predicates}
     % For any assertion $P$, $\pred{P}$ is a predicate. 
     If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
-\end{lemma}
+\end{proposition}
 
 A corollary of this lemma is that the set of states denoted by an assertions is closed w.r.t.\ the flushing order.  
 
@@ -1531,7 +1531,7 @@ Let us consider a small example. In the sequel, let $\arnil \eqdef \fun{x} \lnil
 
 We overload for convenience the symbol $\msep$ to indicate the pointwise lifting of this function to sets of memory systems: \[ S_1 \msep S_2 \eqdef \cup \setof{\nu_1 \msep \nu_2}{\nu_1 \in S_1 \conj \nu_2 \in S_2 \conj \nu_1 \compat_\sepsym \nu_2}.\] We use these functions interchangeably when the intended meaning is clear from context, e.g.: \[ \nu_1 \msep (\nu_2 \msep \nu_3) = \cup \setof{\nu_1 \msep \nu_{23}}{\nu_{23} \in \nu_2 \msep \nu_3}.\] 
 
-In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty generalized memory system. The following lemma asserts some algebraic properties of spatial separation. \begin{lemma}
+In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty generalized memory system. The following lemma asserts some algebraic properties of spatial separation. \begin{proposition}
   \label{lem:spatial-separation-algebra}
   For generalized multiprocessor memory systems $\nu_0, \nu_1, \nu_2$: 
   \begin{itemize}
@@ -1539,7 +1539,7 @@ In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty gene
     \item $\nu_0 \msep \nu_1 = \nu_1 \msep \nu_0$
     \item $\nu_0 \msep (\nu_1 \msep \nu_2) = (\nu_0 \msep \nu_1) \msep \nu_2$
   \end{itemize}
-\end{lemma}
+\end{proposition}
 
 \subsection{Temporal Separation}
 \label{sec:temporal-separation}
@@ -1572,14 +1572,14 @@ The role of the third conjunct in the temporal compatibility relation is similar
 
 Note that writes committed to the memory are combined by the temporal separator using heap overriding (first defined in Section~\ref{sec:functions}). This reflects the fact that previous committed writes are subsumed by more recent flushed writes. For example, consider $\nu_0 = (1 \mapsto 2,\arnil,\nil,\set{0})$ and $\nu_1 = (1 \mapsto 3, \arnil, \nil, \set{0})$. In the temporal separation $\nu_0 \mseq \nu_1$, the later write overrides the earlier write because $(1 \mapsto 2) \override (1\mapsto 3) = 1 \mapsto 3$: \[ \nu_0 \mseq \nu_1 = (1 \mapsto 3, \arnil, \nil, \set{0}).\] Also note that, because there can be no ordering among writes on distinct buffers, none is created by temporal separation of such memory systems. For example, because $\nu'_0 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,3)}}},\nil,\nil)$ and $\nu'_1 = (\nil,\funup{\arnil}{\ptup{1}{\llit{(2,4)}}},\nil,\nil)$ have writes only on distinct buffers, their temporal separation is symmetric: \[ \nu'_0 \mseq \nu'_1 = (\nil,\funup{\arnil}{\ptup{0}{\llit{(1,3)}},\ptup{1}{\llit{(2,4)}}},\nil,\nil) = \nu'_1 \mseq \nu'_0.\]
 
-In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty generalized memory system as before. The following lemma asserts some algebraic properties of temporal separation. \begin{lemma}
+In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty generalized memory system as before. The following lemma asserts some algebraic properties of temporal separation. \begin{proposition}
   \label{lem:temporal-separation-algebra}
   For generalized multiprocessor memory systems $\nu_0, \nu_1, \nu_2$: 
   \begin{itemize}
     \item $\nu_u \mseq \nu_0 = \nu_0 \mseq \nu_u = \nu_0$
     \item $\nu_0 \mseq (\nu_1 \mseq \nu_2) = (\nu_0 \mseq \nu_1) \mseq \nu_2$
   \end{itemize}
-\end{lemma}
+\end{proposition}
 
 \subsubsection{Strong Temporal Separation}
 
@@ -1636,14 +1636,14 @@ We can now check the proposed definition of $\nu_0 \mhash \nu_1$ for consistency
 
 As with spatial separation, we overload for convenience the symbol $\mhash$ to indicate the pointwise lifting of this function to sets of memory systems: \[ S_1 \mhash S_2 \eqdef \cup \setof{\nu_1 \mhash \nu_2}{\nu_1 \in S_1 \conj \nu_2 \in S_2 \conj \nu_1 \compat_\hashsym \nu_2}.\] We use these functions interchangeably when the intended meaning is clear from context, e.g.: \[ \nu_1 \mhash (\nu_2 \mhash \nu_3) = \cup \setof{\nu_1 \mhash \nu_{23}}{\nu_{23} \in \nu_2 \mhash \nu_3}.\] 
 
-In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty generalized memory system as before. The following lemma asserts some algebraic properties of spatiotemporal separation. \begin{lemma}
+In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty generalized memory system as before. The following lemma asserts some algebraic properties of spatiotemporal separation. \begin{proposition}
   \label{lem:spatiotemporal-separation-algebra}
   For generalized multiprocessor memory systems $\nu_0, \nu_1, \nu_2$: 
   \begin{itemize}
     \item $\nu_u \mhash \nu_0 = \nu_0 \mhash \nu_u = \set{\nu_0}$
     \item $\nu_0 \mhash (\nu_1 \mhash \nu_2) = (\nu_0 \mhash \nu_1) \mhash \nu_2$
   \end{itemize}
-\end{lemma}
+\end{proposition}
 
 \section{Assertions}
 \label{sec:assertions}
@@ -1801,10 +1801,10 @@ The flushing order on multiprocesor memory systems, described in Section~\ref{se
 
 The fact that this order on generalized multiprocessor memory systems encompasses the flushing order on multiprocessor memory systems is formalized by the following lemma. 
 
-\begin{lemma}
+\begin{proposition}
   \label{lem:generalized-order-encompasses-flushing-order}
   If $\mu_0 \taurefines \mu_1$ then for all $\Gamma_1$ there exists $\Gamma_0$ such that $(\mu_0,\Gamma_0) \modrefines (\mu_1,\Gamma_1)$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
   If $\mu_0 \taurefines \mu_1$, then there exists some sequence of memory systems such that $\mu'_0 \taustep \cdots \taustep \mu'_n$, with $\mu'_0 = \mu_1$ and $\mu'_n = \mu_0$. For each step in the above sequence, there exists a processor identifier $i$ such that $\mu'_m \pstep{\tau,i} \mu'_{m+1}$. Let $\Gamma_0$ be the set of these identifiers. 
@@ -1812,10 +1812,10 @@ The fact that this order on generalized multiprocessor memory systems encompasse
 
 As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is closed w.r.t.\ the generalized flushing order. 
 
-\begin{lemma}[Flushing Closure]
+\begin{proposition}[Flushing Closure]
   \label{lem:generalized-flushing-closure}
   If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
-\end{lemma}
+\end{proposition}
 
 An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. 
 
@@ -2204,10 +2204,10 @@ Although one could imagine changing or improving many aspects of this logic, it 
 
 The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
 
-\begin{lemma}
+\begin{proposition}
   \label{lem:separation-tau}
   If $\nu \in \nu_1 \fhash \nu_2$ and $\nu \modstep \nu'$, then either there exists $\nu'_1$ such that $\nu' \in \nu'_1 \fhash \nu_2$, or there exists $\nu'_2$ such that $\nu' \in \nu_1 \fhash \nu'_2$.
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
   Without loss of generality, assume $\nu = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\nu' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\nu_1 = (s,h_1,B_1,k_1)$ and $\nu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
@@ -2217,10 +2217,10 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
   In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\nu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\nu_2 \modstep \nu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\nu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \nu_1 \fhash \nu_2$. 
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
   \label{lem:separation-refinement}
   If $\nu \in \nu_1 \fhash \nu_2$ and $\nu' \taurefines \nu$ then there exists $\nu'_1,\nu'_2$ such that $\nu'_1 \taurefines \nu_1$, $\nu'_2 \taurefines \nu_2$ and $\nu' \in \nu'_1 \fhash \nu'_2$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
   By induction on the number of $\tau$ steps from $\nu$ to $\nu'$. The base case is trivial. Otherwise, assume that $\nu'' \taurefines \nu$ and $\nu'' \taustep \nu'$, and by the induction hypothesis that there exists $\nu''_1,\nu''_2$ such that $\nu''_1 \taurefines \nu_1$, $\nu''_2 \taurefines \nu_2$ and $\nu'' \in \nu''_1 \fhash \nu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
@@ -2230,10 +2230,10 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \label{sec:soundness-proofs}
 Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
 
-\begin{lemma}
+\begin{proposition}
 	\label{lem:skip-safe}
 	For all $n \in \setnaturals$, if $\sigma \sentails P$ then $\safe{n}{\cskip,\sigma,J,P}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
 	By induction on $n$. The base case is trivial. For the induction step, we show $\safe{n+1}{\cskip,\sigma,J,P}$ under the assumption that $\safe{n}{\cskip,\sigma,J,P}$. 
@@ -2248,19 +2248,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\end{enumerate}
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
 	\label{lem:skip-sound}
 	$\truespec{J}{P}{\cskip}{P}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
 	Immediate from Lemma~\ref{lem:skip-safe}. 
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
 	\label{lem:load-safe}
 	For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fsseq P$, if $x \notin \fv{e,e',e'',P}$ then $\safe{n}{\cload{x}{e}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fsseq P \conj x = e''\right)}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
 	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2278,19 +2278,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\end{enumerate}
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:load-sound}
     $\truespec{J}{x \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{x \fwrite{e'} e'' \fsseq P \conj x = e''}$ if $x \notin \fv{e,e',e'',P}$. 
-\end{lemma} 
+\end{proposition} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:load-safe}. 
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:store-safe}
     For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
     By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2330,19 +2330,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \end{enumerate}
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:store-sound}
     $\truespec{J}{\left(e \fwrite{e'} e''\right) \fseq P}{\cstore{e}{f}_{e'}}{\left(e \fwrite{e'} e''\right) \fseq P \fseq \left(e \fwrite{e'} f\right)}$. 
-\end{lemma} 
+\end{proposition} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:store-safe}. 
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:lock-safe}
     For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \femp$, \\ $\safe{n}{\clock_{e},s,\mu,J,\flock{e}}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
   By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2361,19 +2361,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \end{enumerate}
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:lock-sound}
     $\truespec{J}{\femp}{\clock_{e}}{\flock{e}}$. 
-\end{lemma} 
+\end{proposition} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:lock-safe}. 
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:unlock-safe}
     For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \flock{e}$, \\ $\safe{n}{\cunlock_{e},s,\mu,J,\femp}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
   By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$.
@@ -2392,19 +2392,19 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
     \end{enumerate}
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
     \label{lem:unlock-sound}
     $\truespec{J}{\flock{e}}{\cunlock_{e}}{\femp}$. 
-\end{lemma} 
+\end{proposition} 
 
 \begin{proof}
     Immediate from Lemma~\ref{lem:unlock-safe}. 
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
 	\label{lem:weak-interleaving-safe}
 	If $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, then $\safe{n}{c, \sigma_R \fhash \sigma,J,R \fhash Q}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
 	By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,\sigma,\sigma_R,J,Q,R$, that whenever $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, it is also the case that $\safe{n}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$ holds. We also assume that $\safe{n+1}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, and show that \\ 
@@ -2440,10 +2440,10 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
 	\end{enumerate}
 \end{proof}
 
-\begin{lemma}
+\begin{proposition}
   \label{lem:general-separation-sound}
 	If $\truespec{J}{P}{c}{Q}$ and $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
-\end{lemma}
+\end{proposition}
 
 \begin{proof}
 	Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
