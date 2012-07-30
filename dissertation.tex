@@ -107,7 +107,7 @@
                                      %% or degrees.  Uncomment as many
                                      %% as neccessary. (Ignored for Master's)
 
-\renewcommand{\thesisauthoraddress}{ian@wehrman.org}
+\renewcommand{\thesisauthoraddress}{ian@wehrman.net}
                                      %% Your permanent address; use "\\" for
                                      %% linebreaks.
 
@@ -595,50 +595,55 @@ As the name indicates, a proof sketch provides a skeleton of a complete proof of
 \[ \infer[{\textsc{seq}}]{\triple{P}{c_1 \opseq c_2}{Q}}{\infer{\triple{P}{c_1}{R}}{\vdots} & \infer{\triple{R}{c_2}{Q}}{\vdots}}\] where the vertical dots represent the remaining proofs to be supplied. 
 
 Returning to the proof sketch of the program specification in Equation~\ref{eq:seq-ex-spec}, we see that to complete the proof we must derive three sub-specifications, one for each primitive command: \begin{enumerate}
-  \item $\triple{(x \fpointsto z) \fsep (y \fpointsto -)}{\cload{t}{x}}{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}$
-  \item $\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}{\cstore{y}{t+1}}{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}$
-  \item $\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}{\cfence}{(x \fpointsto z) \fsep (y \fpointsto (z+1))}$
+  \item $\triple{x \fpointsto z \fsep y \fpointsto -}{\cload{t}{x}}{x \fpointsto z \fsep (y \fpointsto - \conj t = z)}$
+  \item $\triple{x \fpointsto z \fsep (y \fpointsto - \conj t = z)}{\cstore{y}{t+1}}{x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)}$
+  \item $\triple{x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)}{\cfence}{x \fpointsto z \fsep y \fpointsto z+1}$
 \end{enumerate}
 The first specification asserts that the result of loading the value $z$ in memory at address $x$ into variable $t$ results in a state that is otherwise unchanged except that $t = z$. The second specification asserts that the result of storing the value $t+1$ to the address $y$ results in the addition of a new buffered write to the state, which may later be committed to memory, overwriting the current, unspecified value. The third specification asserts that the result of explicitly flushing this write to memory overwrites the existing value in memory at $y$ with the value $z+1$. 
+
+% When necessary for space reasons, we shall abbreviate the pre and postconditions of the three specifications above by $P_n$ and $Q_n$, as follows: \begin{align*}
+% P_1 \eqdef & x \fpointsto z \fsep y \fpointsto - & Q_1 \eqdef & x \fpointsto z \fsep (y \fpointsto - \conj t = z) \\ 
+% P_2 \eqdef & x \fpointsto z \fsep (y \fpointsto - \conj t = z) & Q_2 \eqdef &  x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1) \\ 
+% P_3 \eqdef & x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1) & Q_3 \eqdef &  x \fpointsto z \fsep y \fpointsto z+1
+% \end{align*}
 
 We shall now derive these three specifications. For the first specification, we start by using an instance of the \textsc{load} axiom scheme to show that the result of evaluating the load command $\cload{t}{x}$ from precondition $x \fpointsto z$ yields the postcondition $x \fpointsto z \conj t = z$.
 \[ 
   \infer[\textsc{load}]{\triple{x \fpointsto z}{\cload{t}{x}}{x \fpointsto z \conj t = z}}{}
 \] We then use the \emph{spatial frame rule} \textsc{frame-sp} to extend the pre- and post-condition with a description of the value of an additional, distinct memory address $y$: \[ 
-  \infer[\textsc{frame-sp}]{\triple{(y \fpointsto -) \fsep (x \fpointsto z)}{\cload{t}{x}}{(y \fpointsto -) \fsep (x \fpointsto z \conj t = z)}}{
+  \infer[\textsc{frame-sp}]{\triple{y \fpointsto - \fsep x \fpointsto z}{\cload{t}{x}}{y \fpointsto - \fsep (x \fpointsto z \conj t = z)}}{
     \infer[\textsc{load}]{\triple{x \fpointsto z}{\cload{t}{x}}{x \fpointsto z \conj t = z}}{}
   }
 \] Finally, we observe that the derived pre and postconditions are not syntactically equal to those of the desired specification, but are logically equivalent: \begin{align*}
-(y \fpointsto -) \fsep (x \fpointsto z) \sequiv & (x \fpointsto z) \fsep (y \fpointsto -) \\ 
-(y \fpointsto -) \fsep (x \fpointsto z \conj t = z) \sequiv & (x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)
+y \fpointsto - \fsep x \fpointsto z \sequiv & x \fpointsto z \fsep y \fpointsto - \\ 
+y \fpointsto - \fsep (x \fpointsto z \conj t = z) \sequiv & x \fpointsto z \fsep (y \fpointsto - \conj t = z)
 \end{align*} More generally, the derived precondition is logically implied by the desired precondition, and the derived postcondition logically implies the desired postcondition. Hence, we may strengthen the precondition and weaken the postcondition accordingly with the rule of consequence \textsc{cons}: \[ 
-  \infer[\textsc{cons}]{\triple{(x \fpointsto z) \fsep (y \fpointsto -)}{\cload{t}{x}}{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}}{
-    \infer[\textsc{frame-sp}]{\triple{(y \fpointsto -) \fsep (x \fpointsto z)}{\cload{t}{x}}{(y \fpointsto -) \fsep (x \fpointsto z \conj t = z)}}{
+  \infer[\textsc{cons}]{\triple{x \fpointsto z \fsep y \fpointsto -}{\cload{t}{x}}{x \fpointsto z \fsep (y \fpointsto - \conj t = z)}}{
+    \infer[\textsc{frame-sp}]{\triple{y \fpointsto - \fsep x \fpointsto z}{\cload{t}{x}}{y \fpointsto - \fsep (x \fpointsto z \conj t = z)}}{
       \infer[\textsc{load}]{\triple{x \fpointsto z}{\cload{t}{x}}{x \fpointsto z \conj t = z}}{}
     }
   }
 \] This completes the derivation of the first specification. 
 
-For the second specification, we begin with an instance of the axiom scheme for the store command in which the precondition describes just the value of $y$ in memory: \[ \infer[\textsc{store}]{\triple{y \fpointsto -}{\cstore{y}{t+1}}{(y \fpointsto -) \fseq (y \fwriteu (t+1))}}{}\] The postcondition describes, with the \emph{leads-to} assertion $y \fwriteu  t+1$, the addition of a new, buffered write to address $y$ with value $t+1$. The \emph{temporal separating conjunction} $(y \fpointsto -) \fseq (y \fwriteu t+1)$ indicates that the writes described on the left side precede those on the right side. 
+For the second specification, we begin with an instance of the axiom scheme for the store command in which the precondition describes just the value of $y$ in memory: \[ \infer[\textsc{store}]{\triple{y \fpointsto -}{\cstore{y}{t+1}}{y \fpointsto - \fseq y \fwriteu t+1}}{}\] The postcondition describes, with the \emph{leads-to} assertion $y \fwriteu  t+1$, the addition of a new, buffered write to address $y$ with value $t+1$. The \emph{temporal separating conjunction} $y \fpointsto - \fseq y \fwriteu t+1$ indicates that the writes described on the left side precede those on the right side.
 
-Next, we again apply the spatial frame rule \textsc{frame-sp} to extend the specification with a description of the value of memory at $x$ and the value of variable $t$: 
-\[ \infer[\textsc{frame-sp}]{\triple{(x \fpointsto z \conj t = z) \fsep (y \fpointsto -)}{\cstore{y}{t+1}}{(x \fpointsto z \conj t = z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (t+1)))}}{
-  \infer[\textsc{store}]{\triple{y \fpointsto -}{\cstore{y}{t+1}}{(y \fpointsto -) \fseq (y \fwriteu (t+1))}}{}
+Next, we again apply the spatial frame rule \textsc{frame-sp} to extend the specification with a description of the value of memory at $x$ and the value of variable $t$, namely $(x \fpointsto z \conj t = z)$, which we abbreviate for space reasons as $F_2$ below:  
+\[ \infer[\textsc{frame-sp}]{\triple{F_2 \fsep y \fpointsto -}{\cstore{y}{t+1}}{F_2 \fsep (y \fpointsto - \fseq y \fwriteu t+1)}}{
+  \infer[\textsc{store}]{\triple{y \fpointsto -}{\cstore{y}{t+1}}{y \fpointsto - \fseq y \fwriteu t+1}}{}
   } \]
 
-The derived precondition is logically equivalent to the desired precondition, and the derived postcondition logically implies the desired postcondition \begin{align*}
-(x \fpointsto z \conj t = z) \fsep (y \fpointsto -) \sequiv & (x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z))\\ 
-(x \fpointsto z \conj t = z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (t+1))) \sentails & (x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))
+The derived precondition is logically equivalent to---and, hence, is implied by---the desired precondition, and the derived postcondition logically implies the desired postcondition \begin{align*}
+(x \fpointsto z \conj t = z) \fsep y \fpointsto - \sequiv & x \fpointsto z \fsep (y \fpointsto - \conj t = z)\\ 
+(x \fpointsto z \conj t = z) \fsep (y \fpointsto - \fseq y \fwriteu t+1) \sentails & x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)
 \end{align*} Hence, we finish the derivation of the second specification with an application of the rule of consequence \textsc{cons}: 
-\[ \infer[\textsc{cons}]{\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)}{\cstore{y}{t+1}}{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}}{\infer[\textsc{frame-sp}]{\triple{(x \fpointsto z \conj t = z) \fsep (y \fpointsto -)}{\cstore{y}{t+1}}{(x \fpointsto z \conj t = z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (t+1)))}}{
-  \infer[\textsc{store}]{\triple{y \fpointsto -}{\cstore{y}{t+1}}{(y \fpointsto -) \fseq (y \fwriteu (t+1))}}{}
+\[ \infer[\textsc{cons}]{\triple{x \fpointsto z \fsep (y \fpointsto - \conj t = z)}{\cstore{y}{t+1}}{x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)}}{\infer[\textsc{frame-sp}]{\triple{F_2 \fsep y \fpointsto -}{\cstore{y}{t+1}}{F_2 \fsep (y \fpointsto - \fseq y \fwriteu t+1)}}{
+  \infer[\textsc{store}]{\triple{y \fpointsto -}{\cstore{y}{t+1}}{y \fpointsto - \fseq y \fwriteu t+1}}{}
   }}
  \]
 
-For the third and final specification, we begin with the axiom for the $\cfence$ command: \[ \infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}\] This small axiom allows for the introduction, from an empty system description, of the $\fbaru$ assertion. Intuitively, this assertion describes the effect of a barrier on the system state, in the sense that any writes that precede $\fbaru$ must necessarily be committed to memory. For example, we have the following logical equivalence: \[ y \fpointsto t+1 \sequiv (y \fwriteu t+1) \fseq \fbaru \] This means that the description of $y$ having value $t+1$ in memory is equivalent to the description of a buffered write to address $y$ with value $t+1$ followed by a flush of that write to memory.\footnote{In fact, the points-to assertion shall later on in the description of the sequential logic be made definitionally equal to the temporal conjunction of the analogous leads-to assertion and $\fbaru$. This equivalence will not necessarily hold in the concurrent logic, however.} We wish to describe the effect of $\fbaru$ on the postcondition from the previous specification, so we extend the specification accordingly with the \emph{temporal frame rule} \textsc{frame-tm}: 
-\[ \infer[\textsc{frame-tm}]{\triple{((x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))) \fseq \femp}{\cfence}{((x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))) \fseq \fbaru}}{
-\infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}
-\] The empty assertion is a unit w.r.t.\ both the spatial and temporal separating conjunctions, so the precondition assertion is equivalent to one without the final temporal conjunct $\femp$. And the postcondition is equivalent to one in which the buffered write has been flushed to memory, replacing the previous value in memory: \[ (x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))) \fseq \fbaru \sequiv (x \fpointsto z) \fsep (y \fpointsto z+1)\] So, once again, the derivation can be completed by an application of the rule of consequence: \[ \infer[\textsc{cons}]{\triple{(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))}{\cfence}{(x \fpointsto z) \fsep (y \fpointsto (z+1))}}{\infer[\textsc{frame-tm}]{\triple{((x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))) \fseq \femp}{\cfence}{((x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1)))) \fseq \fbaru}}{
+For the third and final specification, we begin with the axiom for the $\cfence$ command: \[ \infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}\] This small axiom allows for the introduction, from an empty system description, of the $\fbaru$ assertion. Intuitively, this assertion describes the effect of a barrier on the system state, in the sense that any writes that precede $\fbaru$ must necessarily be committed to memory. For example, we have the following logical equivalence: \[ y \fpointsto t+1 \sequiv y \fwriteu t+1 \fseq \fbaru \] This means that the description of $y$ having value $t+1$ in memory is equivalent to the description of a buffered write to address $y$ with value $t+1$ followed by a flush of that write to memory.\footnote{In fact, the points-to assertion shall later on in the description of the sequential logic be made definitionally equal to the temporal conjunction of the analogous leads-to assertion and $\fbaru$. This equivalence will not necessarily hold in the concurrent logic, however.} We wish to describe the effect of $\fbaru$ on the postcondition from the previous specification, so we extend the specification with the \emph{temporal frame rule} \textsc{frame-tm} and the frame assertion $x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)$, which we abbreviate for space below as $F_2$: 
+\[ \infer[\textsc{frame-tm}]{\triple{F_2 \fseq \femp}{\cfence}{F_2 \fseq \fbaru}}{
+\infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}\] The empty assertion is a unit w.r.t.\ both the spatial and temporal separating conjunctions, so the precondition assertion is equivalent to one without the final temporal conjunct $\femp$. And the postcondition is equivalent to one in which the buffered write has been flushed to memory, replacing the previous value in memory: \[ (x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)) \fseq \fbaru \sequiv x \fpointsto z \fsep y \fpointsto z+1\] So, once again, the derivation can be completed by an application of the rule of consequence: \[ \infer[\textsc{cons}]{\triple{x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1)}{\cfence}{x \fpointsto z \fsep y \fpointsto z+1}}{\infer[\textsc{frame-tm}]{\triple{F_2 \fseq \femp}{\cfence}{F_2 \fseq \fbaru}}{
 \infer[\textsc{fence}]{\triple{\femp}{\cfence}{\fbaru}}{}}}\]
 
 This completes the proof of the program specification of Equation~\ref{eq:seq-ex-spec}. In the following sections, the notions of program, system state, assertion, model, specification and proof are formally defined and discussed.
