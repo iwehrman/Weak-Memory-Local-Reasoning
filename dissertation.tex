@@ -1884,7 +1884,7 @@ As before, we shall define the strong temporal separating conjunction as the add
 
 Again, the spatial separating conjunction $P \fsep Q$ is commutative, so there is no need to define its converse operation, but the temporal separating conjunction is not. Hence, we define $P \fseqc Q$ as shorthand for $Q \fseq P$, and similarly for $P \fsseqc Q$: \begin{align*}
   P \fseqc Q \eqdef & Q \fseq P \\ 
-  P \fsseqc Q \eqdef & Q \fsseq P. \\ 
+  P \fsseqc Q \eqdef & Q \fsseq P.
 \end{align*}
 
 In the sequential assertion logic we defined the points-to assertion $e \fpointsto e'$ as an abbreviation of a leads-to assertion followed temporally by a barrier assertion. In the concurrent assertion logic, however, the situation is not as simple. The leads-to assertions are here annotated with expressions indicating the identifier of the processor on which they are buffered, and similarly for barrier assertions. We might try to define a points-to assertion as a leads-to assertion on a certain processor temporally conjoined with a barrier assertion on the same processor: \[
@@ -1991,6 +1991,10 @@ An effect of this is that \emph{assertions are oblivious to the nondeterministic
     % For any assertion $P$, $\pred{P}$ is a predicate. 
     If $s,(\mu,\Gamma) \sentails P$ and $\mu' \taurefines \mu$ then, for some $\Gamma'$, $s,(\mu',\Gamma') \sentails P$. 
 \end{corollary}
+
+\begin{proof}[Sketch]
+    By Propositions~\ref{lem:generalized-flushing-closure} and~\ref{lem:generalized-order-encompasses-flushing-order}. 
+\end{proof}
 
 Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. This is an important feature of the assertion language because flushing buffered writes---which cannot be controlled---never changes the satisfiability of an assertion. This is also extremely important for the specification logic, as is described in the next section. 
 
@@ -2381,28 +2385,29 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 
 \begin{lemma}
   \label{lem:separation-tau}
-  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu \modstep \nu'$, then either there exists $\nu'_1$ such that $\nu' \in \nu'_1 \fhash \nu_2$, or there exists $\nu'_2$ such that $\nu' \in \nu_1 \fhash \nu'_2$.
+  If $\mu \in \mu_1 \shash \mu_2$ and $\mu \modstep \mu'$, then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \shash \mu_2$, or there exists $\mu'_2$ such that $\mu' \in \mu_1 \shash \mu'_2$.
 \end{lemma}
 
 \begin{proof}
-  Without loss of generality, assume $\nu = (s,h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\nu' = (s,\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\nu_1 = (s,h_1,B_1,k_1)$ and $\nu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+  Without loss of generality, assume $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\mu_1 = (s,h_1,B_1,k_1)$ and $\mu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let $\nu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1)$. Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\nu_1 \modstep \nu'_1$. By definedness of $\nu_1 \fhash \nu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\nu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \nu'_1 \fhash \nu_2$. 
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1).\] Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\mu_1 \modstep \mu'_1$. By definedness of $\mu_1 \shash \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \mu'_1 \shash \mu_2$.
 
-  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let $\nu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2)$. Again, $i \notin k_2$, and so $\nu_2 \modstep \nu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\nu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \nu_1 \fhash \nu_2$. 
+  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2).\] Again, $i \notin k_2$, and so $\mu_2 \modstep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \mu_1 \shash \mu_2$. 
 \end{proof}
 
 \begin{lemma}
   \label{lem:separation-refinement}
-  If $\nu \in \nu_1 \fhash \nu_2$ and $\nu' \taurefines \nu$ then there exists $\nu'_1,\nu'_2$ such that $\nu'_1 \taurefines \nu_1$, $\nu'_2 \taurefines \nu_2$ and $\nu' \in \nu'_1 \fhash \nu'_2$. 
+  If $\mu \in \mu_1 \shash \mu_2$ and $\mu' \taurefines \mu$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' \in \mu'_1 \shash \mu'_2$. 
 \end{lemma}
 
 \begin{proof}
-  By induction on the number of $\tau$ steps from $\nu$ to $\nu'$. The base case is trivial. Otherwise, assume that $\nu'' \taurefines \nu$ and $\nu'' \taustep \nu'$, and by the induction hypothesis that there exists $\nu''_1,\nu''_2$ such that $\nu''_1 \taurefines \nu_1$, $\nu''_2 \taurefines \nu_2$ and $\nu'' \in \nu''_1 \fhash \nu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
+  By induction on the number of $\tau$ steps from $\mu$ to $\mu'$. The base case is trivial. Otherwise, assume that $\mu'' \taurefines \mu$ and $\mu'' \taustep \mu'$, and by the induction hypothesis that there exists $\mu''_1,\mu''_2$ such that $\mu''_1 \taurefines \mu_1$, $\mu''_2 \taurefines \mu_2$ and $\mu'' \in \mu''_1 \shash \mu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
 \end{proof}
 
 \section{Soundness}
 \label{sec:soundness-proofs}
+
 Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
 
 \begin{lemma}
