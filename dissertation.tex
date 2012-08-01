@@ -1980,6 +1980,10 @@ As in the uniprocessor semantics, a central claim is that the denotation $\pred{
   If $s,\nu \sentails P$ and $\nu' \modrefines \nu$ then $s,\nu' \sentails P$. 
 \end{proposition}
 
+\begin{proof}[Sketch]
+    By induction on the shape of $P$. For the separating conjunctions, see, e.g., Lemma~\ref{lem:separation-refinement} in Section~\ref{sec:flushing-closure-proofs}. 
+\end{proof}
+
 An effect of this is that \emph{assertions are oblivious to the nondeterministic flushing of buffered writes to memory}. 
 
 \begin{corollary}
@@ -2367,8 +2371,10 @@ Although one could imagine changing or improving many aspects of this logic, it 
 \appendix
 
 \chapter{Proofs}
+\label{ch:proofs}
 
 \section{Flushing Closure}
+\label{sec:flushing-closure-proofs}
 
 
 The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
