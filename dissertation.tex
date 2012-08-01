@@ -1960,9 +1960,9 @@ The flushing order on multiprocesor memory systems, described in Section~\ref{se
     \nu_2 \pstep{\widehat{\tau}} \nu_1 \iffdef & \exists i \in \setprocessors \st \nu_2 \pstep{\widehat{\tau},i} \nu_1 \\ 
     \nu_1 \modrefines \nu_2 \iffdef & \nu_2 \rtcl{\pstep{\widehat{\tau}}} \nu_1
   \end{align*} 
-\end{definition} Informally, $\nu_1 \modrefines \nu_2$ if $\nu_2$ can flush its buffer-complete processors to arrive at $\nu_1$. 
+\end{definition} 
 
-The fact that this order on generalized multiprocessor memory systems encompasses the flushing order on multiprocessor memory systems is formalized by the following lemma. 
+Informally, $\nu_1 \modrefines \nu_2$ if $\nu_2$ can flush its buffer-complete processors to arrive at $\nu_1$. The fact that this order on generalized multiprocessor memory systems encompasses the flushing order on multiprocessor memory systems is formalized by the following lemma. 
 
 \begin{proposition}
   \label{lem:generalized-order-encompasses-flushing-order}
@@ -1985,10 +1985,10 @@ An effect of this is that \emph{assertions are oblivious to the nondeterministic
 \begin{corollary}
     \label{lem:flushing-closure}
     % For any assertion $P$, $\pred{P}$ is a predicate. 
-    If $s,(\mu,\Gamma) \sentails P$ and $\mu' \taurefines \mu$ then there exists $\Gamma'$ such that $s,(\mu',\Gamma') \sentails P$. 
+    If $s,(\mu,\Gamma) \sentails P$ and $\mu' \taurefines \mu$ then, for some $\Gamma'$, $s,(\mu',\Gamma') \sentails P$. 
 \end{corollary}
 
-Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. We consider this property to be an important feature of the assertion language and hence also of the program logic. 
+Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. This is an important feature of the assertion language because flushing buffered writes---which cannot be controlled---never changes the satisfiability of an assertion. This is also extremely important for the specification logic, as is described in the next section. 
 
 \section{Concurrent Specifications}
 \label{sec:specifications}
