@@ -2408,6 +2408,17 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \section{Soundness}
 \label{sec:soundness-proofs}
 
+The following lemma describes the relationship between the ``safety'' lemmas and ``soundness'' lemmas in subsequent sections. 
+
+\begin{lemma}
+    \label{lem:safety-soundness}
+    Let $c$ be a command and $J,P,$ and $Q$ be assertions. Suppose, for all $n \in \setnaturals$, $s \in \setstacks$ and $\mu \in \setmemorysystems$, that whenever $s,\mu,\setprocessors \sentails P$ it is also the case that $\safe{n}{c,s,\mu,J,Q}$ holds. Then $\truespec{J}{P}{c}{Q}$ holds as well. 
+\end{lemma}
+
+\begin{proof}
+    Immediate from the definition of $\truespec{J}{P}{c}{Q}$. 
+\end{proof}
+
 \subsection{Axioms}
 
 \begin{lemma}
@@ -2434,7 +2445,7 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \end{lemma}
 
 \begin{proof}
-      Immediate from Lemma~\ref{lem:skip-safe}. 
+      Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:skip-safe}. 
 \end{proof}
 
 \begin{lemma}
@@ -2464,7 +2475,7 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \end{lemma} 
 
 \begin{proof}
-    Immediate from Lemma~\ref{lem:load-safe}. 
+    Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:load-safe}. 
 \end{proof}
 
 \begin{lemma}
