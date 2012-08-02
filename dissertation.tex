@@ -2169,7 +2169,7 @@ We now give a formal definition of $\safe{n}{c,s,\mu,J,Q}$ by natural number ind
     \item either $(s,\mu_J,\setprocessors) \sentails J$ or $\locked{\mu_0}$, and 
     \item $c,(s,\mu_0) \step c',(s',\mu_1)$,
   \end{enumerate} there exists $\mu'_J,\mu'_F,\mu'$ such that \begin{enumerate}
-    \item $\mu_1 \in (\mu'_J \fsep (\mu'_F \shash \mu'))$,
+    \item $\mu_1 \in (\mu'_J \ssep (\mu'_F \shash \mu'))$,
     \item $\mu'_F \taurefines \mu_F$,
     \item either $(s',\mu'_J,\setprocessors) \sentails J$ or $\locked{\mu_1}$, and
     \item $\safe{n}{c',s',\mu',J,Q}$.
@@ -2422,9 +2422,9 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 
             \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\sigma_0}$ and either $s,\mu_J,\setprocessors \sentails J$ or $\locked{\mu_0}$. We must show that $\cskip,s,\mu_0 \nrightarrow \abort$. But the only evaluation step possible from configuration $\cskip,s,\mu_0$ is by \textsc{c-tau}, which never aborts. 
 
-            \item Let $\mu_0,\mu_J,\mu_F,c_1,\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $s,\mu_J,\setprocessors \sentails J$ or $\locked{\mu_0}$, and $\cskip,s,\mu_0 \step c_1,s,\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $s,\mu'_J,\setprocessors \sentails J$ or $\locked{\mu_1}$, and $\safe{n}{c_1,s,\mu_1,J,P}$.
+            \item Let $\mu_0,\mu_J,\mu_F,c_1,\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $s,\mu_J,\setprocessors \sentails J$ or $\locked{\mu_0}$, and $\cskip,s,\mu_0 \step c_1,s,\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $s,\mu'_J,\setprocessors \sentails J$ or $\locked{\mu_1}$, and $\safe{n}{c_1,s,\mu',J,P}$.
 
-            The only evaluation step possible from $\cskip,\sigma_0$ is by \textsc{c-tau}, hence $\sigma_1 \taurefines \sigma_0$. By Lemma~\ref{lem:separation-refinement}, there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$, $\mu' \taurefines \mu$. By Proposition~\ref{lem:flushing-closure} and $\mu'_J \taurefines \mu_J$, if $s,\mu_J,\setprocessors \sentails J$ then also $s,\mu'_J,\setprocessors \sentails J$. Similarly, $s,\mu',\setprocessors \sentails P$ because $s,\mu,\setprocessors \sentails P$ and $\mu' \taurefines \mu$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,s,\mu',J,P}$. 
+            The only evaluation step possible from $\cskip,s,\mu_0$ is by \textsc{c-tau}, hence $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-refinement}, there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$, $\mu' \taurefines \mu$. By Proposition~\ref{lem:flushing-closure} and $\mu'_J \taurefines \mu_J$, if $s,\mu_J,\setprocessors \sentails J$ then also $s,\mu'_J,\setprocessors \sentails J$. Similarly, $s,\mu',\setprocessors \sentails P$ because $s,\mu,\setprocessors \sentails P$ and $\mu' \taurefines \mu$. Hence, by the inductive hypothesis we have that $\safe{n}{\cskip,s,\mu',J,P}$. 
       \end{enumerate}
 \end{proof}
 
