@@ -2419,7 +2419,10 @@ The following lemma describes the relationship between the ``safety'' lemmas and
     Immediate from the definition of $\truespec{J}{P}{c}{Q}$. 
 \end{proof}
 
-\subsection{Axioms}
+\subsection{Soundness of the Axioms}
+\label{sec:axiom-soundness}
+
+This section presents soundness lemmas for each of the axioms described in Section~\ref{sec:proof-theory}. That is, for each axiom $\spec{J}{P}{c}{Q}$, there is a lemma below which asserts $\truespec{J}{P}{c}{Q}$. 
 
 \begin{lemma}
       \label{lem:skip-safe}
@@ -2592,7 +2595,11 @@ The following lemma describes the relationship between the ``safety'' lemmas and
     Immediate from Lemma~\ref{lem:unlock-safe}. 
 \end{proof}
 
-\subsection{Inference Rules}
+\subsection{Soundness of the Inference Rules}
+\label{sec:inference-rule-soundness}
+
+This section presents soundness lemmas for some, but not all, of the inference rules described in Section~\ref{sec:proof-theory}. That is, for some inference rules \[\infer{\spec{J}{P}{c}{Q}}{\spec{J'}{P'}{c'}{Q'}}\] we present lemmas below which assert that \[ \truespec{J'}{P'}{c'}{Q'} \text{~only if~} \truespec{J}{P}{c}{Q}.\] 
+
 
 Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
 
