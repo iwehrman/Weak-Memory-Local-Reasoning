@@ -2601,11 +2601,11 @@ This section presents soundness lemmas for each of the axioms described in Secti
 This section presents soundness lemmas for some, but not all, of the inference rules described in Section~\ref{sec:proof-theory}. That is, for some inference rules \[\infer{\spec{J}{P}{c}{Q}}{\spec{J'}{P'}{c'}{Q'}}\] we present lemmas below which assert that \[ \truespec{J'}{P'}{c'}{Q'} \text{~only if~} \truespec{J}{P}{c}{Q}.\] 
 
 
-Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for the universal quantification: \[ \forall \sigma \in S \st \safe{n}{c,\sigma,J,Q}.\]
+For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma \sentails Q$ as shorthand for the universal quantifications \[ \forall \mu \in S \st \safe{n}{c,s,\mu,J,Q} \andif \forall \mu \in S \st s,\mu,\Gamma \sentails Q.\]
 
 \begin{lemma}
       \label{lem:weak-interleaving-safe}
-      If $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, then $\safe{n}{c, \sigma_R \fhash \sigma,J,R \fhash Q}$. 
+      If $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, then $\safe{n}{c,s,\mu_R \shash \mu,J,R \shash Q}$. 
 \end{lemma}
 
 \begin{proof}
@@ -2613,7 +2613,7 @@ Below, we write $\safe{n}{c,S,J,Q}$, for a set of state $S$, as shorthand for th
       $\safe{n+1}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$. To show this, we must establish three conditions. 
 
       \begin{enumerate}
-            \item Suppose $c = \cskip$. By assumption, $\sigma_R \sentails R$, $\defined{\sigma_R \fhash \sigma}$, and if $c = \cskip$ then $\sigma \sentails Q$, and so $\sigma \sentails Q$. Hence $\sigma_R \fhash \sigma \sentails R \fhash Q$. 
+            \item Suppose $c = \cskip$. By assumption, $s,\mu_R,\setprocessors \sentails R$, $\defined{\mu_R \shash \mu}$, and if $c = \cskip$ then $s,\mu,\setprocessors \sentails Q$, and so $s,\mu,\setprocessors \sentails Q$. Hence $s,(\mu_R \shash \mu),\setprocessors \sentails R \fhash Q$. \todo{FIXME: there is no formula $R \fhash Q$.}
 
             \item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \abort$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
 
@@ -2656,9 +2656,10 @@ By induction on the structure of an arbitrary derivation of $\proofof{\spec{J}{P
 
 \end{proof}
 
+\pagebreak
 \section{Summary of Notation}
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \begin{tabular}{l|l|l}
 Object & Symbols & Components\\  
