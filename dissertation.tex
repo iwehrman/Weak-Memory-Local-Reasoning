@@ -684,10 +684,10 @@ The set of \emph{free variables} of a (boolean) expression $e$, written $\fv{e}$
 \end{align*}
 
 For stacks $s,s'$ and $X \subseteq \setidentifiers$, we write $s \stcong{X} s'$ if, for all $x \in X$, $s(x) = s'(x)$. The following basic lemma uses this relation to connect the static and dynamic semantics of expressions. 
-\begin{proposition}
+\begin{lemma}
 \label{lem:exp-stcong}
     If $s \stcong{\fv{e}} s'$ then $\ext{s}(e) = \ext{s'}(e)$. 
-\end{proposition}
+\end{lemma}
 
 \begin{proof}
 By induction on the structure of the expression $e$. 
@@ -843,6 +843,22 @@ The reflexive-transitive closure of the command evaluation relation, written $c,
 \end{figure}
 
 \paragraph{Static Semantics} The static semantics of expressions, primitive commands and commands, embodied here by functions $\fv{-}$ and $\mod{-}$ associating these objects to their sets of free and modified variables, respectively, are completely standard. (Especially so because there are no name-hiding operations in the language, like the aforementioned missing local variable declaration command.) For example, $\fv{\cload{x}{y+1}} = \set{x,y}$ and $\mod{\cload{x}{y+1}} = \set{x}$.  
+
+The following lemma notes some basic facts about the relationship between the step relation $\step$ and the static semantics of commands. 
+
+\begin{lemma}
+    \label{lem:step-stcong}
+    If $c,s,\mu \step c',s',\mu'$ then: 
+    \begin{itemize}
+        \item $\fv{c'} \subseteq \fv{c}$
+        \item $\mod{c'} \subseteq \mod{c}$
+        \item $s \stcong{\setidentifiers \setminus \mod{c}} s'$. 
+    \end{itemize}
+\end{lemma}
+
+\begin{proof}
+    By a straightforward induction on the derivation of $c,s,\mu \step c',s\,\mu'$. 
+\end{proof}
 
 \section{Locality and Separation}
 \label{sec:locality}
@@ -1036,7 +1052,6 @@ The meaning of the standard first-order logic formulas is as usual (i.e., classi
 \end{align*}
 Note that the above model-theoretic separation functions lift the memory-system-theoretic separation functions defined in Section~\ref{sec:locality}. In both cases, the buffer-completeness flag is set in the combined model iff it is set in either of the constituent models. Furthermore, the temporal function requires that the left-side buffer be empty whenever the right-side buffer-completeness flag is set, which corresponds to the informal requirement discussed above that writes which precede a buffer-complete state must be flushed. 
 
-
 The set of free variables of an assertion $P$, written $\fv{P}$, is defined as usual: \begin{align*}
     \fv{P \disj P} \eqdef & \fv{P} \cup \fv{P'} & \fv{P \conj P} \eqdef & \fv{P} \cup \fv{P'} \\ 
     \fv{\exists x \st P} \eqdef &\fv{P} \setminus \set{x} & \fv{\forall x \st P} \eqdef &\fv{P} \setminus \set{x} \\
@@ -1046,10 +1061,10 @@ The set of free variables of an assertion $P$, written $\fv{P}$, is defined as u
 \end{align*}
 
 The following lemma, analogous to Lemma~\ref{lem:exp-stcong}, relates the set of free variables of an assertion and the stack-component of the states that satisfy it:
-\begin{proposition}
+\begin{lemma}
 \label{lem:assertion-stcong}
     If $s \stcong{\fv{P}} s'$ then $s,\nu \satisfies P$ iff $s',\nu \satisfies P$. 
-\end{proposition}
+\end{lemma}
 \begin{proof}
 By induction on the structure of $P$, using Lemma~\ref{lem:exp-stcong} in the base cases. 
 \end{proof}
@@ -2389,12 +2404,24 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \end{lemma}
 
 \begin{proof}
-  Without loss of generality, assume $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$, with $i \notin k$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\mu_1 = (s,h_1,B_1,k_1)$ and $\mu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ for some $i \notin k$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\mu_1 = (s,h_1,B_1,k_1)$ and $\mu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
   In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1).\] Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\mu_1 \modstep \mu'_1$. By definedness of $\mu_1 \shash \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \mu'_1 \shash \mu_2$.
 
-  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2).\] Again, $i \notin k_2$, and so $\mu_2 \modstep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \mu_1 \shash \mu_2$. 
+  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2).\] Again, $i \notin k_2$, and so $\mu_2 \modstep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \mu_1 \shash \mu'_2$. 
 \end{proof}
+
+\begin{corollary}
+    \label{cor:separation-tau}
+    Suppose $\mu \taustep \mu'$. 
+    \begin{itemize}
+        \item If $\mu \in \mu_1 \ssep \mu_2$ then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \ssep \mu_2$ or there exists $\mu'_2$ such that $\mu' \in \mu_1 \ssep \mu'_2$.
+
+        \item If $\mu = \mu_1 \sseq \mu_2$ then either there exists $\mu'_1$ such that $\mu' = \mu'_1 \sseq \mu_2$ or there exists $\mu'_2$ such that $\mu' = \mu_1 \sseq \mu'_2$.
+
+        \item If $\mu = \mu_1 \ssseq \mu_2$ then either there exists $\mu'_1$ such that $\mu' = \mu'_1 \ssseq \mu_2$ or there exists $\mu'_2$ such that $\mu' = \mu_1 \ssseq \mu'_2$.
+    \end{itemize}
+\end{corollary}
 
 \begin{lemma}
   \label{lem:separation-refinement}
@@ -2404,6 +2431,19 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \begin{proof}
   By induction on the number of $\tau$ steps from $\mu$ to $\mu'$. The base case is trivial. Otherwise, assume that $\mu'' \taurefines \mu$ and $\mu'' \taustep \mu'$, and by the induction hypothesis that there exists $\mu''_1,\mu''_2$ such that $\mu''_1 \taurefines \mu_1$, $\mu''_2 \taurefines \mu_2$ and $\mu'' \in \mu''_1 \shash \mu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
 \end{proof}
+
+\begin{corollary}
+  \label{cor:separation-refinement}
+  Suppose $\mu' \taurefines \mu$. 
+  \begin{itemize}
+      \item If $\mu \in \mu_1 \ssep \mu_2$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' \in \mu'_1 \ssep \mu'_2$. 
+
+      \item If $\mu = \mu_1 \sseq \mu_2$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' = \mu'_1 \sseq \mu'_2$. 
+
+      \item If $\mu = \mu_1 \ssseq \mu_2$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' = \mu'_1 \ssseq \mu'_2$. 
+  \end{itemize}
+  
+\end{corollary}
 
 \section{Soundness}
 \label{sec:soundness-proofs}
@@ -2615,39 +2655,39 @@ For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma 
       \begin{enumerate}
             \item Suppose $c = \cskip$. By assumption, $s,\mu_R,\setprocessors \sentails R$, $\defined{\mu_R \shash \mu}$, and if $c = \cskip$ then $s,\mu,\setprocessors \sentails Q$, and so $s,\mu,\setprocessors \sentails Q$. Hence $s,(\mu_R \shash \mu),\setprocessors \sentails R \fhash Q$. \todo{FIXME: there is no formula $R \fhash Q$.}
 
-            \item Let $\sigma_0,\sigma_J,\sigma_F$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, and either $\locked{\sigma_0}$ or $\sigma_J \sentails J$. We must show that $\sigma_0 \nrightarrow \abort$. But \[ \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma)) = \sigma_J \fsep ((\sigma_F \fhash \sigma_R) \fhash \sigma),\] and so by part 2 of assumption $\safe{n+1}{c,\sigma,J,Q}$, instantiating with $\sigma_F \fhash \sigma_R$, the result holds. 
+            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash (\mu_R \shash \mu))$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. But \[ \mu_J \ssep (\mu_F \shash (\mu_R \shash \mu)) \subseteq \mu_J \ssep ((\mu_F \shash \mu_R) \shash \mu),\] and so by part 2 of assumption $\safe{n+1}{c,s,\mu,J,Q}$, instantiating with (an arbitrary element of) $\mu_F \shash \mu_R$, the result holds. 
 
-            \item Let $\sigma_0,\sigma_J,\sigma_F,\sigma_1,c'$ such that $\sigma_0 \in \sigma_J \fsep (\sigma_F \fhash (\sigma_R \fhash \sigma))$, either $\locked{\sigma_0}$ or $\sigma_J \sentails J$, and $c,\sigma_0 \step c',\sigma_1$. We must exhibit $\sigma'_J,\sigma'_F,\sigma'$ such that: \begin{enumerate}[(a)]
-                  \item $\sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash \sigma')$,
-                  \item $\sigma'_F \taurefines \sigma_F$, 
-                  \item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
-                  \item $\safe{n}{c',\sigma',J,R \fhash Q}$. 
+            \item Let $\mu_0,\mu_J,\mu_F,\mu_1,c',s'$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash (\mu_R \shash \mu))$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must exhibit $\mu'_J,\mu'_F,\mu'$ such that: \begin{enumerate}[(a)]
+                  \item $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$,
+                  \item $\mu'_F \taurefines \mu_F$, 
+                  \item either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and
+                  \item $\safe{n}{c',s',\mu',J,R \fhash Q}$. 
             \end{enumerate}
 
-            We instantiate part 3 of assumption $\safe{n+1}{c,\sigma,J,Q}$ with $\sigma_J$, $\sigma_F \fhash \sigma_R$, $\sigma_1$ and $c'$, which gives us $\sigma'_J, \sigma'_{FR}, \sigma'$ such that: \begin{enumerate}[(a)]
-                  \item $\sigma_1 \in \sigma'_J \fsep (\sigma'_{FR} \fhash \sigma')$
-                  \item $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$
-                  \item either $\locked{\sigma_1}$ or $\sigma'_J \sentails J$, and
-                  \item $\safe{n}{c',\sigma',J,Q}$.
+            We instantiate part 3 of assumption $\safe{n+1}{c,s,\mu,J,Q}$ with $\mu_J$, (an arbitrary element of) $\mu_F \shash \mu_R$, $\mu_1$, $c'$ and $s'$, which gives us $\mu'_J, \mu'_{FR}, \mu'$ such that: \begin{enumerate}[(a)]
+                  \item $\mu_1 \in \mu'_J \ssep (\mu'_{FR} \shash \mu')$
+                  \item $\mu'_{FR} \taurefines \mu_F \shash \mu_R$
+                  \item either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and
+                  \item $\safe{n}{c',s,\mu',J,Q}$.
             \end{enumerate}   
 
-            By Lemma~\ref{lem:separation-refinement} and $\sigma'_{FR} \taurefines \sigma_F \fhash \sigma_R$, there exists $\sigma'_F,\sigma'_R$ such that $\sigma'_F \taurefines \sigma_F$, $\sigma'_R \taurefines \sigma_R$ and $\sigma'_{FR} \in \sigma'_F \fhash \sigma'_R$. 
+            By Lemma~\ref{lem:separation-refinement} and $\mu'_{FR} \taurefines \mu_F \shash \mu_R$, there exists $\mu'_F,\mu'_R$ such that $\mu'_F \taurefines \mu_F$, $\mu'_R \taurefines \mu_R$ and $\mu'_{FR} \in \mu'_F \shash \mu'_R$. 
 
-            From $\sigma'_R \taurefines \sigma_R$ and $\sigma_R \sentails R$, it follows that $\sigma'_R \sentails R$. 
+            From $\mu'_R \taurefines \mu_R$ and $s,\mu_R,\setprocessors \sentails R$---as well as the assumption $\fv{R} \cap \mod{c} = \nil$ and Lemmas~\ref{lem:step-stcong} and~\ref{lem:assertion-stcong}---it follows that $s',\sigma'_R,\setprocessors \sentails R$.
 
-            Next, we wish to apply the inductive hypothesis to $\safe{n}{c',\sigma',J,Q}$ to show that $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$) and $\defined{\sigma'_R \fhash \sigma'}$. 
+            Next, we wish to apply the inductive hypothesis to $\safe{n}{c',s',\mu',J,Q}$ to show that $\safe{n}{c',s',\mu'_R \fhash \mu',J,R \fhash Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$ from Lemma~\ref{lem:step-stcong}) and $\defined{\mu'_R \shash \mu'}$. 
 
-            Returning to our original task, we exhibit $\sigma'_J$, $\sigma'_F$ and $\sigma'_R \fhash \sigma'$. By associativity and monotonicity it follows that \[ \sigma_1 \in \sigma'_J \fsep (\sigma'_F \fhash (\sigma'_R \fhash \sigma')).\] We already showed that $\sigma'_F \taurefines \sigma_F$. Either $\locked{\sigma'_J}$ or $\sigma'_J \sentails J$ by assumption. Finally $\safe{n}{c',\sigma'_R \fhash \sigma',J,R \fhash Q}$ by the inductive hypothesis above. 
+            Returning to our original task, we exhibit $\mu'_J$, $\mu'_F$ and $\mu'_R \shash \mu'$. By associativity and monotonicity it follows that \[ \mu_1 \in \mu'_J \ssep (\mu'_F \shash (\mu'_R \shash \mu')).\] We have already showed that $\mu'_F \taurefines \mu_F$. Either $\locked{\mu_1}$ or $s',\sigma'_J,\setprocessors \sentails J$ by assumption. Finally $\safe{n}{c',s',\mu'_R \shash \mu',J,R \fhash Q}$ by the inductive hypothesis above. 
       \end{enumerate}
 \end{proof}
 
 \begin{lemma}
   \label{lem:general-separation-sound}
-      If $\truespec{J}{P}{c}{Q}$ and $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
+      If $\truespec{J}{P}{c}{Q}$ and it is the case that $\fv{R} \cap \mod{c} = \nil$ then\\ $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
 \end{lemma}
 
 \begin{proof}
-      Let $\sigma \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,\sigma,J,R\fhash Q}$. From $\sigma \sentails R \fhash P$, there exists $\sigma_R \sentails R$ and $\sigma_P \sentails P$ with $\defined{\sigma_R \fhash \sigma_P}$. By assumption, $\safe{n}{c,\sigma_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
+      Let $s,\mu,\setprocessors \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,s,\mu,J,R\fhash Q}$. From $s,\mu,\setprocessors \sentails R \fhash P$, there exists $s,\mu_R,\setprocessors \sentails R$ and $s,\mu_P,\setprocessors \sentails P$ with $\defined{\mu_R \shash \mu_P}$. By assumption, $\safe{n}{c,s,\mu_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:soundness}]
