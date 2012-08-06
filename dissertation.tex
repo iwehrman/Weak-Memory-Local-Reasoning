@@ -1981,11 +1981,11 @@ Informally, $\nu_1 \modrefines \nu_2$ if $\nu_2$ can flush its buffer-complete p
 
 \begin{proposition}
   \label{lem:generalized-order-encompasses-flushing-order}
-  If $\mu_0 \taurefines \mu_1$ then for all $\Gamma_1$ there exists $\Gamma_0$ such that $(\mu_0,\Gamma_0) \modrefines (\mu_1,\Gamma_1)$. 
+  If $\mu_0 \taurefines \mu_1$ then for all $\Gamma_1$ there exists $\Gamma_0$ such that $\Gamma_0 \supseteq \Gamma_1$ and $(\mu_0,\Gamma_0) \modrefines (\mu_1,\Gamma_1)$. 
 \end{proposition}
 
 \begin{proof}
-  If $\mu_0 \taurefines \mu_1$, then there exists some sequence of memory systems such that $\mu'_0 \taustep \cdots \taustep \mu'_n$, with $\mu'_0 = \mu_1$ and $\mu'_n = \mu_0$. For each step in the above sequence, there exists a processor identifier $i$ such that $\mu'_m \pstep{\tau,i} \mu'_{m+1}$. Let $\Gamma_0$ be the set of these identifiers. 
+  If $\mu_0 \taurefines \mu_1$, then there exists some sequence of memory systems such that $\mu'_0 \taustep \cdots \taustep \mu'_n$, with $\mu'_0 = \mu_1$ and $\mu'_n = \mu_0$. For each step in the above sequence, there exists a processor identifier $i$ such that $\mu'_m \pstep{\tau,i} \mu'_{m+1}$. Let $\Gamma'$ be this set of these identifiers, and $\Gamma_0 = \Gamma_1 \cup \Gamma'$.  
 \end{proof}
 
 As in the uniprocessor semantics, a central claim is that the denotation $\pred{P}$ of each assertion $P$ is closed w.r.t.\ the generalized flushing order. 
@@ -2004,7 +2004,7 @@ An effect of this is that \emph{assertions are oblivious to the nondeterministic
 \begin{corollary}
     \label{lem:flushing-closure}
     % For any assertion $P$, $\pred{P}$ is a predicate. 
-    If $s,(\mu,\Gamma) \sentails P$ and $\mu' \taurefines \mu$ then, for some $\Gamma'$, $s,(\mu',\Gamma') \sentails P$. 
+    If $s,\mu,\Gamma \sentails P$ and $\mu' \taurefines \mu$ then there exists $\Gamma'$ such that $\Gamma' \supseteq \Gamma$ and $s,\mu',\Gamma' \sentails P$. 
 \end{corollary}
 
 \begin{proof}[Sketch]
@@ -2504,7 +2504,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
       \begin{enumerate}
             \item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $s,\mu,\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$ by hypothesis, which means there exists $\mu_w,k_w$ such that $s,\mu_w,k_w \sentails e \fwrite{e'} e''$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort. 
+            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $s,\mu,\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$ by hypothesis, which means there exists $\mu_w$ such that $s,\mu_w,\setprocessors \sentails e \fwrite{e'} e''$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort. 
 
             \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,(e \fwrite{e'} e'' \fsseq P) \conj x = e''}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
@@ -2516,16 +2516,16 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
 \begin{lemma}
     \label{lem:load-sound}
-    $\truespec{J}{x \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{x \fwrite{e'} e'' \fsseq P \conj x = e''}$ if $x \notin \fv{e,e',e'',P}$. 
+    $\truespec{J}{x \fwrite{e'} e'' \fsseq P}{\cload{x}{e}_{e'}}{(x \fwrite{e'} e'' \fsseq P) \conj x = e''}$ if $x \notin \fv{e,e',e'',P}$. 
 \end{lemma} 
 
 \begin{proof}
-    Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:load-safe}. 
+    Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:load-safe}.
 \end{proof}
 
 \begin{lemma}
     \label{lem:store-safe}
-    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. 
+    For all $n \in \setnaturals$ and $s,\mu$ with $s,\mu,\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$, it is the case that $\safe{n}{\cstore{e}{f}_{e'},s,\mu,J,\left(e \fwrite{e'} e'' \fsseq P \right) \fseq e \fwrite{e'} f}$. 
 \end{lemma}
 
 \begin{proof}
@@ -2534,45 +2534,42 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
     \begin{enumerate}
         \item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-        \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$. We must show that $c,(s,\mu_0) \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-store-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $(s,\mu) \sentails (e \fwrite{e'} e'') \fseq P$, which means there exists $\mu_w$ such that $(s,\mu_w) \sentails (e \fwrite{e'} e'')$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort.
+        \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-store-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $s,\mu,\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$, which means there exists $\mu_w$ such that $s,\mu_w,\setprocessors \sentails e \fwrite{e'} e''$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort.
 
-        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,\left((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f)\right)}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-store}. 
+        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,\left(e \fwrite{e'} e'' \fseq P\right) \fseq e \fwrite{e'} f}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-store}. 
 
-        In the case of \textsc{c-tau}, $c' = (\cstore{e}{f}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails (e \fwrite{e'} e'') \fseq P$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))}$. 
+        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,(e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f}$. 
 
-        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and $\mu_1 = \mu_0 \fseq (\nil,\beta,\nil)$, where $\beta$ defined by: \[ \beta \eqdef \fun{x} \begin{cases}
-          \ext{s}(f) & \text{if $x = \ext{s}(e)$} \\ 
-          \lnil & \text{otherwise.}
-        \end{cases}\] From $\mu_0 \in (\mu_J \fsep (\mu_F \fhash \mu))$ we have:        
+        In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and let $\mu_1 = \mu_0 \sseq \mu_w$, where $\mu_w$ models the new write, defined as follows\[ \mu_w \eqdef (\nil,\funup{\arnil}{\ptup{\ext{s}(e')}{\llit{(\ext{s}(e),\ext{s}(f))}}},\nil).\] From $\mu_0 \in (\mu_J \ssep (\mu_F \shash \mu))$ we have:        
         \Calc{ 
 
           $\mu_1$
 
           \conn{=}{definition}
 
-          $\mu_0 \fseq (\nil,\beta\nil)$
+          $\mu_0 \sseq \mu_w$
 
-          \conn{\in}{assumption $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$}
+          \conn{\in}{assumption $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$}
 
-          $(\mu_J \fsep (\mu_F \fhash \mu)) \fseq (\nil,\beta,\nil)$
+          $(\mu_J \ssep (\mu_F \shash \mu)) \sseq \mu_w$
 
           \conn{\subseteq}{algebra of separation functions}
 
-          $\mu_J \fsep (\mu_F \fhash (\mu \fseq (\nil,\beta,\nil))) $
+          $\mu_J \ssep (\mu_F \shash (\mu \sseq \mu_w)) $
 
         }
 
-         Finally, $\safe{n}{\cskip,s,(\mu \fseq (\nil,\beta,\nil)),J,((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))}$ follows from Lemma~\ref{lem:skip-safe} because $(s,(\mu \fseq (\nil,\beta,\nil))) \sentails ((e \fwrite{e'} e'') \fseq P \fseq (e \fwrite{e'} f))$, which itself is because $(s,\mu) \sentails ((e \fwrite{e'} e'') \fseq P)$.  
+         Finally, $\safe{n}{\cskip,s,\mu \sseq \mu_w,J,(e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f}$ follows from Lemma~\ref{lem:skip-safe} because $s,\mu \sseq \mu_w,\setprocessors \sentails (e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f$, which itself is because $s,\mu,\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ and $s,\mu_w,\setprocessors \sentails e \fwrite{e'} f$  
     \end{enumerate}
 \end{proof}
 
 \begin{lemma}
     \label{lem:store-sound}
-    $\truespec{J}{\left(e \fwrite{e'} e''\right) \fseq P}{\cstore{e}{f}_{e'}}{\left(e \fwrite{e'} e''\right) \fseq P \fseq \left(e \fwrite{e'} f\right)}$. 
+    $\truespec{J}{e \fwrite{e'} e'' \fsseq P}{\cstore{e}{f}_{e'}}{\left(e \fwrite{e'} e'' \fsseq P\right) \fseq e \fwrite{e'} f}$. 
 \end{lemma} 
 
 \begin{proof}
-    Immediate from Lemma~\ref{lem:store-safe}. 
+    Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:store-safe}. 
 \end{proof}
 
 \begin{lemma}
@@ -2733,7 +2730,7 @@ Assertions (as invariants) & $I,J$ \\
 \bibliographystyle{abbrv} 
 
 \begin{thesisauthorvita}
-    Ian Wehrman was born in St.\ Louis, Missouri on June 7, 1980. He received his B.Sc.\ in Computer Science from Webster University in 2004, and his M.Sc.\ in Computer Science from Washington University in St.\ Louis in 2006. His thesis described the application of automated term-rewriting termination checkers to the word problem in automated deduction. Later in 2006, he entered the doctoral program in Computer Science at the University of Texas at Austin, where he studied models and logics for concurrency. He received a Ph.D for this work in 2012.
+    Ian Wehrman was born in St.\ Louis, Missouri on June 7, 1980. He received his B.Sc.\ in Computer Science from Webster University in 2004, and his M.Sc.\ in Computer Science from Washington University in St.\ Louis in 2006. His thesis described the application of automated term-rewriting termination checkers to the word problem in automated deduction. Later in 2006, he entered the doctoral program in Computer Science at the University of Texas at Austin, where he studied models and logics for concurrency. He received a Ph.D 2012 for his work on logics for local reasoning about concurrent programs interacting with an x86-like model of memory.
 \end{thesisauthorvita}
 
 \end{document}                       %% Done.
