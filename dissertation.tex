@@ -169,7 +169,7 @@
 Here are some acknowledgements. 
 \end{thesisacknowledgments}
 
-\begin{thesisabstract}
+\begin{thesisabstract} 
     Program logics are formal logics designed to facilitate specification and correctness reasoning for software programs. Separation logic, a recent program logic for C-like programs, has found great success in automated verification due in large part to its embodiment of the principle of local reasoning, in which specifications and proofs are restricted to just those resources---variables, shared memory addresses, locks, etc.---used by the program during execution. Existing program logics make the strong assumption that all threads agree on the values of shared memory at all times. But, on modern computer architectures, this assumption is unsound for certain shared-memory concurrent programs: namely, those with races. Typically races are considered to be errors, but some programs, like fine-grained concurrent data structures, are necessarily racy. Verification of these difficult programs must take into account the weaker model of memory provided by the architecture on which they execute. This dissertation project seeks to explicate a local reasoning principle tailored for the x86-like architectures. This principle is demonstrated with a new program logic for fine-grained concurrent C-like programs, which incorporates ideas from separation logic. The goal of the logic is to allow verification of racy programs like concurrent data structures for which no general-purpose high-level verification techniques exist. 
 \end{thesisabstract}
 
@@ -2510,7 +2510,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
       \begin{enumerate}
             \item The command is not equal to $\cskip$, so this part holds vacuously. 
 
-            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $s,\mu,\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$ by hypothesis, which means there exists $\mu_w$ such that $s,\mu_w,\setprocessors \sentails e \fwrite{e'} e''$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so $\ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}$. Hence, the command cannot abort. 
+            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. The only aborting step possible is via \textsc{c-prim-a} by way of \textsc{p-load-a}. This requires that $\ext{s}(e) \notin \dom{h \override \funof{B(\ext{s}(e'))}}$. But $s,\mu,\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$ by hypothesis, which means there exists $\mu_w$ such that $s,\mu_w,\setprocessors \sentails e \fwrite{e'} e''$ and $\dom{\restrict{\mu_w}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu}{\ext{s}(e')}} \subseteq \dom{\restrict{\mu_0}{\ext{s}(e')}}$. But $\ext{s}(e) \in \dom{\restrict{\mu_w}{\ext{s}(e')}}$, and so \[ \ext{s}(e) \in \dom{h \override \funof{B(\ext{s}(e'))}}.\] Hence, the command cannot abort. 
 
             \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,(e \fwrite{e'} e'' \fsseq P) \conj x = e''}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
@@ -2580,7 +2580,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
 \begin{lemma}
     \label{lem:lock-safe}
-    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \femp$, \\ $\safe{n}{\clock_{e},s,\mu,J,\flock{e}}$. 
+    For all $n \in \setnaturals$ and $s,\mu$ such that $s,\mu,\setprocessors \sentails \femp$ it is the case that $\safe{n}{\clock_{e},s,\mu,J,\flock{e}}$. 
 \end{lemma}
 
 \begin{proof}
@@ -2591,11 +2591,11 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
         \item There are no aborting steps possible from command $\clock_e$. 
 
-        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,\flock{e}}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-lock}. 
+        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,\flock{e}}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-lock}. 
 
-        In the case of \textsc{c-tau}, $c' = (\clock_{e})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails \femp$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,\flock{e}}$. 
+        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails \femp$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,\flock{e}}$. 
 
-        In the case of \textsc{c-prim} and \textsc{p-lock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\setprocessors \setminus \set{\ext{s}(e)})$, assuming $\mu_0 = (h_0,B_0,k_0)$. By assumption, $k_0 = \nil$, and so from $\mu_0  \in (\mu_J \fsep (\mu_F \fhash \mu))$, we have that $\mu = (h,B,\nil)$. Let $\mu' = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$. Then from $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$ and $k_0 = \nil$, we also have $\mu_1 \in \mu_J \fsep (\mu_F \fhash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\flock{e}}$ follows from Lemma~\ref{lem:skip-safe} because $(s,\mu') \sentails \flock{e}$, which itself is because $(s,\mu) \sentails \femp$.  
+        In the case of \textsc{c-prim} and \textsc{p-lock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\setprocessors \setminus \set{\ext{s}(e)})$, assuming $\mu_0 = (h_0,B_0,K_0)$. By assumption, $K_0 = \nil$, and so from $\mu_0  \in \mu_J \ssep (\mu_F \shash \mu)$, we have that $\mu = (h,B,\nil)$ for some $h,B$. Let $\mu' = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$. Then from $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$ and $K_0 = \nil$, we also have $\mu_1 \in \mu_J \ssep (\mu_F \shash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\flock{e}}$ follows from Lemma~\ref{lem:skip-safe} because $s,\mu',\setprocessors \sentails \flock{e}$, which itself is because $s,\mu,\setprocessors \sentails \femp$.  
 
     \end{enumerate}
 \end{proof}
@@ -2606,12 +2606,12 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 \end{lemma} 
 
 \begin{proof}
-    Immediate from Lemma~\ref{lem:lock-safe}. 
+    Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:lock-safe}. 
 \end{proof}
 
 \begin{lemma}
     \label{lem:unlock-safe}
-    For all $n \in \setnaturals$ and $(s,\mu)$ such that $(s,\mu) \sentails \flock{e}$, \\ $\safe{n}{\cunlock_{e},s,\mu,J,\femp}$. 
+    For all $n \in \setnaturals$ and $s,\mu$ such that $s,\mu,\setprocessors \sentails \flock{e}$ it is the case that $\safe{n}{\cunlock_{e},s,\mu,J,\femp}$. 
 \end{lemma}
 
 \begin{proof}
@@ -2622,11 +2622,11 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
         \item There are no aborting steps possible from command $\cunlock_e$. 
 
-        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $(s,\mu_J) \sentails J$, and $c,(s,\mu_0) \step c',(s',\mu_1)$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \fsep (\mu'_F \fhash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $(s',\mu'_J) \sentails J$, and $\safe{n}{c_1,s',\mu',J,\flock{e}}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-unlock}. 
+        \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,\femp}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-unlock}. 
 
-        In the case of \textsc{c-tau}, $c' = (\clock_{e})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $(s,\mu') \sentails \flock{e}$ and $(s,\mu'_J) \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,\femp}$. 
+        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails \flock{e}$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,\femp}$. 
 
-        In the case of \textsc{c-prim} and \textsc{p-unlock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\nil)$, assuming $\mu_0 = (h_0,B_0,k_0)$. By assumption, $k_0 = \setprocessors \setminus \set{\ext{s}(e)}$, and so from $\mu_0  \in (\mu_J \fsep (\mu_F \fhash \mu))$, we have that $\mu = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$. Let $\mu' = (h,B,\nil)$. Then from $\mu_0 \in \mu_J \fsep (\mu_F \fhash \mu)$ and $k_0 = \setprocessors \setminus \set{\ext{s}(e)}$, we also have $\mu_1 \in \mu_J \fsep (\mu_F \fhash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\femp}$ follows from Lemma~\ref{lem:skip-safe} because $(s,\mu') \sentails \femp$, which itself is because $(s,\mu) \sentails \flock{e}$.  
+        In the case of \textsc{c-prim} and \textsc{p-unlock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\nil)$, assuming $\mu_0 = (h_0,B_0,K_0)$. By assumption, $K_0 = \setprocessors \setminus \set{\ext{s}(e)}$, and so from $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, we have that $\mu = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$ for some $h,B$. Let $\mu' = (h,B,\nil)$. Then from $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$ and $K_0 = \setprocessors \setminus \set{\ext{s}(e)}$, we also have $\mu_1 \in \mu_J \ssep (\mu_F \shash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\femp}$ follows from Lemma~\ref{lem:skip-safe} because $s,\mu',\setprocessors \sentails \femp$, which itself is because $s,\mu,\setprocessors \sentails \flock{e}$.  
 
     \end{enumerate}
 \end{proof}
@@ -2637,7 +2637,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 \end{lemma} 
 
 \begin{proof}
-    Immediate from Lemma~\ref{lem:unlock-safe}. 
+    Immediate from Lemmas~\ref{lem:safety-soundness} and~\ref{lem:unlock-safe}. 
 \end{proof}
 
 \subsection{Soundness of the Inference Rules}
@@ -2703,6 +2703,10 @@ By induction on the structure of an arbitrary derivation of $\proofof{\spec{J}{P
 
 \pagebreak
 \section{Summary of Notation}
+
+Mathematical function and predicate symbols are written in an \textit{italic} face. Programing language primitives are written in a \textsf{sans-serif} face. Atomic formulas are written in a \textbf{bold serif} face. 
+
+The symbols that are typically used to denote particular objects are listed in Figure~\ref{fig:objects-and-symbols}. 
 
 \begin{figure}[h]
 \centering
