@@ -2398,6 +2398,8 @@ Although one could imagine changing or improving many aspects of this logic, it 
 \chapter{Proofs}
 \label{ch:proofs}
 
+This chapter contains proofs of various results about the assertion and program logics. Section~\ref{sec:flushing-closure-proofs} describes results about closure properties of the models of the separating conjunctions, and Section~\ref{sec:soundness-proofs} describes results about the soundness of the program logic w.r.t.\ the model given in Chapter~\ref{ch:multiprocessor}. 
+
 \section{Flushing Closure Proofs}
 \label{sec:flushing-closure-proofs}
 
@@ -2405,16 +2407,27 @@ Although one could imagine changing or improving many aspects of this logic, it 
 The following lemma describes a crucial relationship between spatiotemporal separation and the flushing relation. 
 
 \begin{lemma}
-  \label{lem:separation-tau}
+  \label{lem:spatiotemporal-separation-tau}
   If $\mu \in \mu_1 \shash \mu_2$ and $\mu \taustep \mu'$, then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \shash \mu_2$, or there exists $\mu'_2$ such that $\mu' \in \mu_1 \shash \mu'_2$.
 \end{lemma}
 
 \begin{proof}
-  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (s,h_1,B_1,K_1)$ and $\mu_2 = (s,h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (h_1,B_1,K_1)$ and $\mu_2 = (h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By definedness of $\mu_1 \shash \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in K$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},K) \in \mu'_1 \shash \mu_2$.
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let \[\mu'_1 = (\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By definedness of $\mu_1 \shash \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in K$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that
+  \begin{align*}
+    \mu' & = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K) \\ 
+         & = (\funup{h_1}{\ptup{\ell}{v}} \override h_2,\funup{B}{\ptup{i}{b}},K_1 \uplus K_2) \\ 
+         & \in (\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1) \shash (h_2,B_2,K_2) \\ 
+         & = \mu'_1 \shash \mu_2.
+  \end{align*}
 
-  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Again, $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},K) \in \mu_1 \shash \mu'_2$. 
+  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Again, $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that \begin{align*}
+    \mu' & = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K) \\ 
+         & = (h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},K_1 \uplus K_2) \\ 
+         & \in (h_1,B_1,K_1) \shash (\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2)\\ 
+         & = \mu_1 \shash \mu'_2.
+  \end{align*}
 \end{proof}
 
 \begin{lemma}
@@ -2423,11 +2436,17 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \end{lemma}
 
 \begin{proof}
-  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \uplus h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \merge B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (s,h_1,B_1,K_1)$ and $\mu_2 = (s,h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \uplus h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \merge B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (h_1,B_1,K_1)$ and $\mu_2 = (h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \merge B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By $\mu_1 \compat_\sepsym \mu_2$ and $\ell \in \dom{\mu_1}$ we have $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \uplus h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \uplus h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \uplus h_2, \funup{B}{\ptup{i}{b}},K) \in \mu'_1 \ssep \mu_2$.
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \merge B_2(i)$. Let \[\mu'_1 = (\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By $\mu_1 \compat_\sepsym \mu_2$ and $\ell \in \dom{\mu_1}$ we have $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \uplus h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \uplus h_2$. It follows that
+  \begin{align*}
+    \mu' & = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K) \\ 
+         & = (\funup{h_1}{\ptup{\ell}{v}} \uplus h_2,\funup{B}{\ptup{i}{b}},K_1 \uplus K_2) \\ 
+         & \in (\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1) \ssep (h_2,B_2,K_2) \\ 
+         & = \mu'_1 \ssep \mu_2.
+  \end{align*}
 
-  The other case is symmetric. 
+  The second case is symmetric. 
 \end{proof}
 
 \begin{lemma}
@@ -2436,53 +2455,25 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 \end{lemma}
 
 \begin{proof}
-  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b = B_1(i) \lapp B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (s,h_1,B_1,K_1)$ and $\mu_2 = (s,h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b = B_1(i) \lapp B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (h_1,B_1,K_1)$ and $\mu_2 = (h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b = b'_1 \lapp B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By $\mu_1 \compat_\seqsym \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in K$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that \begin{align*}
-     \mu'_1 \sseq \mu_2 & = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B_1}{\ptup{i}{b'_1}} \lapp B_2 ,K_1 \uplus K_2)\\ & = (s,\funup{(h_1 \override h_2)}{\ptup{\ell}{v}}, \funup{B}{\ptup{i}{b}},K) \\ & = \mu'.
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b = b'_1 \lapp B_2(i)$. Let \[\mu'_1 = (\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By $\mu_1 \compat_\seqsym \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in K$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that \begin{align*}
+     \mu'_1 \sseq \mu_2 & = (\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B_1}{\ptup{i}{b'_1}} \lapp B_2 ,K_1 \uplus K_2)\\ & = (\funup{(h_1 \override h_2)}{\ptup{\ell}{v}}, \funup{B}{\ptup{i}{b}},K) \\ & = \mu'.
   \end{align*}
 
-   In the second case, $B_2(i) = (\ell,v) \lcons b_2'$, $B_1(i) = \lnil$ and $b = b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. By definition of function overriding, $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override \funup{h_2}{\ptup{\ell}{v}}$. It follows that \begin{align*}
-      \mu_1 \sseq \mu'_2 & = (s,h_1 \override \funup{h_2}{\ptup{\ell}{v}}, B_1 \lapp \funup{B_2}{\ptup{i}{b'_2}}, K_1 \uplus K_2)\\ & = (s,\funup{(h_1 \override h_2)}{\ptup{\ell}{v}}, \funup{B}{\ptup{i}{b}},K) \\ & = \mu'.
+   In the second case, $B_2(i) = (\ell,v) \lcons b_2'$, $B_1(i) = \lnil$ and $b = b'_2$. Let \[\mu'_2 = (\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. By definition of function overriding, $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override \funup{h_2}{\ptup{\ell}{v}}$. It follows that \begin{align*}
+      \mu_1 \sseq \mu'_2 & = (h_1 \override \funup{h_2}{\ptup{\ell}{v}}, B_1 \lapp \funup{B_2}{\ptup{i}{b'_2}}, K_1 \uplus K_2)\\ & = (\funup{(h_1 \override h_2)}{\ptup{\ell}{v}}, \funup{B}{\ptup{i}{b}},K) \\ & = \mu'.
   \end{align*}
-
-  % In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Again, $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b'_1}},K) \in \mu_1 \shash \mu'_2$. 
 \end{proof}
-
-
-\begin{corollary}
-    \label{cor:separation-tau}
-    Suppose $\mu \taustep \mu'$. 
-    \begin{itemize}
-        \item If $\mu \in \mu_1 \ssep \mu_2$ then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \ssep \mu_2$ or there exists $\mu'_2$ such that $\mu' \in \mu_1 \ssep \mu'_2$.
-
-        \item If $\mu = \mu_1 \sseq \mu_2$ then either there exists $\mu'_1$ such that $\mu' = \mu'_1 \sseq \mu_2$ or there exists $\mu'_2$ such that $\mu' = \mu_1 \sseq \mu'_2$.
-
-        \item If $\mu = \mu_1 \ssseq \mu_2$ then either there exists $\mu'_1$ such that $\mu' = \mu'_1 \ssseq \mu_2$ or there exists $\mu'_2$ such that $\mu' = \mu_1 \ssseq \mu'_2$.
-    \end{itemize}
-\end{corollary}
 
 \begin{lemma}
   \label{lem:separation-refinement}
-  If $\mu \in \mu_1 \shash \mu_2$ and $\mu' \taurefines \mu$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' \in \mu'_1 \shash \mu'_2$. 
+  If $\mu \in \mu_1 \sgen \mu_2$, for $\gensym \in \set{(\hashsym),(\sepsym),(\seqsym),(\sseqsym)}$, and $\mu' \taurefines \mu$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' \in \mu'_1 \sgen \mu'_2$. 
 \end{lemma}
 
 \begin{proof}
-  By induction on the number of $\tau$ steps from $\mu$ to $\mu'$. The base case is trivial. Otherwise, assume that $\mu'' \taurefines \mu$ and $\mu'' \taustep \mu'$, and by the induction hypothesis that there exists $\mu''_1,\mu''_2$ such that $\mu''_1 \taurefines \mu_1$, $\mu''_2 \taurefines \mu_2$ and $\mu'' \in \mu''_1 \shash \mu''_2$. In which case the result follows from Lemma~\ref{lem:separation-tau} and transitivity of $\taurefines$.
+  By induction on the number of $\tau$ steps from $\mu$ to $\mu'$. The base case is trivial. Otherwise, assume that $\mu'' \taurefines \mu$ and $\mu'' \taustep \mu'$, and by the induction hypothesis that there exists $\mu''_1,\mu''_2$ such that $\mu''_1 \taurefines \mu_1$, $\mu''_2 \taurefines \mu_2$ and $\mu'' \in \mu''_1 \sgen \mu''_2$. In which case the result follows from one of Lemmas~\ref{lem:spatiotemporal-separation-tau},~\ref{lem:spatial-separation-tau} or~\ref{lem:temporal-separation-tau}, and by transitivity of $\taurefines$.
 \end{proof}
-
-\begin{corollary}
-  \label{cor:separation-refinement}
-  Suppose $\mu' \taurefines \mu$. 
-  \begin{itemize}
-      \item If $\mu \in \mu_1 \ssep \mu_2$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' \in \mu'_1 \ssep \mu'_2$. 
-
-      \item If $\mu = \mu_1 \sseq \mu_2$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' = \mu'_1 \sseq \mu'_2$. 
-
-      \item If $\mu = \mu_1 \ssseq \mu_2$ then there exists $\mu'_1,\mu'_2$ such that $\mu'_1 \taurefines \mu_1$, $\mu'_2 \taurefines \mu_2$ and $\mu' = \mu'_1 \ssseq \mu'_2$. 
-  \end{itemize}
-  
-\end{corollary}
 
 \section{Soundness Proofs}
 \label{sec:soundness-proofs}
@@ -2547,7 +2538,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
             \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,(e \fwrite{e'} e'' \fsseq P) \conj x = e''}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-load}. 
 
-            In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,(e \fwrite{e'} e'' \fsseq P) \conj x = e''}$. 
+            In the case of \textsc{c-tau}, $c' = (\cload{x}{e}_{e'})$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-refinement} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails (e \fwrite{e'} e'') \fsseq P$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,(e \fwrite{e'} e'' \fsseq P) \conj x = e''}$. 
 
             In the case of \textsc{c-prim} and \textsc{p-load}, $c' = \cskip$, $s' = \funup{s}{\ptup{x}{v}}$ and $\mu_1 = \mu_0$, assuming $\mu_0 = (h_0,B_0,k_0)$ and $(h_0 \override \funof{B_0(\ext{s}(e'))})(\ext{s}(e)) = v$. Let $\mu'_J = \mu_J$, $\mu'_F = \mu_F$ and $\mu' = \mu$. Then $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$ by assumption, $\mu'_F \taurefines \mu_F$ by reflexivity, $s',\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$ because $x \notin \fv{J}$ and by Lemmas~\ref{lem:step-stcong} and~\ref{lem:assertion-stcong}. Finally, $\safe{n}{\cskip,s',\mu',J,((e \fwrite{e'} e'') \fsseq P \conj x = e'')}$ follows from Lemma~\ref{lem:skip-safe} because $s',\mu',\setprocessors = \funup{s}{\ptup{x}{v}},\mu,\setprocessors \sentails (e \fwrite{e'} e'' \fsseq P) \conj x = e''$, which itself is because $s,\mu,\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ with $x \notin \fv{e,e',e'',P}$. 
       \end{enumerate}
@@ -2577,7 +2568,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
         \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,\left(e \fwrite{e'} e'' \fseq P\right) \fseq e \fwrite{e'} f}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-store}. 
 
-        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,(e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f}$. 
+        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-refinement} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c,s,\mu',J,(e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f}$. 
 
         In the case of \textsc{c-prim} and \textsc{p-store}, $c' = \cskip$, $s' = s$ and let $\mu_1 = \mu_0 \sseq \mu_w$, where $\mu_w$ models the new write, defined as follows\[ \mu_w \eqdef (\nil,\funup{\arnil}{\ptup{\ext{s}(e')}{\llit{(\ext{s}(e),\ext{s}(f))}}},\nil).\] From $\mu_0 \in (\mu_J \ssep (\mu_F \shash \mu))$ we have:        
         \Calc{ 
@@ -2626,7 +2617,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
         \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,\flock{e}}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-lock}. 
 
-        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails \femp$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,\flock{e}}$. 
+        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-refinement} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails \femp$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,\flock{e}}$. 
 
         In the case of \textsc{c-prim} and \textsc{p-lock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\setprocessors \setminus \set{\ext{s}(e)})$, assuming $\mu_0 = (h_0,B_0,K_0)$. By assumption, $K_0 = \nil$, and so from $\mu_0  \in \mu_J \ssep (\mu_F \shash \mu)$, we have that $\mu = (h,B,\nil)$ for some $h,B$. Let $\mu' = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$. Then from $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$ and $K_0 = \nil$, we also have $\mu_1 \in \mu_J \ssep (\mu_F \shash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\flock{e}}$ follows from Lemma~\ref{lem:skip-safe} because $s,\mu',\setprocessors \sentails \flock{e}$, which itself is because $s,\mu,\setprocessors \sentails \femp$.  
 
@@ -2657,7 +2648,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
         \item Let $\mu_0,\mu_J,\mu_F,c',s',\mu_1$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, $\lockcomplete{\mu_0}$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must show $\mu'_J,\mu'_F,\mu'$ such that $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$, $\mu'_F \taurefines \mu_F$, either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and $\safe{n}{c',s',\mu',J,\femp}$. The evaluation step is either by \textsc{c-tau} or \textsc{c-prim} by way of \textsc{p-unlock}. 
 
-        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-tau} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails \flock{e}$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,\femp}$. 
+        In the case of \textsc{c-tau}, $c' = c$, $s' = s$ and $\mu_1 \taurefines \mu_0$. By Lemma~\ref{lem:separation-refinement} there exists $\mu'_J,\mu'_F,\mu'$ such that $\mu'_J \taurefines \mu_J$, $\mu'_F \taurefines \mu_F$ and $\mu' \taurefines \mu$. By Lemma~\ref{lem:flushing-closure}, $s,\mu',\setprocessors \sentails \flock{e}$ and $s,\mu'_J,\setprocessors \sentails J$ if not $\locked{\mu_1}$. It follows from the inductive hypothesis that $\safe{n}{c',s',\mu',J,\femp}$. 
 
         In the case of \textsc{c-prim} and \textsc{p-unlock}, $c' = \cskip$, $s' = s$ and $\mu_1 = (h_0,B_0,\nil)$, assuming $\mu_0 = (h_0,B_0,K_0)$. By assumption, $K_0 = \setprocessors \setminus \set{\ext{s}(e)}$, and so from $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$, we have that $\mu = (h,B,\setprocessors \setminus \set{\ext{s}(e)})$ for some $h,B$. Let $\mu' = (h,B,\nil)$. Then from $\mu_0 \in \mu_J \ssep (\mu_F \shash \mu)$ and $K_0 = \setprocessors \setminus \set{\ext{s}(e)}$, we also have $\mu_1 \in \mu_J \ssep (\mu_F \shash \mu')$. Finally, $\safe{n}{\cskip,s,\mu',J,\femp}$ follows from Lemma~\ref{lem:skip-safe} because $s,\mu',\setprocessors \sentails \femp$, which itself is because $s,\mu,\setprocessors \sentails \flock{e}$.  
 
