@@ -1378,8 +1378,8 @@ Next consider the program $c_r$, which reads the same memory location while hold
 
 The parallel composition of these commands, $c_s \oppar c_r$, is a very simple message-passing program. The sending thread $c_s$ communicates to the receiving thread by setting a flag at address $d$. If the receiving thread loads the address $d$ and observes that the flag has been set, then it knows something about the progress of the sending thread: namely, that it completed execution up to and including the location of the flag setting in the program order. In this particular program, if the receiver observes that the flag has been set then the receiver may claim sole ownership of the address $d$ and may read and write to it without concern of future interference, and hence without first having acquired the global memory lock.
 
-We might like to prove such a specification: i.e., assuming $d \fpointsto 0$ and $x = 0$ holds initially, that the composition is safe and that $d \fpointsto (x+1)$ holds upon termination: \begin{align}
-\label{eq:conc-ex-spec} \spec{}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)}\end{align} In the concurrent program logic, however, specifications distinguish between private state, which is only accessible to the specified command, and shared state, which is accessible to the environment at large. Private state is still described with pre- and post-conditions, but the shared state is described using a single assertion, which must be maintained as an invariant throughout the specified command's execution. We write $\spec{J}{P}{c}{Q}$ for the specification of a (possibly) concurrent command $c$ with shared state described by invariant assertion $J$, local pre-condition $P$ and local post-condition $Q$. The specification in Equation~\ref{eq:conc-ex-spec} is completely private to the parallel command $c_s \oppar c_r$, and so the shared invariant is simply $\femp$, an assertion that describes no memory addresses. Thus, the revised specification is: \begin{align}\label{eq:conc-ex-spec-rev} \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)}\end{align}
+We might like to prove such a specification: i.e., assuming $d \fpointsto 0$ and $x = 0$ holds initially, that the composition is safe and that $d \fpointsto x+1$ holds upon termination: \begin{align}
+\label{eq:conc-ex-spec} \spec{}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto x+1}\end{align} In the concurrent program logic, however, specifications distinguish between private state, which is only accessible to the specified command, and shared state, which is accessible to the environment at large. Private state is still described with pre- and post-conditions, but the shared state is described using a single assertion, which must be maintained as an invariant throughout the specified command's execution. We write $\spec{J}{P}{c}{Q}$ for the specification of a (possibly) concurrent command $c$ with shared state described by invariant assertion $J$, local pre-condition $P$ and local post-condition $Q$. The specification in Equation~\ref{eq:conc-ex-spec} is completely private to the parallel command $c_s \oppar c_r$, and so the shared invariant is simply $\femp$, an assertion that describes no memory addresses. Thus, the revised specification is: \begin{align}\label{eq:conc-ex-spec-rev} \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto x+1}\end{align}
 
 From the perspective of the constituent commands $c_s$ and $c_r$, however, the memory at address $d$ must be considered shared because neither command makes sole use of the memory at that address. Hence, to prove specifications of the constituent commands, we must describe the evolution of the memory at address $d$ using an invariant assertion and then show that both commands maintain that invariant. 
 
@@ -1406,7 +1406,7 @@ The pre-condition can then be strengthened and the post-condition weakened using
 s = 0 \conj x = 0 \conj d \fpointsto 0 & \sentails I \fsep P_s \fsep P_r \\ 
 I \fsep Q_s \fsep Q_r & \sentails d \fpointsto (x + 1)
 \end{align*} With a final inference rule (\textsc{aux})\footnote{No attempt is made here to formalize the notion of auxiliary variable or the auxiliary variable elimination rule.} we remove any mention of auxiliary variables from the commands and assertions, giving the following derivation of the desired specification from Equation~\ref{eq:conc-ex-spec-rev}: 
-\[ \infer[\textsc{aux}]{ \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \conj x = 0 \conj d \fpointsto 0}{c'_s \oppar c_r}{d \fpointsto (x+1)} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }}}}\]
+\[ \infer[\textsc{aux}]{ \spec{\femp}{x = 0 \conj d \fpointsto 0}{c_s \oppar c_r}{d \fpointsto x+1} }{\infer[\textsc{cons}]{ \spec{\femp}{s = 0 \conj x = 0 \conj d \fpointsto 0}{c'_s \oppar c_r}{d \fpointsto x+1} }{\infer[\textsc{share}]{ \spec{\femp}{I \fsep P_s \fsep P_r}{c'_s \oppar c_r}{I \fsep Q_s \fsep Q_r} }{\infer[\textsc{par}]{\spec{I}{P_s \fsep P_r}{c'_s \oppar c_r}{Q_s \fsep Q_r}}{ \infer{\spec{I}{P_s}{c'_s}{Q_s}}{\vdots} & \infer{\spec{I}{P_r}{c_r}{Q_r}}{\vdots} }}}}\]
 
 It remains to show that the sequential commands $c'_s$ and $c_r$ satisfy their individual specifications, each maintaining the invariant $I$ along the way. The specification of $c'_s$ follows from an application of the inference rule (\textsc{atomic}) for well-locked commands: \[ \infer[\textsc{atomic}]{\spec{I}{P_s}{\clock_0 \opseq c \opseq \cunlock_0}{Q_s} }{\spec{\femp}{(\flock{0} \fsep I \fsep P_s) \fseq \fbar{0}}{c}{(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}}}\] where we abbreviate $\cstore{d}{1}_0 \opseq \cassign{s}{1}_0$ as $c$ above. 
 
@@ -1527,31 +1527,31 @@ The definition of the semantic relation for primitive commands, which is given w
 
             \vspace{1em}
 
-            \infrule[p-load]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = v$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,K)}
+            \infrule[p-load]{\text{if $(h \override \funof{B(i)})(\ext{s}(e)) = v$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} (\funup{s}{\ptup{x}{v}},h,B,K)}
 
             \vspace{1em}
 
-            \infrule[p-load-a]{\text{if $(h \override \funof{B_i})(\ext{s}(e)) = \bot$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} \abort}
+            \infrule[p-load-a]{\text{if $(h \override \funof{B(i)})(\ext{s}(e)) = \bot$ and $i \notin K$}}{\cload{x}{e} :(s,h,B,K) \pstep{i} \abort}
             
             \vspace{1em}
 
-            \infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} (s,h,\funup{B}{\ptup{i}{B_i \lapp \llit{\ext{s}(e),\ext{s}(e')}}},K)}
+            \infrule[p-store]{\text{if $\ext{s}(e) \in \dom{h \override \funof{B(i)}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} (s,h,\funup{B}{\ptup{i}{B(i) \lapp \llit{\ext{s}(e),\ext{s}(e')}}},K)}
             
             \vspace{1em}
 
-            \infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B_i}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} \abort}
+            \infrule[p-store-a]{\text{if $\ext{s}(e) \notin \dom{h \override \funof{B(i)}}$}}{\cstore{e}{e'} :(s,h,B,K) \pstep{i} \abort}
             
             \vspace{1em}
 
-            \infrule[p-fence]{\text{if $B_i = \lnil$}}{\cfence :(s,h,B,K) \pstep{i} (s,h,B,K)}
+            \infrule[p-fence]{\text{if $B(i) = \lnil$}}{\cfence :(s,h,B,K) \pstep{i} (s,h,B,K)}
             
             \vspace{1em}
 
-            \infrule[p-lock]{\text{if $B_i = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\setprocessors \setminus \set{i})}
+            \infrule[p-lock]{\text{if $B(i) = \lnil$}}{\clock :(s,h,B,\nil) \pstep{i} (s,h,B,\setprocessors \setminus \set{i})}
             
             \vspace{1em}
 
-            \infrule[p-unlock]{\text{if $B_i = \lnil$}}{\cunlock :(s,h,B,\setprocessors \setminus \set{i}) \pstep{i} (s,h,B,\nil)}
+            \infrule[p-unlock]{\text{if $B(i) = \lnil$}}{\cunlock :(s,h,B,\setprocessors \setminus \set{i}) \pstep{i} (s,h,B,\nil)}
       \end{minipage}
       \caption{\label{fig:primitive-semantics} Semantics of concurrent primitive commands}
 \end{figure}
@@ -1562,9 +1562,9 @@ The formal language of commands is defined by the following grammar: \[ \comms~c
 
 The formal semantics of a single, atomic, successful step of execution by a command is given as a transition relation between command-state pairs: \[ c,\sigma \step c',\sigma'.\] Such an entry may interpreted to mean that a command $c$ in state $\sigma$ may take a step of evaluation, transforming to command $c'$ in an updated state $\sigma'$. But the evaluation of a command may abort unsuccessfully as well, as for primitive commands. Unsuccessful executions are modeled by transitions from command-state pairs to the erroneous pseudo-state $\abort$, again as for primitive commands: \[ c,\sigma \step \abort. \] We refer collectively to command-state pairs and the erroneous state $\abort$ as \emph{configurations}, and use $\mathcal{C}$ to indicate a configuration. 
 
-The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,B,K) \pstep{\tau,i} (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K) \iffdef & B_i = \llit{(\ell,v)} \lapp b \conj i \notin K \\ 
+The semantics of commands also encompasses ``silent'' transitions, which represent the flushing of buffered writes to the shared memory as allowed by the memory model. This flushing is described by a relation $\taustep$ between memory systems\footnote{As noted earlier, we abuse notation by interchanging the concept of state and memory system in definitions for which the stack is irrelevant. Hence, the definition of the relation between memory systems  also constitutes the definition of a relation between states such that $(s,\mu) \taustep (s,\mu')$ iff $\mu \taustep \mu'$.} defined as follows: \begin{align*} (h,B,K) \pstep{\tau,i} (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K) \iffdef & B(i) = \llit{(\ell,v)} \lapp b \conj i \notin K \\ 
 \mu \taustep \mu' \iffdef & \exists i \in  \setprocessors \st \mu \pstep{\tau,i} \mu'
-\end{align*} We write $\taurefines$ for the reflexive-transitive closure of the converse of $\taustep$: \[ \mu \taurefines \mu' \iffdef \mu' \rtcl{\taustep} \mu.\]
+\end{align*} We write $\taurefines$ for the reflexive-transitive closure of the converse of $\taustep$: \[ \mu' \taurefines \mu \iffdef \mu \rtcl{\taustep} \mu'.\]
 
 The complete relation that defines the semantics of commands is given in Figure~\ref{fig:command-semantics} below. 
 
