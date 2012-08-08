@@ -2398,7 +2398,7 @@ Although one could imagine changing or improving many aspects of this logic, it 
 \chapter{Proofs}
 \label{ch:proofs}
 
-\section{Flushing Closure}
+\section{Flushing Closure Proofs}
 \label{sec:flushing-closure-proofs}
 
 
@@ -2406,16 +2406,49 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
 
 \begin{lemma}
   \label{lem:separation-tau}
-  If $\mu \in \mu_1 \shash \mu_2$ and $\mu \modstep \mu'$, then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \shash \mu_2$, or there exists $\mu'_2$ such that $\mu' \in \mu_1 \shash \mu'_2$.
+  If $\mu \in \mu_1 \shash \mu_2$ and $\mu \taustep \mu'$, then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \shash \mu_2$, or there exists $\mu'_2$ such that $\mu' \in \mu_1 \shash \mu'_2$.
 \end{lemma}
 
 \begin{proof}
-  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},k)$ for some $i \notin k$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},k)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $k = k_1 \uplus k_2$, assuming $\mu_1 = (s,h_1,B_1,k_1)$ and $\mu_2 = (s,h_2,B_2,k_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \override B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (s,h_1,B_1,K_1)$ and $\mu_2 = (s,h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
 
-  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},k_1).\] Because $i \notin k = k_1 \uplus k_2$, it is also the case that $i \notin k_1$, and so $\mu_1 \modstep \mu'_1$. By definedness of $\mu_1 \shash \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in k$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},k) \in \mu'_1 \shash \mu_2$.
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \override B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By definedness of $\mu_1 \shash \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in K$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B}{\ptup{i}{b}},K) \in \mu'_1 \shash \mu_2$.
 
-  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},k_2).\] Again, $i \notin k_2$, and so $\mu_2 \modstep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},k) \in \mu_1 \shash \mu'_2$. 
+  In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Again, $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b}},K) \in \mu_1 \shash \mu'_2$. 
 \end{proof}
+
+\begin{lemma}
+  \label{lem:spatial-separation-tau}
+  If $\mu \in \mu_1 \ssep \mu_2$ and $\mu \taustep \mu'$, then either there exists $\mu'_1$ such that $\mu' \in \mu'_1 \ssep \mu_2$, or there exists $\mu'_2$ such that $\mu' \in \mu_1 \ssep \mu'_2$.
+\end{lemma}
+
+\begin{proof}
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \uplus h_2$, $B(i) = (\ell,v) \lcons b \in B_1(i) \merge B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (s,h_1,B_1,K_1)$ and $\mu_2 = (s,h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b \in b'_1 \merge B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By $\mu_1 \compat_\sepsym \mu_2$ and $\ell \in \dom{\mu_1}$ we have $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \uplus h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \uplus h_2$. It follows that $\mu' = (s,\funup{h_1}{\ptup{\ell}{v}} \uplus h_2, \funup{B}{\ptup{i}{b}},K) \in \mu'_1 \ssep \mu_2$.
+
+  The other case is symmetric. 
+\end{proof}
+
+\begin{lemma}
+  \label{lem:temporal-separation-tau}
+  If $\mu = \mu_1 \sseq \mu_2$ and $\mu \taustep \mu'$, then either there exists $\mu'_1$ such that $\mu' = \mu'_1 \sseq \mu_2$, or there exists $\mu'_2$ such that $\mu' = \mu_1 \sseq \mu'_2$.
+\end{lemma}
+
+\begin{proof}
+  Without loss of generality we may assume that $\mu = (h,\funup{B}{\ptup{i}{(\ell,v)\lcons b}},K)$ for some $i \notin K$, and thus $\mu' = (\funup{h}{\ptup{\ell}{v}},\funup{B}{\ptup{i}{b}},K)$. Furthermore, we have $h = h_1 \override h_2$, $B(i) = (\ell,v) \lcons b = B_1(i) \lapp B_2(i)$ and $K = K_1 \uplus K_2$, assuming $\mu_1 = (s,h_1,B_1,K_1)$ and $\mu_2 = (s,h_2,B_2,K_2)$. The least-recent write of $B(i)$, $(\ell,v)$, is either the least-recent write of $B_1(i)$ or $B_2(i)$. 
+
+  In the first case, $B_1(i) = (\ell,v) \lcons b_1'$, and $b = b'_1 \lapp B_2(i)$. Let \[\mu'_1 = (s,\funup{h_1}{\ptup{\ell}{v}},\funup{B_1}{\ptup{i}{b'_1}},K_1).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_1$, and so $\mu_1 \taustep \mu'_1$. By $\mu_1 \compat_\seqsym \mu_2$, we know that if $\ell \in \dom{h_2} \cap \dom{B_1(i)}$ then $i \in K$. Hence $\ell \notin \dom{h_2}$, which means that $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = \funup{h_1}{\ptup{\ell}{v}} \override h_2$. It follows that \begin{align*}
+     \mu'_1 \sseq \mu_2 & = (s,\funup{h_1}{\ptup{\ell}{v}} \override h_2, \funup{B_1}{\ptup{i}{b'_1}} \lapp B_2 ,K_1 \uplus K_2)\\ & = (s,\funup{(h_1 \override h_2)}{\ptup{\ell}{v}}, \funup{B}{\ptup{i}{b}},K) \\ & = \mu'.
+  \end{align*}
+
+   In the second case, $B_2(i) = (\ell,v) \lcons b_2'$, $B_1(i) = \lnil$ and $b = b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Because $i \notin K = K_1 \uplus K_2$, it is also the case that $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. By definition of function overriding, $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override \funup{h_2}{\ptup{\ell}{v}}$. It follows that \begin{align*}
+      \mu_1 \sseq \mu'_2 & = (s,h_1 \override \funup{h_2}{\ptup{\ell}{v}}, B_1 \lapp \funup{B_2}{\ptup{i}{b'_2}}, K_1 \uplus K_2)\\ & = (s,\funup{(h_1 \override h_2)}{\ptup{\ell}{v}}, \funup{B}{\ptup{i}{b}},K) \\ & = \mu'.
+  \end{align*}
+
+  % In the second case, $B_2(i) = (\ell,v) \lcons b'_2$, and $b \in B_1(i) \override b'_2$. Let \[\mu'_2 = (s,\funup{h_2}{\ptup{\ell}{v}},\funup{B_2}{\ptup{i}{b'_2}},K_2).\] Again, $i \notin K_2$, and so $\mu_2 \taustep \mu'_2$. Because $\funup{(h_1 \override h_2)}{\ptup{\ell}{v}} = h_1 \override (\funup{h_2}{\ptup{\ell}{v}})$, it follows that $\mu' = (s,h_1 \override (\funup{h_2}{\ptup{\ell}{v}}),\funup{B}{\ptup{i}{b'_1}},K) \in \mu_1 \shash \mu'_2$. 
+\end{proof}
+
 
 \begin{corollary}
     \label{cor:separation-tau}
@@ -2451,7 +2484,7 @@ The following lemma describes a crucial relationship between spatiotemporal sepa
   
 \end{corollary}
 
-\section{Soundness}
+\section{Soundness Proofs}
 \label{sec:soundness-proofs}
 
 The following lemma describes the relationship between the ``safety'' lemmas and ``soundness'' lemmas in subsequent sections. 
