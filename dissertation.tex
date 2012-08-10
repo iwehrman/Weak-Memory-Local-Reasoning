@@ -548,34 +548,34 @@ Although the memory models of most modern computer architectures---including, as
 
 In this chapter we describe a program logic for a sequential, single-processor, weak-memory programming model. The semantics of programs and assertions will be given in terms of system states with a single write buffer, and the logic is tailored to reason about the behavior of sequential programs w.r.t.\ these states. The logic developed in this chapter is not especially useful; the behavior of sequential program execution on this model is essentially the same as on the typical, strong-memory model (in which memory is modeled as a single array of addresses), and existing logics for reasoning about this behavior are certainly simpler than the one developed here. But the sequential program logic is a pedagogical stepping stone toward the concurrent program logic, for which the behavior of programs may well be significantly different from that of a strong-memory model. The development of the sequential logic is vastly simpler than the weak-memory, multi-processor logic, and many of the more difficult issues in that task can be introduced and explained more easily in a single-processor setting. 
 
-A detailed description and soundness proof of a single-processor, weak-memory program logic was given previously \cite{wmsldetails}. 
+A detailed description and soundness proof of an earlier single-processor, weak-memory program logic was given previously \cite{wmsldetails}. 
 
 \section{An Example Sequential Proof}
 \label{sec:ex-seq-proof}
 
 Consider the following simple sequential program $c$, which loads the value at an address $x$ into variable $t$, writes the value $t+1$ into address $y$, and then flushes that write back to memory with a fence instruction: \[ c \eqdef \cload{t}{x} \opseq \cstore{y}{t+1} \opseq \cfence.\] This sequential program will fail with a memory error unless the value of $x$, from which the program loads, is a properly allocated memory address, as well as the value $y$, to which the program writes. Any provable specification of this program must require this of $x$ and $y$ initially. If the value of $x$ and $y$ are indeed allocated addresses, and the value in memory at address $x$ is initially some value $z$, then upon termination the write buffer will be empty and the value in memory at location $y$ will be $z+1$. 
 
-In the program logic we develop throughout this chapter, we express this informal specification of $c$ with the following formal specification: \begin{align}\label{eq:seq-ex-spec} \triple{(x \fpointsto z) \fsep (y \fpointsto -)}{c}{(x \fpointsto z) \fsep (y \fpointsto (z + 1))}.\end{align}
+In the program logic we develop throughout this chapter, we express this informal specification of $c$ with the following formal specification: \begin{align}\label{eq:seq-ex-spec} \triple{x \fpointsto z \fsep y \fpointsto -}{c}{x \fpointsto z \fsep y \fpointsto z+1}.\end{align}
 We write $e \fpointsto f$ to mean that the value in memory at the address given by the integer-valued expression $e$ is equal to the value given by expression $f$, or $e \fpointsto -$ if the value in memory at $e$ is irrelevant. We also write the \emph{separating conjunction} $e \fpointsto f \fsep e' \fpointsto f'$ to mean that $e$ and $e'$ are distinct, allocated memory addresses, with values in memory given by $f$ and $f'$ respectively. Hence, the pre-condition on the left asserts that $x$ and $y$ are allocated memory locations, the former with value $z$, and the post-condition on the right asserts that, upon executing the command $c$, the value at $x$ remains $z$ and the value at $y$ has been set to $z+1$. 
 
-Note that the specification in Equation~\ref{eq:seq-ex-spec} above would not be true if the traditional \emph{additive conjunction} $\conj$ were used instead of the separating conjunction. That is, the following specification: \[ \triple{(x \fpointsto z) \conj (y \fpointsto -)}{c}{(x \fpointsto z) \conj (y \fpointsto (z + 1))}.\] is not true because it allows for $x$ and $y$ to be \emph{aliased}---i.e., to denote the same memory address. For in that case the store to $y$ would change the value in memory at $y$ as well as at $x$, leaving $x \fpointsto (z+1)$ instead of $x \fpointsto z$ as specified. Also note that the specification in Equation~\ref{eq:seq-ex-spec} would not be true without the trailing $\cfence$ command because the buffered write will not necessarily have committed to memory at the moment the commands have completed their execution. 
+Note that the specification in Equation~\ref{eq:seq-ex-spec} above would not be true if the traditional \emph{additive conjunction} $\conj$ were used instead of the separating conjunction. That is, the following specification: \[ \triple{x \fpointsto z \conj y \fpointsto -}{c}{x \fpointsto z \conj y \fpointsto z+1}.\] is not true because it allows for $x$ and $y$ to be \emph{aliased}---i.e., to denote the same memory address. For in that case the store to $y$ would change the value in memory at $y$ as well as at $x$, leaving $x \fpointsto z+1$ instead of $x \fpointsto z$ as specified. Also note that the specification in Equation~\ref{eq:seq-ex-spec} would not be true without the trailing $\cfence$ command because the buffered write will not necessarily have committed to memory at the moment the commands have completed their execution. 
 
 A \emph{proof sketch} of the program specification in Equation~\ref{eq:seq-ex-spec} is as follows, the details of which will be explained shortly:
 \Sketch{
   
-  \aconn{$(x \fpointsto z) \fsep (y \fpointsto -)$}
+  \aconn{$x \fpointsto z \fsep y \fpointsto -$}
 
   \acomm{$\cload{t}{x}$}
 
-  \aconn{$(x \fpointsto z) \fsep ((y \fpointsto -) \conj t = z)$}
+  \aconn{$x \fpointsto z \fsep (y \fpointsto - \conj t = z)$}
 
   \acomm{$\cstore{y}{t+1}$}
 
-  \aconn{$(x \fpointsto z) \fsep ((y \fpointsto -) \fseq (y \fwriteu (z+1))) $}
+  \aconn{$x \fpointsto z \fsep (y \fpointsto - \fseq y \fwriteu z+1) $}
 
   \acomm{$\cfence$}
 
-  \aconnl{$(x \fpointsto z) \fsep (y \fpointsto (z+1))$}
+  \aconnl{$x \fpointsto z \fsep y \fpointsto z+1$}
 
 }
 As the name indicates, a proof sketch provides a skeleton of a complete proof of a program specification. For a program $c_1 \opseq c_2$, a proof sketch may take the form: 
@@ -1438,7 +1438,7 @@ A proof sketch of the antecedent follows below:
 
   \aconnl{$(\flock{0} \fsep I \fsep Q_s) \fseqri \fbar{0}$}
       
-} In the proof sketch above, we separate successive assertions with $\therefore$ to indicate implication---weakening pre-conditions and strengthening post-conditions of triples---allowed by the rule of consequence. In the first triple, the pre-condition describes the memory address $d$ is allocated but has an unknown value ($d \fpointsto -$), while the post-condition of the store command $\cstore{d}{1}_0$ describes the addition of a buffered write on processor 0 ($d \fpointsto - \fseq d \fwrite{0} 1$). The post-condition of the assignment command $s = 1$ simply asserts the equality. The final sequence of implications indicates that, once a barrier is performed, the buffered write will be flushed, yielding the correct value in memory.  
+} In the proof sketch above, we separate successive assertions with $\therefore$ to indicate implication---weakening the pre-conditions and strengthening the post-conditions found in the triples---allowed by the rule of consequence. In the first triple, the pre-condition describes the memory address $d$ is allocated but has an unknown value ($d \fpointsto -$), while the post-condition of the store command $\cstore{d}{1}_0$ describes the addition of a buffered write on processor 0 ($d \fpointsto - \fseq d \fwrite{0} 1$). The post-condition of the assignment command $s = 1$ simply asserts the equality. The final sequence of implications indicates that, once a barrier is performed, the buffered write will be flushed, yielding the correct value in memory.  
 
 
 The specification for $c_r$ can be proved similarly to that of $c'_s$. The locked portion of the command is proved using the atomic rule; and the rest by basic sequential reasoning. A proof sketch of the specification of $c_r$ follows below: 
@@ -1576,7 +1576,7 @@ The complete relation that defines the semantics of commands is given in Figure~
       \vspace{1em}
 
       \begin{tabular}{ll}
-      \begin{minipage}{.43\columnwidth}
+      \begin{minipage}{.42\columnwidth}
 
             \infrule[c-prim-a]{\text{ if $p : \sigma \pstep{\ext{s}(e)} \abort$}}{p_e,\sigma \step \abort}
 
@@ -1758,6 +1758,10 @@ In the following, let $\nu_u \eqdef (\nil, \arnil, \nil, \nil)$ be an empty gene
     \item $\nu_0 \mseq (\nu_1 \mseq \nu_2) = (\nu_0 \mseq \nu_1) \mseq \nu_2$
   \end{itemize}
 \end{proposition}
+
+\begin{remark}
+    Unlike traditional notions of separation (e.g., as outlined in work on abstract separation logic \cite{DBLP:conf/lics/CalcagnoOY07}), note that temporal separation is not a cancellative operation. That is, it is not the case that the following implication holds: \[ \mu \sseq \mu_0 = \mu \sseq \mu_1 \onlyif \mu_0 = \mu_1.\] A simple counter-example is $\mu = \mu_0 = (1 \mapsto 2, \arnil, \nil)$ and $\mu_1 = (\nil,\arnil,\nil)$. Then $\mu \sseq \mu_0 = \mu = \mu \sseq \mu_1$, but obviously $\mu_0 \neq \mu_1$. 
+\end{remark}
 
 \subsubsection{Strong Temporal Separation}
 \label{sec:strong-temporal-separation}
@@ -2589,7 +2593,7 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
         }
 
-         Finally, $\safe{n}{\cskip,s,\mu \sseq \mu_w,J,(e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f}$ follows from Lemma~\ref{lem:skip-safe} because $s,\mu \sseq \mu_w,\setprocessors \sentails (e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f$, which itself is because $s,\mu,\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ and $s,\mu_w,\setprocessors \sentails e \fwrite{e'} f$  
+         Finally, we have $\safe{n}{\cskip,s,\mu \sseq \mu_w,J,(e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f}$ by way of Lemma~\ref{lem:skip-safe} because $s,\mu \sseq \mu_w,\setprocessors \sentails (e \fwrite{e'} e'' \fsseq P) \fseq e \fwrite{e'} f$, which itself is because $s,\mu,\setprocessors \sentails e \fwrite{e'} e'' \fsseq P$ and $s,\mu_w,\setprocessors \sentails e \fwrite{e'} f$  
     \end{enumerate}
 \end{proof}
 
@@ -2674,12 +2678,11 @@ For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma 
 
 \begin{lemma}
       \label{lem:weak-interleaving-safe}
-      If $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, then $\safe{n}{c,s,\mu_R \shash \mu,J,R \shash Q}$. 
+      If $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, then $\safe{n}{c,s,\mu_R \shash \mu,J,R \fhash Q}$. 
 \end{lemma}
 
 \begin{proof}
-      By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,\sigma,\sigma_R,J,Q,R$, that whenever $\safe{n}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, it is also the case that $\safe{n}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$ holds. We also assume that $\safe{n+1}{c,\sigma,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\sigma_R \fhash \sigma}$, and $\sigma_R \sentails R$, and show that \\ 
-      $\safe{n+1}{c,\sigma_R \fhash \sigma,J,R \fhash Q}$. To show this, we must establish three conditions. 
+      By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,s,\mu,\mu_R,J,Q,R$, that whenever $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, it is also the case that $\safe{n}{c,s,\mu_R \shash \mu,J,R \fhash Q}$ holds. We also assume that $\safe{n+1}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, and show that $\safe{n+1}{c,s,\mu_R \shash \mu,J,R \fhash Q}$. To show this, we must establish three conditions. 
 
       \begin{enumerate}
             \item Suppose $c = \cskip$. By assumption, $s,\mu_R,\setprocessors \sentails R$, $\defined{\mu_R \shash \mu}$, and if $c = \cskip$ then $s,\mu,\setprocessors \sentails Q$, and so $s,\mu,\setprocessors \sentails Q$. Hence $s,(\mu_R \shash \mu),\setprocessors \sentails R \fhash Q$. \todo{FIXME: there is no formula $R \fhash Q$.}
@@ -2702,7 +2705,7 @@ For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma 
 
             By Lemma~\ref{lem:separation-refinement} and $\mu'_{FR} \taurefines \mu_F \shash \mu_R$, there exists $\mu'_F,\mu'_R$ such that $\mu'_F \taurefines \mu_F$, $\mu'_R \taurefines \mu_R$ and $\mu'_{FR} \in \mu'_F \shash \mu'_R$. 
 
-            From $\mu'_R \taurefines \mu_R$ and $s,\mu_R,\setprocessors \sentails R$---as well as the assumption $\fv{R} \cap \mod{c} = \nil$ and Lemmas~\ref{lem:step-stcong} and~\ref{lem:assertion-stcong}---it follows that $s',\sigma'_R,\setprocessors \sentails R$.
+            From $\mu'_R \taurefines \mu_R$ and $s,\mu_R,\setprocessors \sentails R$---as well as the assumption $\fv{R} \cap \mod{c} = \nil$ and Lemmas~\ref{lem:step-stcong} and~\ref{lem:assertion-stcong}---it follows that $s',\mu'_R,\setprocessors \sentails R$.
 
             Next, we wish to apply the inductive hypothesis to $\safe{n}{c',s',\mu',J,Q}$ to show that $\safe{n}{c',s',\mu'_R \fhash \mu',J,R \fhash Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$ from Lemma~\ref{lem:step-stcong}) and $\defined{\mu'_R \shash \mu'}$. 
 
@@ -2712,11 +2715,58 @@ For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma 
 
 \begin{lemma}
   \label{lem:general-separation-sound}
-      If $\truespec{J}{P}{c}{Q}$ and it is the case that $\fv{R} \cap \mod{c} = \nil$ then\\ $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
+      If $\truespec{J}{P}{c}{Q}$ and it is the case that $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
 \end{lemma}
 
 \begin{proof}
-      Let $s,\mu,\setprocessors \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,s,\mu,J,R\fhash Q}$. From $s,\mu,\setprocessors \sentails R \fhash P$, there exists $s,\mu_R,\setprocessors \sentails R$ and $s,\mu_P,\setprocessors \sentails P$ with $\defined{\mu_R \shash \mu_P}$. By assumption, $\safe{n}{c,s,\mu_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
+      Let $s,\mu,\setprocessors \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,s,\mu,J,R\fhash Q}$. From $s,\mu,\setprocessors \sentails R \fhash P$, there exists $\mu_R,\mu_P$ with $\mu \in \mu_R \shash \mu_P$ such that $s,\mu_R,\setprocessors \sentails R$ and $s,\mu_P,\setprocessors \sentails P$. By assumption, $\safe{n}{c,s,\mu_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
+\end{proof}
+
+A proof sketch of the safety of the spatial frame rule relies on the following unproven conjecture. 
+\begin{conjecture}
+    \label{conj:step-preserves-separation}
+    Let $\mu_a \in \mu_b \ssep \mu_c$, and suppose $c,s,\mu_a \step c',s',\mu'_a$. If $\mu'_a \in \mu'_b \shash \mu'c$ with $\mu'_b \taurefines \mu_b$, then $\mu'_b \shash \mu'c = \mu'_b \ssep \mu'c$. 
+\end{conjecture}
+
+
+\begin{lemma}
+      \label{lem:spatial-separation-safe}
+      If $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \ssep \mu}$, and $s,\mu_R,\setprocessors \sentails R$, then $\safe{n}{c,s,\mu_R \ssep \mu,J,R \fsep Q}$. 
+\end{lemma}
+
+\begin{proof}[Sketch]
+      By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,s,\mu,\mu_R,J,Q,R$, that whenever $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \ssep \mu}$, and $s,\mu_R,\setprocessors \sentails R$, it is also the case that $\safe{n}{c,s,\mu_R \ssep \mu,J,R \fsep Q}$ holds as well. We additionally assume the antecedent, which is that $\safe{n+1}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \ssep \mu}$, and $s,\mu_R,\setprocessors \sentails R$, and show the consequent, which is that $\safe{n+1}{c,s,\mu_R \ssep \mu,J,R \fsep Q}$. To show this, we must establish three conditions. 
+
+      \begin{enumerate}
+            \item Suppose $c = \cskip$. By assumption, $s,\mu_R,\setprocessors \sentails R$, $\defined{\mu_R \ssep \mu}$, and if $c = \cskip$ then $s,\mu,\setprocessors \sentails Q$, and so indeed $s,\mu,\setprocessors \sentails Q$. Hence $s,\mu_R \ssep \mu,\setprocessors \sentails R \fsep Q$. 
+
+            \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash (\mu_R \ssep \mu))$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. But \begin{align*}
+            \mu_J \ssep (\mu_F \shash (\mu_R \ssep \mu)) & \subseteq \mu_J \ssep (\mu_F \shash (\mu_R \shash \mu)) \\ 
+            & = \mu_J \ssep ((\mu_F \shash \mu_R) \shash \mu)
+            \end{align*} and so by part 2 of assumption $\safe{n+1}{c,s,\mu,J,Q}$, instantiating with (an arbitrary element of) $\mu_F \shash \mu_R$, the result holds. 
+
+            \item Let $\mu_0,\mu_J,\mu_F,\mu_1,c',s'$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash (\mu_R \ssep \mu))$, either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$, and $c,s,\mu_0 \step c',s',\mu_1$. We must exhibit $\mu'_J,\mu'_F,\mu'$ such that: \begin{enumerate}[(a)]
+                  \item $\mu_1 \in \mu'_J \ssep (\mu'_F \shash \mu')$,
+                  \item $\mu'_F \taurefines \mu_F$, 
+                  \item either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and
+                  \item $\safe{n}{c',s',\mu',J,R \fsep Q}$. 
+            \end{enumerate}
+
+            We first instantiate part 3 of assumption $\safe{n+1}{c,s,\mu,J,Q}$ with $\mu_J$, (an arbitrary element of) $\mu_F \shash \mu_R$, $\mu_1$, $c'$ and $s'$, which gives us $\mu'_J, \mu'_{FR}, \mu'$ such that: \begin{enumerate}[(a)]
+                  \item $\mu_1 \in \mu'_J \ssep (\mu'_{FR} \shash \mu')$
+                  \item $\mu'_{FR} \taurefines \mu_F \shash \mu_R$
+                  \item either $\locked{\mu_1}$ or $s',\mu'_J,\setprocessors \sentails J$, and
+                  \item $\safe{n}{c',s',\mu',J,Q}$.
+            \end{enumerate}   
+
+            By Lemma~\ref{lem:separation-refinement} and $\mu'_{FR} \taurefines \mu_F \shash \mu_R$, there exists $\mu'_F,\mu'_R$ such that $\mu'_F \taurefines \mu_F$, $\mu'_R \taurefines \mu_R$ and $\mu'_{FR} \in \mu'_F \shash \mu'_R$. 
+
+            From $\mu'_R \taurefines \mu_R$ and $s,\mu_R,\setprocessors \sentails R$---as well as the assumption $\fv{R} \cap \mod{c} = \nil$ and Lemmas~\ref{lem:step-stcong} and~\ref{lem:assertion-stcong}---it follows that $s',\mu'_R,\setprocessors \sentails R$.
+
+            Next, we wish to apply the inductive hypothesis to $\safe{n}{c',s',\mu',J,Q}$ to show that $\safe{n}{c',s',\mu'_R \ssep \mu',J,R \fsep Q}$. This follows from the observations that $\fv{R} \cap \mod{c'} = \nil$ (because $\mod{c'} \subseteq \mod{c}$ from Lemma~\ref{lem:step-stcong}) and $\defined{\mu'_R \ssep \mu'}$. 
+
+            Returning to our original task, we exhibit $\mu'_J$, $\mu'_F$ and $\mu'_R \ssep \mu'$. By Conjecture~\ref{conj:step-preserves-separation} it follows that \[ \mu_1 \in \mu'_J \ssep (\mu'_F \shash (\mu'_R \ssep \mu')).\] We have already showed that $\mu'_F \taurefines \mu_F$. Either $\locked{\mu_1}$ or $s',\sigma'_J,\setprocessors \sentails J$ by assumption. Finally $\safe{n}{c',s',\mu'_R \ssep \mu',J,R \fsep Q}$ by the inductive hypothesis above. 
+      \end{enumerate}
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:soundness}]
