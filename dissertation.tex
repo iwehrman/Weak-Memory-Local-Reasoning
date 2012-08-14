@@ -2017,6 +2017,12 @@ An effect of this is that \emph{assertions are oblivious to the nondeterministic
 
 Intuitively, assertions may be thought to describe only the ``initial'' states without concern for the nondeterministic flushing of writes that may have taken place, though the semantics also encompasses all states reachable as a result these steps. This is an important feature of the assertion language because flushing buffered writes---which cannot be controlled---never changes the satisfiability of an assertion. This is also extremely important for the specification logic, as is described in the next section. 
 
+\begin{remark}
+    Earlier versions of the semantic functions that model the separating conjunctions incorporated directly the notion of flushing closure. In order to ensure that an assertion $P \fgen Q$ denoted a closed sets of states, the corresponding semantic function $\sgen$ was defined so that $\mu \sgen \mu'$ was itself a closed set. For example, the spatial conjunction of two states with buffered writes included not just the result of each possible interleaving of the buffers, but also each possible interleaving of the buffers after arbitrary flushing. Furthermore, the definition of the semantic function for temporal separation was relaxed to be total instead of partial. In particular, the result of temporally conjoining an earlier, left-side state that contained buffered writes to a later, right-side buffer-complete state (e.g., a model of a $\fbaru$ assertion)---a composition that would be undefined according to the current definition---was equivalent to first completely flushing the left-side state and only then temporally combining the states as as in the current definition. That is, the definition of the semantic function included an explicit application of a function $\sflush{h,b}$, which calculates the result of flushing a buffer $b$ into a heap $h$.  
+
+    The relaxations described above made closure arguments straightforward, but yielded function definitions that were otherwise difficult to reason about. The semantic functions described in Section~\ref{sec:separation} are simpler and stronger than the earlier definitions sketched here, but the limited scope and stronger definedness conditions of the current definitions make them easier to reason about. And the lemmas and propositions described earlier in this section assert that the simpler definitions are indeed sufficient for flushing closure. 
+\end{remark}
+
 \section{Concurrent Specifications}
 \label{sec:specifications}
 \label{sec:multiprocessor-specifications}
@@ -2399,7 +2405,7 @@ Although one could imagine changing or improving many aspects of this logic, it 
 
 \appendix
 
-\chapter{Proofs}
+\chapter{Additional Lemmas, Proofs and Conjectures}
 \label{ch:proofs}
 
 This chapter contains proofs of various results about the assertion and program logics. Section~\ref{sec:flushing-closure-proofs} describes results about closure properties of the models of the separating conjunctions, and Section~\ref{sec:soundness-proofs} describes results about the soundness of the program logic w.r.t.\ the model given in Chapter~\ref{ch:multiprocessor}. 
