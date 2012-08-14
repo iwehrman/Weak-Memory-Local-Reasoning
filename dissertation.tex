@@ -2679,19 +2679,20 @@ In the sequel, we write $\dom{\mu}$, for $\mu = (h,B,k)$, as shorthand for $\dom
 
 This section presents soundness lemmas for some, but not all, of the inference rules described in Section~\ref{sec:proof-theory}. That is, for some inference rules \[\infer{\spec{J}{P}{c}{Q}}{\spec{J'}{P'}{c'}{Q'}}\] we present lemmas below which assert that \[ \truespec{J'}{P'}{c'}{Q'} \text{~only if~} \truespec{J}{P}{c}{Q}.\] 
 
-
 For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma \sentails Q$ as shorthand for the universal quantifications \[ \forall \mu \in S \st \safe{n}{c,s,\mu,J,Q} \andif \forall \mu \in S \st s,\mu,\Gamma \sentails Q.\]
+
+The following two lemmas sketch soundness proofs for a spatiotemporal frame rule. Note, however, that the spatiotemporal conjunction is not actually defined in the assertion language described in this dissertation, nor is there a spatiotemporal frame rule. But the separating conjunctions that are described are refinements of this hypothetical spatiotemporal conjunction, and so it may be interesting to consider its frame rule. 
 
 \begin{lemma}
       \label{lem:weak-interleaving-safe}
       If $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, then $\safe{n}{c,s,\mu_R \shash \mu,J,R \fhash Q}$. 
 \end{lemma}
 
-\begin{proof}
+\begin{proof}[Sketch]
       By induction on $n$. The base case is trivial. For the induction step, we assume the lemma holds for $n$ and show that it holds for $n+1$. That is, we assume, for any $c,s,\mu,\mu_R,J,Q,R$, that whenever $\safe{n}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, it is also the case that $\safe{n}{c,s,\mu_R \shash \mu,J,R \fhash Q}$ holds. We also assume that $\safe{n+1}{c,s,\mu,J,Q}$, $\fv{R} \cap \mod{c} = \nil$, $\defined{\mu_R \shash \mu}$, and $s,\mu_R,\setprocessors \sentails R$, and show that $\safe{n+1}{c,s,\mu_R \shash \mu,J,R \fhash Q}$. To show this, we must establish three conditions. 
 
       \begin{enumerate}
-            \item Suppose $c = \cskip$. By assumption, $s,\mu_R,\setprocessors \sentails R$, $\defined{\mu_R \shash \mu}$, and if $c = \cskip$ then $s,\mu,\setprocessors \sentails Q$, and so $s,\mu,\setprocessors \sentails Q$. Hence $s,(\mu_R \shash \mu),\setprocessors \sentails R \fhash Q$. \todo{FIXME: there is no formula $R \fhash Q$.}
+            \item Suppose $c = \cskip$. By assumption, $s,\mu_R,\setprocessors \sentails R$, $\defined{\mu_R \shash \mu}$, and if $c = \cskip$ then $s,\mu,\setprocessors \sentails Q$, and so $s,\mu,\setprocessors \sentails Q$. Hence $s,(\mu_R \shash \mu),\setprocessors \sentails R \fhash Q$. 
 
             \item Let $\mu_0,\mu_J,\mu_F$ such that $\mu_0 \in \mu_J \ssep (\mu_F \shash (\mu_R \shash \mu))$, and either $\locked{\mu_0}$ or $s,\mu_J,\setprocessors \sentails J$. We must show that $c,s,\mu_0 \nrightarrow \abort$. But \[ \mu_J \ssep (\mu_F \shash (\mu_R \shash \mu)) \subseteq \mu_J \ssep ((\mu_F \shash \mu_R) \shash \mu),\] and so by part 2 of assumption $\safe{n+1}{c,s,\mu,J,Q}$, instantiating with (an arbitrary element of) $\mu_F \shash \mu_R$, the result holds. 
 
@@ -2724,7 +2725,7 @@ For a set of memory systems $S$, we write $\safe{n}{c,s,S,J,Q}$ and $s,S,\Gamma 
       If $\truespec{J}{P}{c}{Q}$ and it is the case that $\fv{R} \cap \mod{c} = \nil$ then $\truespec{J}{R \fhash P}{c}{R \fhash Q}$. 
 \end{lemma}
 
-\begin{proof}
+\begin{proof}[Sketch]
       Let $s,\mu,\setprocessors \sentails R \fhash P$ and $n \in \setnaturals$. We must show $\safe{n}{c,s,\mu,J,R\fhash Q}$. From $s,\mu,\setprocessors \sentails R \fhash P$, there exists $\mu_R,\mu_P$ with $\mu \in \mu_R \shash \mu_P$ such that $s,\mu_R,\setprocessors \sentails R$ and $s,\mu_P,\setprocessors \sentails P$. By assumption, $\safe{n}{c,s,\mu_P,J,Q}$. The result follows from Lemma~\ref{lem:weak-interleaving-safe}. 
 \end{proof}
 
