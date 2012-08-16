@@ -235,7 +235,7 @@ The verification literature offers little insight into the problem of verifying 
   $P_1$}\\
 \end{tabular}
 %}
-\caption{\label{fig:dekker} Dekker's algorithm.}
+\caption{\label{fig:dekker} Dekker's algorithm}
 \end{figure}
 
 To motivate study of a local reasoning principle for weak memory models, we consider the problem of reasoning about programs executing on such models. Some of the issues involved can be illustrated by considering the small pseudocode program in Figure~\ref{fig:dekker}.\footnote{The result of dereferencing a pointer variable $x$ is indicated by $\left[ x \right]$.}
@@ -273,7 +273,7 @@ The various components of the program logics described in this dissertation and 
 \begin{figure}[ht]
 %\begin{center}
 \includegraphics[scale=0.5]{dependency-graph/dg-reduced}
-\caption{\label{fig:dependency-graph}Dependency graph for the project.}
+\caption{\label{fig:dependency-graph}Dependencies among the components of the project}
 %\end{center}
 \end{figure}
 
@@ -1038,7 +1038,7 @@ The set of all models is abbreviated $\setmodels$, and the satisfaction relation
     \end{array}
     \]
 \end{minipage}}
-    \caption{\label{fig:uniprocessor-satisfaction-relation} The sequential satisfaction relation}
+    \caption{\label{fig:uniprocessor-satisfaction-relation} Sequential satisfaction relation}
 \end{figure}
 
 The meaning of the standard first-order logic formulas is as usual (i.e., classical). A model $\amod$ satisfies $\femp$ if its memory system $\mu$ is empty. A model satisfies $\fbaru$ if its memory system is empty and its buffer-completeness flag $\gamma$ is set. A model satisfies the leads-to assertion $e \fwriteu e'$ either if its memory system consists of an empty heap and a write buffer with a single write $(\ext{s}(e), \ext{s}(e'))$; or if its buffer-completeness flag is set and its memory system consists of the single-point heap $\ext{s}(e) \mapsto \ext{s}(e')$ and an empty buffer. The  two classes of model represent a write that is either buffered or committed. For the case in which the write has flushed, any previous writes must also have flushed, and so the buffer-completeness flag is set. A model satisfies the temporal (resp.\ spatial) separating conjunction if it admits a model-theoretic temporal (resp.\ spatial) separation, defined below, into models that satisfy the constituent conjunctions. 
@@ -1876,7 +1876,7 @@ The satisfaction relation is defined by recursion on the structure of $P$ below 
       \end{array}
       \]
 \end{minipage}}
-      \caption{\label{fig:satisfaction-relation} The concurrent satisfaction relation}
+      \caption{\label{fig:satisfaction-relation} Concurrent satisfaction relation}
 \end{figure}
 
 The classical atomic formulas and logical operations are defined as usual. The $\femp$ assertion describes generalized memory systems with empty heaps, empty write buffers, and with no processors blocked. The $\fbar{i}$ assertion additionally requires that $i$ be buffer-complete. The $\flock{i}$ assertion is like $\femp$, but requires that all processors except for $i$ be blocked. The leads-to assertion $e \fwrite{i} f$ is modeled by two classes of generalized memory systems: those that are \emph{pending}, with an empty heap, a single buffered write, and in which at most $i$ is blocked; and those that are \emph{flushed}, with a single-point heap, all buffers empty, and in which no processors are blocked. The separating conjunctions and implications are defined with the semantic functions described in Section~\ref{sec:separation}.  
